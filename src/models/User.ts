@@ -1,4 +1,5 @@
 import * as Nano from 'nano'
+import { asBoolean, asMap, asObject } from 'cleaners'
 
 import { Base } from '.'
 import { Device } from './Device'
@@ -8,29 +9,24 @@ const CONFIG = require('../../serverConfig.json')
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbUserSettings = nanoDb.db.use('db_user_settings')
 
-interface IUser {
-  devices: IUserDevices
+const IUserDevices = asMap(asBoolean)
+const IUserNotifications = asObject({
+  currencyCodes: asMap(asObject({
+    '1': asBoolean,
+    '24': asBoolean
+  }))
+})
+const IUser = asObject({
+  devices: IUserDevices,
   notifications: IUserNotifications
-}
+})
 
-interface IUserDevices {
-  [deviceId: string]: boolean
-}
-
-interface IUserNotifications {
-  currencyCodes: {
-    [code: string]: {
-      '1': boolean
-      '24': boolean
-    }
-  }
-}
-
-export class User extends Base implements IUser {
+export class User extends Base implements ReturnType<typeof IUser> {
   public static table = dbUserSettings
+  public static asType = IUser
 
-  public devices: IUserDevices
-  public notifications: IUserNotifications
+  public devices: ReturnType<typeof IUserDevices>
+  public notifications: ReturnType<typeof IUserNotifications>
 
   constructor(...args) {
     super(...args)
@@ -44,7 +40,6 @@ export class User extends Base implements IUser {
   public async attachDevice(deviceId: string) {
     const device = await Device.fetch(deviceId)
     if (!device) throw new Error('Device must be registered before attaching to user.')
-    await device.save('userId', this._id)
 
     this.devices[deviceId] = true
 

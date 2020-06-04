@@ -1,15 +1,19 @@
 import * as express from 'express'
+import { asArray, asBoolean, asObject, asString } from 'cleaners'
+
 import { User } from '../../models'
 
 export const UserController = express.Router()
 
 UserController.get('/', async (req, res) => {
   try {
-    type Query = { userId: string }
-    const { userId } = req.query as Query
-    const result = userId
-      ? await User.fetch(userId)
-      : await User.all()
+    const Query = asObject({
+      userId: asString
+    })
+    Query(req.query)
+
+    const { userId } = req.query as ReturnType<typeof Query>
+    const result = await User.fetch(userId)
 
     res.json(result)
   } catch (err) {
@@ -19,8 +23,13 @@ UserController.get('/', async (req, res) => {
 
 UserController.post('/device/attach', async (req, res) => {
   try {
-    type Query = { deviceId: string, userId: string }
-    const { deviceId, userId } = req.query as Query
+    const Query = asObject({
+      deviceId: asString,
+      userId: asString
+    })
+    Query(req.query)
+
+    const { deviceId, userId } = req.query as ReturnType<typeof Query>
 
     let user = await User.fetch(userId) as User
     if (!user) user = new User(null, userId)
@@ -35,9 +44,17 @@ UserController.post('/device/attach', async (req, res) => {
 
 UserController.post('/notifications', async (req, res) => {
   try {
-    type Query = { userId: string }
-    const { userId } = req.query as Query
-    const { currencyCodes } = req.body
+    const Query = asObject({
+      userId: asString
+    })
+    const Body = asObject({
+      currencyCodes: asArray(asString)
+    })
+    Query(req.query)
+    Body(req.body)
+
+    const { userId } = req.query as ReturnType<typeof Query>
+    const { currencyCodes } = req.body as ReturnType<typeof Body>
 
     const user = await User.fetch(userId) as User
     await user.registerNotifications(currencyCodes)
@@ -50,9 +67,17 @@ UserController.post('/notifications', async (req, res) => {
 
 UserController.get('/notifications/:currencyCode', async (req, res) => {
   try {
-    type Query = { userId: string }
-    const { userId } = req.query as Query
-    const { currencyCode } = req.params
+    const Query = asObject({
+      userId: asString
+    })
+    const Params = asObject({
+      currencyCode: asString
+    })
+    Query(req.query)
+    Params(req.params)
+
+    const { userId } = req.query as ReturnType<typeof Query>
+    const { currencyCode } = req.params as ReturnType<typeof Params>
 
     const user = await User.fetch(userId) as User
     const notificationSettings = user.notifications.currencyCodes[currencyCode]
@@ -66,10 +91,23 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
 
 UserController.put('/notifications/:currencyCode', async (req, res) => {
   try {
-    type Query = { userId: string }
-    const { userId } = req.query as Query
-    const { currencyCode } = req.params
-    const { hours, enabled } = req.body
+    const Query = asObject({
+      userId: asString
+    })
+    const Params = asObject({
+      currencyCode: asString
+    })
+    const Body = asObject({
+      hours: asString,
+      enabled: asBoolean
+    })
+    Query(req.query)
+    Params(req.params)
+    Body(req.body)
+
+    const { userId } = req.query as ReturnType<typeof Query>
+    const { currencyCode } = req.params as ReturnType<typeof Params>
+    const { hours, enabled } = req.body as ReturnType<typeof Body>
 
     const user = await User.fetch(userId) as User
     const currencySettings = user.notifications.currencyCodes[currencyCode]
@@ -78,6 +116,7 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
 
     res.json(currencySettings)
   } catch (err) {
+    console.log(err)
     res.json(err)
   }
 })

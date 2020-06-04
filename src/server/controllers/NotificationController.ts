@@ -1,15 +1,26 @@
 import * as express from 'express'
+import { asMap, asObject, asString } from 'cleaners'
 
 import { NotificationManager } from '../../NotificationManager'
-import { Device } from '../../models'
+import { Device, User } from '../../models'
 
 export const NotificationController = express.Router()
 
 NotificationController.post('/send', async (req, res) => {
-  const { title, body, data  } = req.body
-  const { appId } = req.apiKey
+  // TODO:
+  if (!req.apiKey.admin)
+    return res.sendStatus(401)
 
-  const fcm = await NotificationManager.init(appId)
+  const Body = asObject({
+    title: asString,
+    body: asString,
+    data: asMap,
+    userId: asString
+  })
+
+  const { title, body, data, userId  } = req.body as ReturnType<typeof Body>
+
+  const fcm = await NotificationManager.init(req.apiKey)
   const message = {
     notification: {
       title,
@@ -18,8 +29,12 @@ NotificationController.post('/send', async (req, res) => {
     data
   }
 
-  const devices = await Device.where({ selector: { appId } }) as Array<Device>
-  const deviceTokens = devices.map((device) => device.tokenId)
+  const user = await User.fetch(userId) as User
+  const tokens = []
+  for (const deviceId in user.devices) {
+    const device = await Device.fetch(deviceId) as Device
+    tokens.push(device.tokenId)
+  }
 
-  await fcm.sendNotifications(message, deviceTokens)
+  await fcm.sendNotifications(message, tokens)
 })

@@ -1,26 +1,26 @@
 import * as Nano from 'nano'
+import { asMap, asNumber, asObject } from 'cleaners'
 
 import { Base } from '.'
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
-const dbCurrencyThreshold = nanoDb.db.use('db_currency_threshold')
+const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
 
-interface ICurrencyThreshold {
+const IThresholds = asMap(asObject({
+  lastUpdated: asNumber,
+  price: asNumber
+}))
+
+const ICurrencyThreshold = asObject({
   thresholds: IThresholds
-}
+})
 
-interface IThresholds {
-  [hour: number]: {
-    lastUpdated: number
-    price: number
-  }
-}
-
-export class CurrencyThreshold extends Base implements ICurrencyThreshold {
+export class CurrencyThreshold extends Base implements ReturnType<typeof ICurrencyThreshold> {
   public static table = dbCurrencyThreshold
+  public static asType = ICurrencyThreshold
 
-  public thresholds: IThresholds
+  public thresholds: ReturnType<typeof IThresholds>
 
   constructor(...args) {
     super(...args)

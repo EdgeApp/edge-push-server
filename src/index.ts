@@ -1,6 +1,12 @@
 import { CurrencyThreshold, Device, User } from './models'
 import { getPrice } from './prices'
 import { NotificationManager } from './NotificationManager'
+const CONFIG = require('../serverConfig.json')
+
+const HOURS_PERCENT_MAP = {
+  1: 3,
+  24: 10
+}
 
 interface NotificationPriceMap {
   [currencyCode: string]: {
@@ -34,8 +40,11 @@ async function checkPriceChanges() {
         map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)
       }
 
-      const devices = await Device.where({ selector: { userId: user._id } }) as Array<Device>
-      const deviceTokens = devices.map((device) => device.tokenId)
+      const deviceIds = Object.keys(user.devices)
+      const deviceTokens = await Promise.all(deviceIds.map(async (deviceId) => {
+        const device = await Device.fetch(deviceId) as Device
+        return device.tokenId
+      }))
 
       const userHourSettings = user.notifications.currencyCodes[currencyCode]
       for (const [ hours, enabled ] of Object.entries(userHourSettings)) {
@@ -45,12 +54,13 @@ async function checkPriceChanges() {
       }
     }
   }
+  console.log(priceMap)
 
   sendNotifications(priceMap)
 }
 
 async function sendNotifications(priceMap: NotificationPriceMap) {
-  const fcm = await NotificationManager.init('edge')
+  const fcm = await NotificationManager.init(CONFIG.apiKey)
 
   for (const currencyCode in priceMap) {
     for (const hours in priceMap[currencyCode]) {
@@ -114,8 +124,10 @@ async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold): Promi
     const priceChange = parseFloat((100 * (price - priceBefore) / priceBefore).toFixed(2))
 
     const today = Date.parse(new Date().toISOString())
+
+    const percent = HOURS_PERCENT_MAP[hours]
     console.log(currencyCode, hours, price, priceBefore, priceChange)
-    if (priceChange <= -0 || priceChange >= 0) {
+    if (priceChange <= -percent || priceChange >= percent) {
       currencyThreshold.thresholds[hours] = { lastUpdated: today, price }
       await currencyThreshold.save()
 

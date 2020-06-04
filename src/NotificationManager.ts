@@ -1,6 +1,6 @@
 import * as FCM from 'fcm-notification'
 
-import { FirebaseApp } from './models'
+import { ApiKey } from './models'
 
 interface IMessage {
   data: object
@@ -16,9 +16,11 @@ export class NotificationManager {
   ) {
   }
 
-  public static async init(appId: string): Promise<NotificationManager> {
-    const app = await FirebaseApp.fetch(appId) as FirebaseApp
-    const fcm = new FCM(app.adminsdk)
+  public static async init(apiKey: ApiKey | string): Promise<NotificationManager> {
+    if (typeof apiKey === 'string')
+      apiKey = await ApiKey.fetch(apiKey) as ApiKey
+
+    const fcm = new FCM(apiKey.adminsdk)
     return new NotificationManager(fcm)
   }
 
