@@ -1,0 +1,26 @@
+import * as express from 'express'
+import { asObject, asString } from 'cleaners'
+
+import { Device } from '../../models'
+
+export const DeviceController = express.Router()
+
+DeviceController.post('/', async (req, res) => {
+  try {
+    const Query = asObject({
+      deviceId: asString
+    })
+    Query(req.query)
+
+    const { deviceId } = req.query as ReturnType<typeof Query>
+
+    let device = await Device.fetch(deviceId)
+    if (!device) device = new Device(null, deviceId)
+
+    await device.save(req.body)
+
+    res.json(device)
+  } catch (err) {
+    res.json(err)
+  }
+})

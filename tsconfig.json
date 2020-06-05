@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": "./build",
+    "declaration": true,
+    "composite": true,
+    "allowSyntheticDefaultImports": true,
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/**/*",
+    "node_modules/@types/node/globals.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
