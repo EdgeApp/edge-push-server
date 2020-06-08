@@ -1,4 +1,4 @@
-import * as FCM from 'fcm-notification'
+import * as admin from 'firebase-admin'
 
 import { ApiKey } from './models'
 
@@ -12,7 +12,7 @@ interface IMessage {
 
 export class NotificationManager {
   private constructor(
-    private readonly fcm: FCM
+    private readonly app: admin.app.App
   ) {
   }
 
@@ -20,21 +20,33 @@ export class NotificationManager {
     if (typeof apiKey === 'string')
       apiKey = await ApiKey.fetch(apiKey) as ApiKey
 
-    const fcm = new FCM(apiKey.adminsdk)
-    return new NotificationManager(fcm)
+    const name = `app:${apiKey.appId}`
+    let app: admin.app.App
+    try {
+      app = admin.app(name)
+    } catch (err) {
+      app = admin.initializeApp({
+        credential: admin.credential.cert(apiKey.adminsdk)
+      }, name)
+    }
+
+    return new NotificationManager(app)
   }
 
-  public async sendNotifications(message: IMessage, tokens: Array<string>) {
-    return new Promise((resolve, reject) => {
-      this.fcm.sendToMultipleToken(message, tokens, function (err, response) {
-        if (err) {
-          reject(err)
-          console.log('error found', err)
-        } else {
-          resolve(response)
-          console.log('response here', response)
-        }
-      })
-    })
+  public async sendNotifications(title: string, body: string, tokens: Array<string>, data = {}) {
+    const message: admin.messaging.MulticastMessage = {
+      notification: {
+        title,
+        body
+      },
+      data,
+      tokens
+    }
+
+    try {
+      return await this.app.messaging().sendMulticast(message)
+    } catch (err) {
+      console.log('error found', err)
+    }
   }
 }

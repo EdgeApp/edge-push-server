@@ -17,8 +17,7 @@
     "cleaners": "^0.2.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "fcm-notification": "^2.0.0",
-    "fcm-notifications": "^1.0.4",
+    "firebase-admin": "^8.12.1",
     "nano": "^8.2.2"
   },
   "devDependencies": {

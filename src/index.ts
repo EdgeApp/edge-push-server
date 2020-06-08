@@ -32,12 +32,16 @@ async function checkPriceChanges() {
     for (const currencyCode in user.notifications.currencyCodes) {
       let map = priceMap[currencyCode]
       if (!map) {
-        let currencyThreshold = await CurrencyThreshold.fetch(currencyCode) as CurrencyThreshold
-        if (!currencyThreshold) {
-          currencyThreshold = await CurrencyThreshold.create(currencyCode) as CurrencyThreshold
-        }
+        try {
+          let currencyThreshold = await CurrencyThreshold.fetch(currencyCode) as CurrencyThreshold
+          if (!currencyThreshold) {
+            currencyThreshold = await CurrencyThreshold.create(currencyCode) as CurrencyThreshold
+          }
 
-        map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)
+          map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)
+        } catch {
+          continue
+        }
       }
 
       const deviceIds = Object.keys(user.devices)
@@ -60,7 +64,7 @@ async function checkPriceChanges() {
 }
 
 async function sendNotifications(priceMap: NotificationPriceMap) {
-  const fcm = await NotificationManager.init(CONFIG.apiKey)
+  const manager = await NotificationManager.init(CONFIG.apiKey)
 
   for (const currencyCode in priceMap) {
     for (const hours in priceMap[currencyCode]) {
@@ -69,15 +73,12 @@ async function sendNotifications(priceMap: NotificationPriceMap) {
       const symbol = priceChange.priceChange > 0 ? '+' : ''
       const time = Number(hours) === 1 ? '1 hour' : `${hours} hours`
 
-      const message = {
-        data: {},
-        notification: {
-          title: 'Price Alert',
-          body: `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
-        }
-      }
+      const title = 'Price Alert'
+      const body = `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
+      const data = {}
 
-      await fcm.sendNotifications(message, priceChange.deviceTokens)
+      manager.sendNotifications(title, body, priceChange.deviceTokens, data)
+        .catch((err) => console.log(err))
     }
   }
 }
