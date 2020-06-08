@@ -1,11 +1,6 @@
 {
-  "dbFullpath": "http://username:password@localhost:5984",
-  "sslPrivateKeyPath": "",
-  "sslCertPath": "",
-  "sslCaCertPath": "",
-  "httpPort": 8087,
-  "httpsPort": 8444,
-  "currencyConverterApiKey": "",
-  "coinMarketCapApiKey": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-  "slackWebhookUrl": ""
+  "apiKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "dbFullpath": "http://admin:password@localhost:5984",
+  "httpPort": 8001,
+  "coinMarketCapApiKey": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 }
