@@ -2,5 +2,5 @@
   "apiKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   "dbFullpath": "http://admin:password@localhost:5984",
   "httpPort": 8001,
-  "coinMarketCapApiKey": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  "priceCheckInMinutes": 5
 }

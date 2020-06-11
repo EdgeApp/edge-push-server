@@ -1,11 +1,13 @@
+import * as schedule from 'node-schedule'
+
 import { CurrencyThreshold, Device, User } from './models'
 import { getPrice } from './prices'
 import { NotificationManager } from './NotificationManager'
 const CONFIG = require('../serverConfig.json')
 
 const HOURS_PERCENT_MAP = {
-  1: 3,
-  24: 10
+  1: 0.25,
+  24: 0.5
 }
 
 interface NotificationPriceMap {
@@ -21,7 +23,18 @@ interface NotificationPriceChange {
   deviceTokens: Array<string>
 }
 
-checkPriceChanges()
+schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
+
+let isRunning = false
+
+async function run() {
+  if (isRunning) return
+  isRunning = true
+
+  await checkPriceChanges()
+
+  isRunning = false
+}
 
 async function checkPriceChanges() {
   const users = await User.all() as Array<User>
@@ -60,7 +73,7 @@ async function checkPriceChanges() {
   }
   console.log(priceMap)
 
-  sendNotifications(priceMap)
+  await sendNotifications(priceMap)
 }
 
 async function sendNotifications(priceMap: NotificationPriceMap) {
@@ -77,7 +90,7 @@ async function sendNotifications(priceMap: NotificationPriceMap) {
       const body = `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
       const data = {}
 
-      manager.sendNotifications(title, body, priceChange.deviceTokens, data)
+      await manager.sendNotifications(title, body, priceChange.deviceTokens, data)
         .catch((err) => console.log(err))
     }
   }
