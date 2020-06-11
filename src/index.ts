@@ -1,11 +1,13 @@
+import * as schedule from 'node-schedule'
+
 import { CurrencyThreshold, Device, User } from './models'
 import { getPrice } from './prices'
 import { NotificationManager } from './NotificationManager'
 const CONFIG = require('../serverConfig.json')
 
 const HOURS_PERCENT_MAP = {
-  1: 3,
-  24: 10
+  1: 0.25,
+  24: 0.5
 }
 
 interface NotificationPriceMap {
@@ -21,7 +23,18 @@ interface NotificationPriceChange {
   deviceTokens: Array<string>
 }
 
-checkPriceChanges()
+schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
+
+let isRunning = false
+
+async function run() {
+  if (isRunning) return
+  isRunning = true
+
+  await checkPriceChanges()
+
+  isRunning = false
+}
 
 async function checkPriceChanges() {
   const users = await User.all() as Array<User>
@@ -32,12 +45,16 @@ async function checkPriceChanges() {
     for (const currencyCode in user.notifications.currencyCodes) {
       let map = priceMap[currencyCode]
       if (!map) {
-        let currencyThreshold = await CurrencyThreshold.fetch(currencyCode) as CurrencyThreshold
-        if (!currencyThreshold) {
-          currencyThreshold = await CurrencyThreshold.create(currencyCode) as CurrencyThreshold
-        }
+        try {
+          let currencyThreshold = await CurrencyThreshold.fetch(currencyCode) as CurrencyThreshold
+          if (!currencyThreshold) {
+            currencyThreshold = await CurrencyThreshold.create(currencyCode) as CurrencyThreshold
+          }
 
-        map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)
+          map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)
+        } catch {
+          continue
+        }
       }
 
       const deviceIds = Object.keys(user.devices)
@@ -54,13 +71,14 @@ async function checkPriceChanges() {
       }
     }
   }
-  console.log(priceMap)
 
-  sendNotifications(priceMap)
+  console.log('price map: ', JSON.stringify(priceMap, null, 2))
+
+  await sendNotifications(priceMap)
 }
 
 async function sendNotifications(priceMap: NotificationPriceMap) {
-  const fcm = await NotificationManager.init(CONFIG.apiKey)
+  const manager = await NotificationManager.init(CONFIG.apiKey)
 
   for (const currencyCode in priceMap) {
     for (const hours in priceMap[currencyCode]) {
@@ -69,15 +87,13 @@ async function sendNotifications(priceMap: NotificationPriceMap) {
       const symbol = priceChange.priceChange > 0 ? '+' : ''
       const time = Number(hours) === 1 ? '1 hour' : `${hours} hours`
 
-      const message = {
-        data: {},
-        notification: {
-          title: 'Price Alert',
-          body: `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
-        }
-      }
+      const title = 'Price Alert'
+      const body = `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
+      const data = {}
 
-      await fcm.sendNotifications(message, priceChange.deviceTokens)
+      const response = await manager.sendNotifications(title, body, priceChange.deviceTokens, data)
+        .catch((err) => console.log(err))
+      console.log('FCM notification response', response)
     }
   }
 }

@@ -1,4 +1,4 @@
-import info from './infoServer'
+import rates from './ratesServer'
 
 export async function getPriceChange(base: string, quote: string): Promise<number> {
   const today = Date.now()
@@ -9,11 +9,14 @@ export async function getPriceChange(base: string, quote: string): Promise<numbe
   return (todayPrice - yesterdayPrice) / yesterdayPrice
 }
 
-export async function getPrice(base: string, quote: string, at: number = Date.now()): Promise<number> {
-  const dateString = new Date(at).toISOString()
+export async function getPrice(base: string, quote: string, at?: number): Promise<number> {
+  let dateString: string = ''
+  if (at) {
+    dateString = `&date=${new Date(at).toISOString()}`
+  }
 
   try {
-    const { exchangeRate } = await info.get(`exchangeRate?currency_pair=${base}_${quote}&date=${dateString}`)
+    const { exchangeRate } = await rates.get(`exchangeRate?currency_pair=${base}_${quote}${dateString}`)
     return parseFloat(exchangeRate)
   } catch (err) {
     console.log(`Cannot fetch prices for ${base}`)

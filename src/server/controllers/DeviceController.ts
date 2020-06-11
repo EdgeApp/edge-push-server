@@ -19,8 +19,11 @@ DeviceController.post('/', async (req, res) => {
 
     await device.save(req.body)
 
+    console.log(`Device registered`)
+
     res.json(device)
   } catch (err) {
+    console.error(`Failed to register device`, err)
     res.json(err)
   }
 })

@@ -1,11 +1,11 @@
 import axios from 'axios'
 
-class InfoServer {
+class RatesServer {
   public readonly uri: string
   public readonly version: number
 
   constructor (version: number) {
-    this.uri = 'https://info1.edgesecure.co:8444'
+    this.uri = 'https://rates1.edge.app'
     this.version = version
   }
 
@@ -25,4 +25,4 @@ class InfoServer {
   }
 }
 
-export default new InfoServer(1)
+export default new RatesServer(1)

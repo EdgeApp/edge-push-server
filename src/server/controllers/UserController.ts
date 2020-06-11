@@ -15,8 +15,11 @@ UserController.get('/', async (req, res) => {
     const { userId } = req.query as ReturnType<typeof Query>
     const result = await User.fetch(userId)
 
+    console.log(`Got user settings for ${userId}`)
+
     res.json(result)
   } catch (err) {
+    console.error(`Failed to get user settings for ${req.query.userId}`, err)
     res.json(err)
   }
 })
@@ -36,8 +39,11 @@ UserController.post('/device/attach', async (req, res) => {
 
     await user.attachDevice(deviceId)
 
+    console.log(`Successfully attached device "${deviceId}" to user "${userId}"`)
+
     res.json(user)
   } catch (err) {
+    console.error(`Failed to attach device to user ${req.query.userId}`, err)
     res.json(err)
   }
 })
@@ -59,8 +65,11 @@ UserController.post('/notifications', async (req, res) => {
     const user = await User.fetch(userId) as User
     await user.registerNotifications(currencyCodes)
 
+    console.log(`Registered notifications for user ${userId}: ${currencyCodes}`)
+
     res.json(user)
   } catch (err) {
+    console.error(`Failed to register for notifications for user ${req.query.userId}`, err)
     res.json(err)
   }
 })
@@ -82,9 +91,11 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
     const user = await User.fetch(userId) as User
     const notificationSettings = user.notifications.currencyCodes[currencyCode]
 
+    console.log(`Got notification settings for ${currencyCode} for user ${userId}`)
+
     res.json(notificationSettings)
   } catch (err) {
-    console.log(err)
+    console.error(`Failed to get notification settings for user ${req.query.userId} for ${req.params.currencyCode}`, err)
     res.json(err)
   }
 })
@@ -114,9 +125,11 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     currencySettings[hours] = enabled
     await user.save()
 
+    console.log(`Updated notification settings for user ${userId} for ${currencyCode}`)
+
     res.json(currencySettings)
   } catch (err) {
-    console.log(err)
+    console.error(`Failed to update notification settings for user ${req.query.userId} for ${req.params.currencyCode}`, err)
     res.json(err)
   }
 })
