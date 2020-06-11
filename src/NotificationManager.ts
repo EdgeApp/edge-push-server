@@ -43,10 +43,6 @@ export class NotificationManager {
       tokens
     }
 
-    try {
-      return await this.app.messaging().sendMulticast(message)
-    } catch (err) {
-      console.log('error found', err)
-    }
+    return await this.app.messaging().sendMulticast(message)
   }
 }

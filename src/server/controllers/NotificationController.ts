@@ -8,7 +8,6 @@ export const NotificationController = express.Router()
 
 NotificationController.post('/send', async (req, res) => {
   try {
-    // TODO:
     if (!req.apiKey.admin)
       return res.sendStatus(401)
 
@@ -37,8 +36,12 @@ NotificationController.post('/send', async (req, res) => {
     const tokens = await Promise.all(tokenPromises)
 
     const response = await manager.sendNotifications(title, body, tokens, data)
-    res.sendStatus(200)
+    const { successCount, failureCount } = response
+    console.log(`Sent notifications to user ${userId} devices: ${successCount} success - ${failureCount} failure`)
+
+    res.json(response)
   } catch (err) {
+    console.error(`Failed to send notifications to user ${req.body.userId} devices`, err)
     res.json(err)
   }
 })

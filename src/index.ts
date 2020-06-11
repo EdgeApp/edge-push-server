@@ -71,7 +71,8 @@ async function checkPriceChanges() {
       }
     }
   }
-  console.log(priceMap)
+
+  console.log('price map: ', JSON.stringify(priceMap, null, 2))
 
   await sendNotifications(priceMap)
 }
@@ -90,8 +91,9 @@ async function sendNotifications(priceMap: NotificationPriceMap) {
       const body = `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
       const data = {}
 
-      await manager.sendNotifications(title, body, priceChange.deviceTokens, data)
+      const response = await manager.sendNotifications(title, body, priceChange.deviceTokens, data)
         .catch((err) => console.log(err))
+      console.log('FCM notification response', response)
     }
   }
 }
