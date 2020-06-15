@@ -6,8 +6,8 @@ import { NotificationManager } from './NotificationManager'
 const CONFIG = require('../serverConfig.json')
 
 const HOURS_PERCENT_MAP = {
-  1: 0.25,
-  24: 0.5
+  1: 3,
+  24: 10
 }
 
 interface NotificationPriceMap {
