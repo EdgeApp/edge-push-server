@@ -1,5 +1,5 @@
 import * as Nano from 'nano'
-import { asBoolean, asMap, asObject } from 'cleaners'
+import { asBoolean, asMap, asObject, asOptional } from 'cleaners'
 
 import { Base } from '.'
 import { Device } from './Device'
@@ -11,6 +11,7 @@ const dbUserSettings = nanoDb.db.use('db_user_settings')
 
 const IUserDevices = asMap(asBoolean)
 const IUserNotifications = asObject({
+  enabled: asOptional(asBoolean),
   currencyCodes: asMap(asObject({
     '1': asBoolean,
     '24': asBoolean
@@ -33,8 +34,12 @@ export class User extends Base implements ReturnType<typeof IUser> {
 
     if (!this.devices)
       this.devices = {}
-    if (!this.notifications)
-      this.notifications = { currencyCodes: {} }
+    if (!this.notifications) {
+      this.notifications = {
+        enabled: true,
+        currencyCodes: {}
+      }
+    }
   }
 
   public async attachDevice(deviceId: string) {

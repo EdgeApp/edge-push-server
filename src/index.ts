@@ -37,7 +37,9 @@ async function run() {
 }
 
 async function checkPriceChanges() {
-  const users = await User.all() as Array<User>
+  const users = await User.where({selector: {
+    notifications: { enabled: true }
+  }}) as Array<User>
 
   const priceMap: NotificationPriceMap = {}
 

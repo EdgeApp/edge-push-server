@@ -133,3 +133,32 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     res.json(err)
   }
 })
+
+UserController.post('/notifications/toggle', async (req, res) => {
+  try {
+    const Query = asObject({
+      userId: asString
+    })
+    const Body = asObject({
+      enabled: asBoolean
+    })
+    console.log(req.body)
+    Query(req.query)
+    Body(req.body)
+
+    const { userId } = req.query as ReturnType<typeof Query>
+    const { enabled } = req.body as ReturnType<typeof Body>
+
+    let user = await User.fetch(userId) as User
+    if (!user) user = new User(null, userId)
+    user.notifications.enabled = enabled
+    await user.save()
+
+    console.log(`User notifications toggled to: ${enabled}`)
+
+    res.json(user)
+  } catch (err) {
+    console.error(`Failed to toggle user notifications`, err)
+    res.json(err)
+  }
+})
