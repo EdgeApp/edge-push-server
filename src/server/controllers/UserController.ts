@@ -20,7 +20,7 @@ UserController.get('/', async (req, res) => {
     res.json(result)
   } catch (err) {
     console.error(`Failed to get user settings for ${req.query.userId}`, err)
-    res.json(err)
+    res.status(500).json(err)
   }
 })
 
@@ -44,7 +44,7 @@ UserController.post('/device/attach', async (req, res) => {
     res.json(user)
   } catch (err) {
     console.error(`Failed to attach device to user ${req.query.userId}`, err)
-    res.json(err)
+    res.status(500).json(err)
   }
 })
 
@@ -70,7 +70,7 @@ UserController.post('/notifications', async (req, res) => {
     res.json(user)
   } catch (err) {
     console.error(`Failed to register for notifications for user ${req.query.userId}`, err)
-    res.json(err)
+    res.status(500).json(err)
   }
 })
 
@@ -96,7 +96,7 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
     res.json(notificationSettings)
   } catch (err) {
     console.error(`Failed to get notification settings for user ${req.query.userId} for ${req.params.currencyCode}`, err)
-    res.json(err)
+    res.status(500).json(err)
   }
 })
 
@@ -130,7 +130,7 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     res.json(currencySettings)
   } catch (err) {
     console.error(`Failed to update notification settings for user ${req.query.userId} for ${req.params.currencyCode}`, err)
-    res.json(err)
+    res.status(500).json(err)
   }
 })
 
@@ -159,6 +159,6 @@ UserController.post('/notifications/toggle', async (req, res) => {
     res.json(user)
   } catch (err) {
     console.error(`Failed to toggle user notifications`, err)
-    res.json(err)
+    res.status(500).json(err)
   }
 })
