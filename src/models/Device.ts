@@ -1,5 +1,5 @@
 import * as Nano from 'nano'
-import { asNumber, asObject, asString } from 'cleaners'
+import { asNumber, asObject, asOptional, asString } from 'cleaners'
 
 import { Base } from '.'
 const CONFIG = require('../../serverConfig.json')
@@ -9,7 +9,7 @@ const dbDevices = nanoDb.db.use('db_devices')
 
 const IDevice = asObject({
   appId: asString,
-  tokenId: asString,
+  tokenId: asOptional(asString),
   deviceDescription: asString,
   osType: asString,
   edgeVersion: asString,

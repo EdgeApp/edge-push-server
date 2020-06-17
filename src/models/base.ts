@@ -4,7 +4,9 @@ import { asObject, Cleaner } from 'cleaners'
 const IModelData = asObject<Nano.MaybeDocument>({
 })
 
-export abstract class Base implements ReturnType<typeof IModelData> {
+type InstanceClass<T extends new (...args: any) => any> = (new (...args: any) => InstanceType<T>) & T
+
+export class Base implements ReturnType<typeof IModelData> {
   public static table: Nano.DocumentScope<any>
   public static asType: Cleaner<any> = IModelData
 
@@ -42,14 +44,20 @@ export abstract class Base implements ReturnType<typeof IModelData> {
     }
   }
 
-  public static async fetch(id: string): Promise<Base> {
-    let item: Base = null
+  public static async create<T extends typeof Base>(this: InstanceClass<T>, data: Nano.MaybeDocument = {}, id?: string): Promise<InstanceType<T>> {
+    const item = new this(data, id)
+    await item.save()
+    return item
+  }
+
+  public static async fetch<T extends typeof Base>(this: InstanceClass<T>, id: string): Promise<InstanceType<T>> {
+    let item: InstanceType<T> = null
 
     try {
       const doc = await this.table.get(id, { latest: true })
-      // @ts-ignore
       item = new this(doc)
       item.validate()
+      return item
     } catch (err) {
       if (err.statusCode === 404) {
         console.log(`Item with ID "${id}" does not exist`)
@@ -61,12 +69,12 @@ export abstract class Base implements ReturnType<typeof IModelData> {
     return item
   }
 
-  public static async all(): Promise<Array<Base>> {
+  public static async all<T extends typeof Base>(this: InstanceClass<T>): Promise<Array<InstanceType<T>>> {
     try {
       const response = await this.table.list({ include_docs: true })
       return response.rows.map((row) => {
         // @ts-ignore
-        const item = new this(row.doc)
+        const item: InstanceType<T> = new this(row.doc)
         item.validate()
         return item
       })
@@ -75,12 +83,12 @@ export abstract class Base implements ReturnType<typeof IModelData> {
     }
   }
 
-  public static async where(where?: Nano.MangoQuery): Promise<Array<Base>> {
+  public static async where<T extends typeof Base>(this: InstanceClass<T>, where?: Nano.MangoQuery): Promise<Array<InstanceType<T>>> {
     try {
       const response = await this.table.find(where)
       return response.docs.map((doc) => {
         // @ts-ignore
-        const item = new this(doc)
+        const item: InstanceType<T> = new this(doc)
         item.validate()
         return item
       })
@@ -93,7 +101,7 @@ export abstract class Base implements ReturnType<typeof IModelData> {
     return this.dataValues[key]
   }
 
-  public set(key: Nano.MaybeDocument | PropertyKey , value?: any): Base {
+  public set(key: Nano.MaybeDocument | PropertyKey , value?: any): this {
     if (typeof key === 'object') {
       for (const prop in key) {
         if (key.hasOwnProperty(prop)) {
@@ -107,7 +115,7 @@ export abstract class Base implements ReturnType<typeof IModelData> {
     return this
   }
 
-  public async save(key?: Nano.MaybeDocument | string, value?: any): Promise<Base> {
+  public async save(key?: Nano.MaybeDocument | string, value?: any): Promise<this> {
     try {
       this.set(key, value)
 

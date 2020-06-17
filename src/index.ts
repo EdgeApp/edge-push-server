@@ -50,7 +50,7 @@ async function checkPriceChanges() {
         try {
           let currencyThreshold = await CurrencyThreshold.fetch(currencyCode) as CurrencyThreshold
           if (!currencyThreshold) {
-            currencyThreshold = await CurrencyThreshold.create(currencyCode) as CurrencyThreshold
+            currencyThreshold = await CurrencyThreshold.fromCode(currencyCode) as CurrencyThreshold
           }
 
           map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)

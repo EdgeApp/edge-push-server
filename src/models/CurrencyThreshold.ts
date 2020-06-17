@@ -29,7 +29,7 @@ export class CurrencyThreshold extends Base implements ReturnType<typeof ICurren
       this.thresholds = {}
   }
 
-  public static async create(currencyCode: string): Promise<CurrencyThreshold> {
+  public static async fromCode(currencyCode: string): Promise<CurrencyThreshold> {
     const threshold = new CurrencyThreshold(null, currencyCode)
     const obj = { lastUpdated: 0, price: 0 }
     threshold.thresholds[1] = obj

@@ -34,7 +34,7 @@ UserController.post('/device/attach', async (req, res) => {
 
     const { deviceId, userId } = req.query as ReturnType<typeof Query>
 
-    let user = await User.fetch(userId) as User
+    let user = await User.fetch(userId)
     if (!user) user = new User(null, userId)
 
     await user.attachDevice(deviceId)
@@ -62,7 +62,7 @@ UserController.post('/notifications', async (req, res) => {
     const { userId } = req.query as ReturnType<typeof Query>
     const { currencyCodes } = req.body as ReturnType<typeof Body>
 
-    const user = await User.fetch(userId) as User
+    const user = await User.fetch(userId)
     await user.registerNotifications(currencyCodes)
 
     console.log(`Registered notifications for user ${userId}: ${currencyCodes}`)
@@ -88,7 +88,7 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
     const { userId } = req.query as ReturnType<typeof Query>
     const { currencyCode } = req.params as ReturnType<typeof Params>
 
-    const user = await User.fetch(userId) as User
+    const user = await User.fetch(userId)
     const notificationSettings = user.notifications.currencyCodes[currencyCode]
 
     console.log(`Got notification settings for ${currencyCode} for user ${userId}`)
@@ -120,7 +120,7 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     const { currencyCode } = req.params as ReturnType<typeof Params>
     const { hours, enabled } = req.body as ReturnType<typeof Body>
 
-    const user = await User.fetch(userId) as User
+    const user = await User.fetch(userId)
     const currencySettings = user.notifications.currencyCodes[currencyCode]
     currencySettings[hours] = enabled
     await user.save()
@@ -149,7 +149,7 @@ UserController.post('/notifications/toggle', async (req, res) => {
     const { userId } = req.query as ReturnType<typeof Query>
     const { enabled } = req.body as ReturnType<typeof Body>
 
-    let user = await User.fetch(userId) as User
+    let user = await User.fetch(userId)
     if (!user) user = new User(null, userId)
     user.notifications.enabled = enabled
     await user.save()
