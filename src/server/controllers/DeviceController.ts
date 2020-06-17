@@ -15,11 +15,13 @@ DeviceController.post('/', async (req, res) => {
     const { deviceId } = req.query as ReturnType<typeof Query>
 
     let device = await Device.fetch(deviceId)
-    if (!device) device = new Device(null, deviceId)
-
-    await device.save(req.body)
-
-    console.log(`Device registered`)
+    if (device) {
+      console.log('Device already registered.')
+    } else {
+      device = new Device(req.body, deviceId)
+      await device.save()
+      console.log(`Device registered`)
+    }
 
     res.json(device)
   } catch (err) {

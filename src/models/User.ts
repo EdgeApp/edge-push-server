@@ -51,6 +51,27 @@ export class User extends Base implements ReturnType<typeof IUser> {
     await this.save()
   }
 
+  public async fetchDevices(): Promise<Array<Device>> {
+    const devices: Array<Device> = []
+
+    let updated = false
+    for (const deviceId in this.devices) {
+      const device = await Device.fetch(deviceId)
+      if (device) {
+        devices.push(device)
+        continue
+      }
+
+      delete this.devices[deviceId]
+      updated = true
+    }
+
+    if (updated)
+      await this.save()
+
+    return devices
+  }
+
   public async registerNotifications(currencyCodes: Array<string>) {
     const currencyCodesToUnregister = Object.keys(this.notifications.currencyCodes).filter((code) => !currencyCodes.includes(code))
     for (const code of currencyCodesToUnregister) {
