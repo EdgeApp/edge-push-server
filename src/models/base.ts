@@ -116,20 +116,25 @@ export class Base implements ReturnType<typeof IModelData> {
   }
 
   public async save(key?: Nano.MaybeDocument | string, value?: any): Promise<this> {
+    let ItemClass = this.constructor as typeof Base
     try {
       this.set(key, value)
 
       this.validate()
 
-      const response = await (this.constructor as typeof Base).table.insert(this)
+      const response = await ItemClass.table.insert(this)
       this.processAPIResponse(response)
       return this
     } catch (err) {
       switch (err.statusCode) {
         case 404:
           throw new Error('Database does not exist')
+
         case 409:
-          throw new Error('Document already exists. To update it add a revision (`_rev`) number.')
+          console.log('Document already exists. Fetching current `_rev` and resaving.')
+          const { _rev } = await ItemClass.fetch(this._id)
+          return await this.save('_rev', _rev)
+
         default:
           throw err
       }
