@@ -19,7 +19,7 @@ export async function getPrice(base: string, quote: string, at?: number): Promis
     const { exchangeRate } = await rates.get(`exchangeRate?currency_pair=${base}_${quote}${dateString}`)
     return parseFloat(exchangeRate)
   } catch (err) {
-    console.log(`Cannot fetch prices for ${base}`)
+    console.log(`Cannot fetch prices for ${base} - ${err.response.data.error}`)
     throw err
   }
 }

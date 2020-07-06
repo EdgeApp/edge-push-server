@@ -35,6 +35,7 @@ async function run() {
 
   isRunning = false
 }
+run()
 
 async function checkPriceChanges() {
   const users = await User.where({selector: {
@@ -137,11 +138,20 @@ async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold): Promi
     }
 
     const priceChange = parseFloat((100 * (price - priceBefore) / priceBefore).toFixed(2))
-
     const today = Date.parse(new Date().toISOString())
-
     const percent = HOURS_PERCENT_MAP[hours]
-    console.log(currencyCode, hours, price, priceBefore, priceChange)
+
+    const logData = {
+      currencyCode,
+      now: new Date().toISOString(),
+      before: new Date(before).toISOString(),
+      hourChange: hours,
+      price,
+      priceBefore,
+      priceChange
+    }
+    console.log(logData)
+
     if (priceChange <= -percent || priceChange >= percent) {
       currencyThreshold.thresholds[hours] = { lastUpdated: today, price }
       await currencyThreshold.save()

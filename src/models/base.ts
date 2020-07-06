@@ -85,7 +85,11 @@ export class Base implements ReturnType<typeof IModelData> {
 
   public static async where<T extends typeof Base>(this: InstanceClass<T>, where?: Nano.MangoQuery): Promise<Array<InstanceType<T>>> {
     try {
-      const response = await this.table.find(where)
+      const response = await this.table.find({
+        // NOTE: default limit to super high
+        limit: 100000000000,
+        ...where
+      })
       return response.docs.map((doc) => {
         // @ts-ignore
         const item: InstanceType<T> = new this(doc)
