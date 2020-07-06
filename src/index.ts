@@ -60,8 +60,13 @@ async function checkPriceChanges() {
         }
       }
 
-      const deviceTokens = await user.fetchDevices()
-        .then((devices) => devices.map((device) => device.tokenId))
+      const devices = await user.fetchDevices()
+      const deviceTokens: string[] = []
+      for (const device of devices) {
+        const { tokenId } = device
+        if (typeof tokenId === 'string')
+          deviceTokens.push(tokenId)
+      }
 
       const userHourSettings = user.notifications.currencyCodes[currencyCode]
       for (const [ hours, enabled ] of Object.entries(userHourSettings)) {
