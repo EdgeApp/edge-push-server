@@ -72,6 +72,8 @@ async function checkPriceChanges() {
       for (const [ hours, enabled ] of Object.entries(userHourSettings)) {
         if (enabled && map[hours]) {
           map[hours].deviceTokens.push(...deviceTokens)
+          const set = new Set(map[hours].deviceTokens)
+          map[hours].deviceTokens = Array.from(set)
         }
       }
     }
