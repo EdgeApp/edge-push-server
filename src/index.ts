@@ -91,9 +91,15 @@ async function sendNotifications(priceMap: NotificationPriceMap) {
       const body = `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
       const data = {}
 
-      const response = await manager.sendNotifications(title, body, priceChange.deviceTokens, data)
-        .catch((err) => console.log(err))
-      console.log('FCM notification response', response)
+      const pages = Math.ceil(priceChange.deviceTokens.length / 500)
+      for (let i = 0; i < pages; i++) {
+        const start = i * 500
+        const end = start + 500
+        const tokens = priceChange.deviceTokens.slice(start, end)
+        const response = await manager.sendNotifications(title, body, tokens, data)
+          .catch((err) => console.log(err))
+        console.log('FCM notification response', response)
+      }
     }
   }
 }
