@@ -120,6 +120,10 @@ interface IThresholdPricesResponse {
   }
 }
 
+function sleep(ms = 5000) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold): Promise<IThresholdPricesResponse> {
   const response: IThresholdPricesResponse = {}
 
@@ -127,6 +131,7 @@ async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold): Promi
 
   let price: number
   try {
+    await sleep()
     price = await getPrice(currencyCode, 'USD')
   } catch {
     return response
