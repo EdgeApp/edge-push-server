@@ -174,8 +174,14 @@ async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold): Promi
       currencyThreshold.thresholds[hours] = { lastUpdated: today, price }
       await currencyThreshold.save()
 
+      // Set decimal place to 2 significant digits
+      let numSplit = price.toString().split('.')
+      let sigIndex = numSplit[1].search(/[1-9]/)
+      numSplit[1] = numSplit[1].substring(0, sigIndex + 2)
+      const displayPrice = Number(numSplit.join('.'))
+
       response[hours] = {
-        price: parseFloat(price.toFixed(2)),
+        price: displayPrice,
         priceChange,
         timestamp: today,
         deviceTokens: []
