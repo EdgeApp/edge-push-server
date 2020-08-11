@@ -16,11 +16,12 @@ DeviceController.post('/', async (req, res) => {
 
     let device = await Device.fetch(deviceId)
     if (device) {
-      console.log('Device already registered.')
+      await device.save(req.body)
+      console.log('Device updated.')
     } else {
       device = new Device(req.body, deviceId)
       await device.save()
-      console.log(`Device registered`)
+      console.log(`Device registered.`)
     }
 
     res.json(device)
