@@ -2,5 +2,6 @@
   "apiKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   "dbFullpath": "http://admin:password@localhost:5984",
   "httpPort": 8001,
-  "priceCheckInMinutes": 5
+  "priceCheckInMinutes": 5,
+  "ratesServerVersion": 1
 }

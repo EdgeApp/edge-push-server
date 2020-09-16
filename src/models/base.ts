@@ -50,6 +50,17 @@ export class Base implements ReturnType<typeof IModelData> {
     return item
   }
 
+  public static async fetchAll<T extends typeof Base>(this: InstanceClass<T>, ids: string[]): Promise<Array<InstanceType<T>>> {
+    const items: InstanceType<T>[] = []
+
+    for (const id of ids) {
+      const item = await this.fetch(id)
+      items.push(item)
+    }
+
+    return items
+  }
+
   public static async fetch<T extends typeof Base>(this: InstanceClass<T>, id: string): Promise<InstanceType<T>> {
     let item: InstanceType<T> = null
 
@@ -83,11 +94,11 @@ export class Base implements ReturnType<typeof IModelData> {
     }
   }
 
-  public static async where<T extends typeof Base>(this: InstanceClass<T>, where?: Nano.MangoQuery): Promise<Array<InstanceType<T>>> {
+  public static async where<T extends typeof Base>(this: InstanceClass<T>, where?: Nano.MangoQuery, pageSize = 25, page = 0): Promise<Array<InstanceType<T>>> {
     try {
       const response = await this.table.find({
-        // NOTE: default limit to super high
-        limit: 100000000000,
+        limit: pageSize,
+        skip: page * pageSize,
         ...where
       })
       return response.docs.map((doc) => {

@@ -4,10 +4,10 @@
   "description": "",
   "main": "build/index.js",
   "scripts": {
-    "script:price": "node build/index.js",
-    "script:price:pm2": "pm2 start build/index.js --name price-script --log logs/price-script.log --time",
+    "price:script": "node build/index.js",
     "server": "node build/server.js",
-    "server:pm2": "pm2 start build/server.js --name server --log logs/server.log --time",
+    "price:script:pm2": "pm2 start build/price-script/index.js --name price-script --log logs/price-script.log --time",
+    "server:pm2": "pm2 start build/server/index.js --name server --log logs/server.log --time",
     "compile": "tsc"
   },
   "keywords": [],
