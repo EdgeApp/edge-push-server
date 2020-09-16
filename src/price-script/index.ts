@@ -22,7 +22,7 @@ async function run() {
   if (isRunning) return
   isRunning = true
 
-  await checkPriceChanges()
+  await checkPriceChanges(manager)
 
   isRunning = false
 }

@@ -1,6 +1,7 @@
 import { CurrencyThreshold, Device, INotificationsEnabledViewResponse, User } from '../models'
 import { DocumentResponseRowMeta } from 'nano'
 import { fetchThresholdPrices } from './fetchThresholdPrices'
+import { NotificationManager } from '../NotificationManager'
 
 interface NotificationPriceMap {
   [currencyCode: string]: {
@@ -17,7 +18,7 @@ export interface NotificationPriceChange {
   deviceTokens: Array<string>
 }
 
-export async function checkPriceChanges() {
+export async function checkPriceChanges(manager: NotificationManager) {
   const priceMap: NotificationPriceMap = {}
   const thresholdMap: { [currencyCode: string]: CurrencyThreshold } = {}
 
@@ -57,13 +58,13 @@ export async function checkPriceChanges() {
 
       for (const hours in currencyCodes[currencyCode]) {
         // Check if we have a price for the hour change AND user has notifications enabled for that hour change
-        // if (hours in priceMap[currencyCode] && currencyCodes[currencyCode][hours]) {
+        if (hours in priceMap[currencyCode] && currencyCodes[currencyCode][hours]) {
           // Fetch user's device tokens if we don't have they already
           if (!deviceTokens) deviceTokens = await fetchDeviceTokens(Object.keys(userData.devices))
 
           // Send notification to user about price change
-          // await sendNotification(currencyCode, hours, deviceTokens)
-        // }
+          await sendNotification(currencyCode, hours, deviceTokens)
+        }
       }
     }
   }
@@ -80,8 +81,8 @@ export async function checkPriceChanges() {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${price} in the last ${time}.`
     const data = {}
 
-    // await manager.sendNotifications(title, body, deviceTokens, data)
-    //   .catch(() => {})
+    await manager.sendNotifications(title, body, deviceTokens, data)
+      .catch(() => {})
   }
 
   // Fetch list of threshold items and their prices
