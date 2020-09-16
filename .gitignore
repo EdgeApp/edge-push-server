@@ -4,3 +4,4 @@ node_modules
 build
 serverConfig.json
 tsconfig.tsbuildinfo
+logs

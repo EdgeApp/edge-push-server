@@ -5,7 +5,9 @@
   "main": "build/index.js",
   "scripts": {
     "script:price": "node build/index.js",
+    "script:price:pm2": "pm2 start build/index.js --name price-script --log logs/price-script.log --time",
     "server": "node build/server.js",
+    "server:pm2": "pm2 start build/server.js --name server --log logs/server.log --time",
     "compile": "tsc"
   },
   "keywords": [],
