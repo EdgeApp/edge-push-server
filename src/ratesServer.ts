@@ -10,7 +10,7 @@ class RatesServer {
   }
 
   async get (path: string) {
-    const { data } = await axios(`${this.uri}/v${this.version}/${path}`)
+    const { data } = await axios(`${this.uri}/v${this.version}/${path}`, { timeout: 10000 })
     return data
   }
 

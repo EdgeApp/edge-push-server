@@ -1,14 +1,17 @@
 import * as schedule from 'node-schedule'
 
-import { CurrencyThreshold, Device, User } from './models'
+import { CurrencyThreshold, User } from './models'
 import { getPrice } from './prices'
 import { NotificationManager } from './NotificationManager'
+
 const CONFIG = require('../serverConfig.json')
 
 const HOURS_PERCENT_MAP = {
   1: 3,
   24: 10
 }
+
+const USER_BATCH_SIZE = 50
 
 interface NotificationPriceMap {
   [currencyCode: string]: {
@@ -17,6 +20,8 @@ interface NotificationPriceMap {
 }
 
 interface NotificationPriceChange {
+  currencyCode: string
+  hours: string
   price: number
   priceChange: number
   timestamp: number
@@ -26,6 +31,15 @@ interface NotificationPriceChange {
 schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
 
 let isRunning = false
+let manager: NotificationManager
+
+async function start() {
+  manager = await NotificationManager.init(CONFIG.apiKey)
+
+  run()
+}
+
+start()
 
 async function run() {
   if (isRunning) return
@@ -35,92 +49,90 @@ async function run() {
 
   isRunning = false
 }
-run()
 
 async function checkPriceChanges() {
-  const users = await User.where({selector: {
-    notifications: { enabled: true }
-  }}) as Array<User>
-
   const priceMap: NotificationPriceMap = {}
+  const thresholdMap: { [currencyCode: string]: CurrencyThreshold } = {}
 
-  for (const user of users) {
-    for (const currencyCode in user.notifications.currencyCodes) {
-      let map = priceMap[currencyCode]
-      if (!map) {
-        try {
-          let currencyThreshold = await CurrencyThreshold.fetch(currencyCode) as CurrencyThreshold
-          if (!currencyThreshold) {
-            currencyThreshold = await CurrencyThreshold.fromCode(currencyCode) as CurrencyThreshold
-          }
+  async function fetchPrices(currencyCode: string) {
+    if (!!priceMap[currencyCode]) return
 
-          map = priceMap[currencyCode] = await fetchThresholdPrices(currencyThreshold)
-        } catch {
-          continue
-        }
+    try {
+      if (!thresholdMap[currencyCode]) {
+        thresholdMap[currencyCode] = await CurrencyThreshold.fromCode(currencyCode) as CurrencyThreshold
       }
+
+      priceMap[currencyCode] = await fetchThresholdPrices(thresholdMap[currencyCode])
+    } catch (error) {
+      // todo report error
+      console.error(error)
+    }
+  }
+
+  const thresholdList = await CurrencyThreshold.table.list()
+  for (const { id: currencyCode } of thresholdList.rows) {
+    thresholdMap[currencyCode] = await CurrencyThreshold.fetch(currencyCode)
+    await fetchPrices(currencyCode)
+  }
+
+  const userList = await User.table.list()
+  for (let offset = 0; offset < userList.total_rows; offset += USER_BATCH_SIZE) {
+    const promises = new Array(USER_BATCH_SIZE).fill(null).map(async (_, batchIndex) => {
+      const index = offset + batchIndex
+      if (index >= userList.total_rows) return
+
+      const user = await User.fetch(userList.rows[index].id)
+      const { notifications } = user
+      // skip user if notifications are turned off
+      if (!notifications.enabled) return
 
       const devices = await user.fetchDevices()
-      const deviceTokens: string[] = []
-      for (const device of devices) {
-        const { tokenId } = device
-        if (typeof tokenId === 'string')
-          deviceTokens.push(tokenId)
-      }
+      const deviceTokens = devices.map((device) => device.tokenId)
 
-      const userHourSettings = user.notifications.currencyCodes[currencyCode]
-      for (const [ hours, enabled ] of Object.entries(userHourSettings)) {
-        if (enabled && map[hours]) {
-          map[hours].deviceTokens.push(...deviceTokens)
-          const set = new Set(map[hours].deviceTokens)
-          map[hours].deviceTokens = Array.from(set)
+      const { currencyCodes } = notifications
+      for (const currencyCode in currencyCodes) {
+        await fetchPrices(currencyCode)
+
+        for (const hours in currencyCodes[currencyCode]) {
+          if (!(hours in priceMap[currencyCode])) continue
+
+          const enabled = currencyCodes[currencyCode][hours]
+          if (!enabled) continue
+
+          await sendNotification(priceMap[currencyCode][hours], deviceTokens)
         }
       }
-    }
+    })
+
+    await Promise.all(promises)
   }
 
   console.log('price map: ', JSON.stringify(priceMap, null, 2))
-
-  await sendNotifications(priceMap)
 }
 
-async function sendNotifications(priceMap: NotificationPriceMap) {
-  const manager = await NotificationManager.init(CONFIG.apiKey)
+async function sendNotification({
+  currencyCode,
+  hours,
+  price,
+  priceChange
+}: NotificationPriceChange, deviceTokens: string[]) {
+  const direction = priceChange > 0 ? 'up' : 'down'
+  const symbol = priceChange > 0 ? '+' : ''
+  const time = Number(hours) === 1 ? '1 hour' : `${hours} hours`
 
-  for (const currencyCode in priceMap) {
-    for (const hours in priceMap[currencyCode]) {
-      const priceChange = priceMap[currencyCode][hours]
-      const direction = priceChange.priceChange > 0 ? 'up': 'down'
-      const symbol = priceChange.priceChange > 0 ? '+' : ''
-      const time = Number(hours) === 1 ? '1 hour' : `${hours} hours`
+  const title = 'Price Alert'
+  const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${price} in the last ${time}.`
+  const data = {}
 
-      const title = 'Price Alert'
-      const body = `${currencyCode} is ${direction} ${symbol}${priceChange.priceChange}% to $${priceChange.price} in the last ${time}.`
-      const data = {}
-
-      const pages = Math.ceil(priceChange.deviceTokens.length / 500)
-      for (let i = 0; i < pages; i++) {
-        const start = i * 500
-        const end = start + 500
-        const tokens = priceChange.deviceTokens.slice(start, end)
-        const response = await manager.sendNotifications(title, body, tokens, data)
-          .catch((err) => console.log(JSON.stringify(err, null, 2)))
-        console.log('FCM notification response', JSON.stringify(response, null, 2))
-      }
-    }
-  }
+  await manager.sendNotifications(title, body, deviceTokens, data)
+    .catch(() => {})
 }
 
 interface IThresholdPricesResponse {
-  [hours: string]: {
-    price: number
-    priceChange: number
-    timestamp: number
-    deviceTokens: Array<string>
-  }
+  [hours: string]: NotificationPriceChange
 }
 
-function sleep(ms = 5000) {
+function sleep(ms = 1000) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
@@ -181,6 +193,8 @@ async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold): Promi
       const displayPrice = Number(numSplit.join('.'))
 
       response[hours] = {
+        currencyCode,
+        hours,
         price: displayPrice,
         priceChange,
         timestamp: today,
