@@ -8,11 +8,11 @@
   "author": "",
   "main": "build/index.js",
   "scripts": {
-    "price:script": "node build/index.js",
-    "server": "node build/server.js",
+    "compile": "tsc",
     "price:script:pm2": "pm2 start build/price-script/index.js --name price-script --log logs/price-script.log --time",
+    "price:script": "node build/index.js",
     "server:pm2": "pm2 start build/server/index.js --name server --log logs/server.log --time",
-    "compile": "tsc"
+    "server": "node build/server.js"
   },
   "dependencies": {
     "@pm2/io": "^4.3.5",
