@@ -122,6 +122,7 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
 
     const user = await User.fetch(userId)
     const currencySettings = user.notifications.currencyCodes[currencyCode]
+    // @ts-expect-error
     currencySettings[hours] = enabled
     await user.save()
 

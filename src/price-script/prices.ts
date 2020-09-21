@@ -33,6 +33,7 @@ export async function getPrice(base: string, quote: string, at?: number): Promis
     }
     return rate
   } catch (err) {
+    // @ts-expect-error
     const lookupDate = new Date(at).toISOString()
     io.notifyError(err, {
       custom: {
@@ -41,7 +42,7 @@ export async function getPrice(base: string, quote: string, at?: number): Promis
         lookupDate
       }
     })
-    console.log(`Cannot fetch prices for ${base}/${quote} - ${err.response.data.error}`)
+     console.log(`Cannot fetch prices for ${base}/${quote} - ${err.response.data.error}`)
     throw err
   }
 }

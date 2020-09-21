@@ -38,11 +38,14 @@ export class User extends Base implements ReturnType<typeof IUser> {
   public devices: ReturnType<typeof IUserDevices>
   public notifications: ReturnType<typeof IUserNotifications>
 
-  constructor(...args) {
-    super(...args)
+    // @ts-expect-error
+    constructor(...args) {
+      super(...args)
 
+    // @ts-expect-error
     if (!this.devices)
       this.devices = {}
+    // @ts-expect-error
     if (!this.notifications) {
       this.notifications = {
         enabled: true,

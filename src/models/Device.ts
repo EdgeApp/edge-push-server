@@ -22,10 +22,10 @@ export class Device extends Base implements asDevice {
   public static table = dbDevices
   public static asType = IDevice
 
-  public appId: string
+  public appId!: string
   public tokenId?: string
-  public deviceDescription: string
-  public osType: string
-  public edgeVersion: string
-  public edgeBuildNumber: number
+  public deviceDescription!: string
+  public osType!: string
+  public edgeVersion!: string
+  public edgeBuildNumber!: number
 }

@@ -1,7 +1,8 @@
-declare function emit(...args: any[])
+declare function emit(...args: any[]): void
 
 export const views = {
   filter: {
+    // @ts-expect-error
     byCurrency(doc) {
       var notifs = doc.notifications
       if (notifs && notifs.enabled && notifs.currencyCodes) {

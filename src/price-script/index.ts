@@ -18,6 +18,7 @@ const runCounter = io.counter({
 })
 
 async function start() {
+  // @ts-expect-error
   managers = await Promise.all(CONFIG.apiKeys.map(partner => 
     NotificationManager.init(partner.apiKey)
   ))

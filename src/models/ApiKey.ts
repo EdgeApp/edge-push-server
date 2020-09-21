@@ -17,7 +17,7 @@ export class ApiKey extends Base implements ReturnType<typeof IApiKey> {
   public static table = dbDevices
   public static asType = IApiKey
 
-  public appId: string
-  public admin: boolean
-  public adminsdk: { [key: string]: string }
+  public appId!: string
+  public admin!: boolean
+  public adminsdk!: { [key: string]: string }
 }

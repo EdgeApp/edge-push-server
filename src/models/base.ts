@@ -25,9 +25,11 @@ export class Base implements ReturnType<typeof IModelData> {
 
     return new Proxy(this, {
       set(target: Base, key: PropertyKey, value: any): any {
+        // @ts-expect-error
         return key in target ? target[key] = value : target.set(key, value)
       },
       get(target: Base, key: PropertyKey): any {
+        // @ts-expect-error
         return key in target ? target[key] : target.get(key)
       }
     })
@@ -51,6 +53,7 @@ export class Base implements ReturnType<typeof IModelData> {
   }
 
   public static async fetch<T extends typeof Base>(this: InstanceClass<T>, id: string): Promise<InstanceType<T>> {
+    // @ts-expect-error
     let item: InstanceType<T> = null
 
     try {
@@ -83,7 +86,7 @@ export class Base implements ReturnType<typeof IModelData> {
     }
   }
 
-  public static async where<T extends typeof Base>(this: InstanceClass<T>, where?: Nano.MangoQuery): Promise<Array<InstanceType<T>>> {
+  public static async where<T extends typeof Base>(this: InstanceClass<T>, where: Nano.MangoQuery): Promise<Array<InstanceType<T>>> {
     try {
       const response = await this.table.find(where)
       return response.docs.map((doc) => {
@@ -98,6 +101,7 @@ export class Base implements ReturnType<typeof IModelData> {
   }
 
   public get(key: PropertyKey): any {
+    // @ts-expect-error
     return this.dataValues[key]
   }
 
@@ -105,10 +109,12 @@ export class Base implements ReturnType<typeof IModelData> {
     if (typeof key === 'object') {
       for (const prop in key) {
         if (key.hasOwnProperty(prop)) {
+          // @ts-expect-error
           this.dataValues[prop] = key[prop]
         }
       }
     } else {
+      // @ts-expect-error
       this.dataValues[key] = value
     }
 
@@ -118,6 +124,7 @@ export class Base implements ReturnType<typeof IModelData> {
   public async save(key?: Nano.MaybeDocument | string, value?: any): Promise<this> {
     let ItemClass = this.constructor as typeof Base
     try {
+      // @ts-expect-error
       this.set(key, value)
 
       this.validate()
