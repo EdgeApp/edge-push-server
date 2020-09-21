@@ -2,6 +2,7 @@ import * as io from '@pm2/io'
 import axios from 'axios'
 import { asNumber } from 'cleaners'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CONFIG = require('../../serverConfig.json')
 const TIMEOUT = 10000 // in milliseconds
 

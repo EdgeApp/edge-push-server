@@ -3,6 +3,8 @@ import * as Nano from 'nano'
 
 import { Base } from '.'
 import { Defaults } from './Defaults'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
@@ -31,11 +33,6 @@ const asCurrencyThreshold = asObject<ICurrencyThreshold>({
   anomaly: asOptional(asNumber),
   thresholds: IThresholds
 })
-
-const defaultData: IThreshold = {
-  lastUpdated: 0,
-  price: 0
-}
 
 export class CurrencyThreshold extends Base implements ICurrencyThreshold {
   public static table = dbCurrencyThreshold

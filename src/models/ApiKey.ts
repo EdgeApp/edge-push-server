@@ -2,6 +2,8 @@ import { asBoolean, asMap, asObject, asOptional, asString } from 'cleaners'
 import * as Nano from 'nano'
 
 import { Base } from '.'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)

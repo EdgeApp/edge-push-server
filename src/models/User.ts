@@ -4,6 +4,7 @@ import * as Nano from 'nano'
 import { Base } from '.'
 import { Device } from './Device'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
@@ -58,7 +59,10 @@ export class User extends Base implements ReturnType<typeof IUser> {
 
   // Fetch data for users that have notifications enabled using CouchDB Design Document View
   // https://notif1.edge.app:6984/_utils/#/database/db_user_settings/_design/filter/_view/by-currency
-  public static devicesByCurrencyHours(currencyCode: string, hours: string) {
+  public static async devicesByCurrencyHours(
+    currencyCode: string,
+    hours: string
+  ) {
     return User.table.view<IDevicesByCurrencyHoursViewResponse>(
       'filter',
       'by-currency',

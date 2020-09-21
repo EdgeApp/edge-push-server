@@ -4,9 +4,11 @@ import * as schedule from 'node-schedule'
 import { NotificationManager } from '../NotificationManager'
 import { checkPriceChanges } from './checkPriceChanges'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CONFIG = require('../../serverConfig.json')
 
 // Schedule job to run
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
 
 let isRunning = false
@@ -18,14 +20,16 @@ const runCounter = io.counter({
 })
 
 async function start() {
-  // @ts-expect-error
   managers = await Promise.all(
-    CONFIG.apiKeys.map(partner => NotificationManager.init(partner.apiKey))
+    // @ts-expect-error
+    CONFIG.apiKeys.map(async partner =>
+      NotificationManager.init(partner.apiKey)
+    )
   )
 
-  run()
+  await run()
 }
-start()
+start().catch(error => console.error(error))
 
 async function run() {
   if (isRunning) return

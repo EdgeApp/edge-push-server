@@ -9,7 +9,7 @@ const SLEEP_TIMEOUT = 1000 // in milliseconds
 
 const processMetrics: { [id: string]: Counter | undefined } = {}
 
-function sleep(ms = SLEEP_TIMEOUT) {
+async function sleep(ms = SLEEP_TIMEOUT) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 export async function fetchThresholdPrice(

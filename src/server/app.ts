@@ -30,6 +30,7 @@ app.use('/v1', router)
 
 // Define our custom fields that we add to the Express Request object
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       apiKey: ApiKey

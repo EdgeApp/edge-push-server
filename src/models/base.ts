@@ -83,34 +83,26 @@ export class Base implements ReturnType<typeof IModelData> {
   public static async all<T extends typeof Base>(
     this: InstanceClass<T>
   ): Promise<Array<InstanceType<T>>> {
-    try {
-      const response = await this.table.list({ include_docs: true })
-      return response.rows.map(row => {
-        // @ts-ignore
-        const item: InstanceType<T> = new this(row.doc)
-        item.validate()
-        return item
-      })
-    } catch (err) {
-      throw err
-    }
+    const response = await this.table.list({ include_docs: true })
+    return response.rows.map(row => {
+      // @ts-ignore
+      const item: InstanceType<T> = new this(row.doc)
+      item.validate()
+      return item
+    })
   }
 
   public static async where<T extends typeof Base>(
     this: InstanceClass<T>,
     where: Nano.MangoQuery
   ): Promise<Array<InstanceType<T>>> {
-    try {
-      const response = await this.table.find(where)
-      return response.docs.map(doc => {
-        // @ts-ignore
-        const item: InstanceType<T> = new this(doc)
-        item.validate()
-        return item
-      })
-    } catch (err) {
-      throw err
-    }
+    const response = await this.table.find(where)
+    return response.docs.map(doc => {
+      // @ts-ignore
+      const item: InstanceType<T> = new this(doc)
+      item.validate()
+      return item
+    })
   }
 
   public get(key: PropertyKey): any {
@@ -121,6 +113,7 @@ export class Base implements ReturnType<typeof IModelData> {
   public set(key: Nano.MaybeDocument | PropertyKey, value?: any): this {
     if (typeof key === 'object') {
       for (const prop in key) {
+        // eslint-disable-next-line no-prototype-builtins
         if (key.hasOwnProperty(prop)) {
           // @ts-expect-error
           this.dataValues[prop] = key[prop]
@@ -153,13 +146,13 @@ export class Base implements ReturnType<typeof IModelData> {
         case 404:
           throw new Error('Database does not exist')
 
-        case 409:
+        case 409: {
           console.log(
             'Document already exists. Fetching current `_rev` and resaving.'
           )
           const { _rev } = await ItemClass.fetch(this._id)
-          return await this.save('_rev', _rev)
-
+          return this.save('_rev', _rev)
+        }
         default:
           throw err
       }
