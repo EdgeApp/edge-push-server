@@ -1,4 +1,4 @@
-import { asMap, asObject, asString } from 'cleaners'
+import { asMap, asObject, asOptional, asString, asUnknown } from 'cleaners'
 import * as express from 'express'
 
 import { User } from '../../models'
@@ -10,14 +10,14 @@ NotificationController.post('/send', async (req, res) => {
   try {
     if (!req.apiKey.admin) return res.sendStatus(401)
 
-    const Body = asObject({
+    const asBody = asObject({
       title: asString,
       body: asString,
-      data: asMap,
+      data: asOptional(asMap(asUnknown)),
       userId: asString
     })
 
-    const { title, body, data, userId } = req.body as ReturnType<typeof Body>
+    const { title, body, data, userId } = asBody(req.body)
 
     const manager = await NotificationManager.init(req.apiKey)
 

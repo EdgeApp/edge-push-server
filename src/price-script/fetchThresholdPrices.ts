@@ -33,6 +33,7 @@ export async function fetchThresholdPrice(
   let threshold = currencyThreshold.thresholds[hours]
   if (!threshold) {
     threshold = {
+      custom: undefined,
       lastUpdated: 0,
       price: 0
     }

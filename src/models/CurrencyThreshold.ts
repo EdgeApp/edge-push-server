@@ -10,28 +10,23 @@ const CONFIG = require('../../serverConfig.json')
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
 
-interface IThreshold {
-  custom?: number
-  lastUpdated: number
-  price: number
-}
-
-const asThreshold = asObject<IThreshold>({
+const asThreshold = asObject({
   custom: asOptional(asNumber),
   lastUpdated: asNumber,
   price: asNumber
 })
-const IThresholds = asMap<IThreshold | undefined>(asThreshold)
+const asThresholds = asMap(asThreshold)
 
 interface ICurrencyThreshold {
   disabled?: boolean
   anomaly?: number
-  thresholds: ReturnType<typeof IThresholds>
+  thresholds: ReturnType<typeof asThresholds>
 }
+
 const asCurrencyThreshold = asObject<ICurrencyThreshold>({
   disabled: asOptional(asBoolean),
   anomaly: asOptional(asNumber),
-  thresholds: IThresholds
+  thresholds: asThresholds
 })
 
 export class CurrencyThreshold extends Base implements ICurrencyThreshold {
@@ -40,7 +35,7 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
 
   public disabled?: boolean
   public anomaly?: number
-  public thresholds!: ReturnType<typeof IThresholds>
+  public thresholds!: ReturnType<typeof asThresholds>
 
   public static async defaultAnomaly(): Promise<number> {
     const threshold = await Defaults.fetch('thresholds')
@@ -66,7 +61,7 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
     timestamp: number,
     price: number
   ): Promise<CurrencyThreshold> {
-    const threshold: IThreshold = this.thresholds[hours] ?? {
+    const threshold = this.thresholds[hours] ?? {
       lastUpdated: 0,
       price: 0
     }

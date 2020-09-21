@@ -1,16 +1,16 @@
 import { asObject, Cleaner } from 'cleaners'
 import * as Nano from 'nano'
 
-const IModelData = asObject<Nano.MaybeDocument>({})
+const asModelData = asObject<Nano.MaybeDocument>({})
 
 type InstanceClass<T extends new (...args: any) => any> = (new (
   ...args: any
 ) => InstanceType<T>) &
   T
 
-export class Base implements ReturnType<typeof IModelData> {
+export class Base implements ReturnType<typeof asModelData> {
   public static table: Nano.DocumentScope<any>
-  public static asType: Cleaner<any> = IModelData
+  public static asType: Cleaner<any> = asModelData
 
   public _id!: string
   public _rev!: string

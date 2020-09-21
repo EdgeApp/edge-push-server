@@ -7,9 +7,9 @@ import { Base } from '.'
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
-const dbDevices = nanoDb.db.use<ReturnType<typeof IDevice>>('db_devices')
+const dbDevices = nanoDb.db.use<ReturnType<typeof asDevice>>('db_devices')
 
-const IDevice = asObject({
+const asDevice = asObject({
   appId: asString,
   tokenId: asOptional(asString),
   deviceDescription: asString,
@@ -18,16 +18,12 @@ const IDevice = asObject({
   edgeBuildNumber: asNumber
 })
 
-type asDevice = Omit<ReturnType<typeof IDevice>, 'tokenId'> & {
-  tokenId?: string
-}
-
-export class Device extends Base implements asDevice {
+export class Device extends Base implements ReturnType<typeof asDevice> {
   public static table = dbDevices
-  public static asType = IDevice
+  public static asType = asDevice
 
   public appId!: string
-  public tokenId?: string
+  public tokenId!: string | undefined
   public deviceDescription!: string
   public osType!: string
   public edgeVersion!: string

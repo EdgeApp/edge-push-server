@@ -9,38 +9,38 @@ const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbUserSettings =
-  nanoDb.db.use<ReturnType<typeof IUser>>('db_user_settings')
+  nanoDb.db.use<ReturnType<typeof asUser>>('db_user_settings')
 
-const IUserDevices = asMap(asBoolean)
-const IUserCurrencyHours = asObject({
+const asUserDevices = asMap(asBoolean)
+const asUserCurrencyHours = asObject({
   '1': asBoolean,
   '24': asBoolean
 })
-const IUserCurrencyCodes = asMap(IUserCurrencyHours)
-const IUserNotifications = asObject({
+const asUserCurrencyCodes = asMap(asUserCurrencyHours)
+const asUserNotifications = asObject({
   enabled: asOptional(asBoolean),
-  currencyCodes: IUserCurrencyCodes
+  currencyCodes: asUserCurrencyCodes
 })
-const IUser = asObject({
-  devices: IUserDevices,
-  notifications: IUserNotifications
+const asUser = asObject({
+  devices: asUserDevices,
+  notifications: asUserNotifications
 })
 
 export interface INotificationsEnabledViewResponse {
-  devices: ReturnType<typeof IUserDevices>
-  currencyCodes: ReturnType<typeof IUserCurrencyCodes>
+  devices: ReturnType<typeof asUserDevices>
+  currencyCodes: ReturnType<typeof asUserCurrencyCodes>
 }
 
 export type IDevicesByCurrencyHoursViewResponse = ReturnType<
-  typeof IUserDevices
+  typeof asUserDevices
 >
 
-export class User extends Base implements ReturnType<typeof IUser> {
+export class User extends Base implements ReturnType<typeof asUser> {
   public static table = dbUserSettings
-  public static asType = IUser
+  public static asType = asUser
 
-  public devices: ReturnType<typeof IUserDevices>
-  public notifications: ReturnType<typeof IUserNotifications>
+  public devices: ReturnType<typeof asUserDevices>
+  public notifications: ReturnType<typeof asUserNotifications>
 
   // @ts-expect-error
   constructor(...args) {
