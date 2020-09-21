@@ -1,5 +1,5 @@
-import * as express from 'express'
 import { asArray, asBoolean, asObject, asString } from 'cleaners'
+import * as express from 'express'
 
 import { User } from '../../models'
 
@@ -39,7 +39,9 @@ UserController.post('/device/attach', async (req, res) => {
 
     await user.attachDevice(deviceId)
 
-    console.log(`Successfully attached device "${deviceId}" to user "${userId}"`)
+    console.log(
+      `Successfully attached device "${deviceId}" to user "${userId}"`
+    )
 
     res.json(user)
   } catch (err) {
@@ -69,7 +71,10 @@ UserController.post('/notifications', async (req, res) => {
 
     res.json(user)
   } catch (err) {
-    console.error(`Failed to register for notifications for user ${req.query.userId}`, err)
+    console.error(
+      `Failed to register for notifications for user ${req.query.userId}`,
+      err
+    )
     res.status(500).json(err)
   }
 })
@@ -91,11 +96,16 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
     const user = await User.fetch(userId)
     const notificationSettings = user.notifications.currencyCodes[currencyCode]
 
-    console.log(`Got notification settings for ${currencyCode} for user ${userId}`)
+    console.log(
+      `Got notification settings for ${currencyCode} for user ${userId}`
+    )
 
     res.json(notificationSettings)
   } catch (err) {
-    console.error(`Failed to get notification settings for user ${req.query.userId} for ${req.params.currencyCode}`, err)
+    console.error(
+      `Failed to get notification settings for user ${req.query.userId} for ${req.params.currencyCode}`,
+      err
+    )
     res.status(500).json(err)
   }
 })
@@ -126,11 +136,16 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     currencySettings[hours] = enabled
     await user.save()
 
-    console.log(`Updated notification settings for user ${userId} for ${currencyCode}`)
+    console.log(
+      `Updated notification settings for user ${userId} for ${currencyCode}`
+    )
 
     res.json(currencySettings)
   } catch (err) {
-    console.error(`Failed to update notification settings for user ${req.query.userId} for ${req.params.currencyCode}`, err)
+    console.error(
+      `Failed to update notification settings for user ${req.query.userId} for ${req.params.currencyCode}`,
+      err
+    )
     res.status(500).json(err)
   }
 })

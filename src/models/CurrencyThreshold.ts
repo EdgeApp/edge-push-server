@@ -1,5 +1,5 @@
-import * as Nano from 'nano'
 import { asBoolean, asMap, asNumber, asObject, asOptional } from 'cleaners'
+import * as Nano from 'nano'
 
 import { Base } from '.'
 import { Defaults } from './Defaults'
@@ -50,17 +50,25 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
     return threshold.get('anomaly')
   }
 
-  public static async defaultThresholds(): Promise<{ [hours: string]: number }> {
+  public static async defaultThresholds(): Promise<{
+    [hours: string]: number
+  }> {
     const threshold = await Defaults.fetch('thresholds')
     return threshold.get('hours')
   }
 
-  public static async fromCode(currencyCode: string): Promise<CurrencyThreshold> {
+  public static async fromCode(
+    currencyCode: string
+  ): Promise<CurrencyThreshold> {
     const threshold = new CurrencyThreshold(undefined, currencyCode)
     return threshold.save()
   }
 
-  public async update(hours: string | number, timestamp: number, price: number): Promise<CurrencyThreshold> {
+  public async update(
+    hours: string | number,
+    timestamp: number,
+    price: number
+  ): Promise<CurrencyThreshold> {
     const threshold: IThreshold = this.thresholds[hours] ?? {
       lastUpdated: 0,
       price: 0
@@ -68,6 +76,6 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
     threshold.lastUpdated = timestamp
     threshold.price = price
     this.thresholds[hours] = threshold
-    return await this.save() as CurrencyThreshold
+    return (await this.save()) as CurrencyThreshold
   }
 }

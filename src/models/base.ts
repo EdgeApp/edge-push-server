@@ -1,10 +1,12 @@
-import * as Nano from 'nano'
 import { asObject, Cleaner } from 'cleaners'
+import * as Nano from 'nano'
 
-const IModelData = asObject<Nano.MaybeDocument>({
-})
+const IModelData = asObject<Nano.MaybeDocument>({})
 
-type InstanceClass<T extends new (...args: any) => any> = (new (...args: any) => InstanceType<T>) & T
+type InstanceClass<T extends new (...args: any) => any> = (new (
+  ...args: any
+) => InstanceType<T>) &
+  T
 
 export class Base implements ReturnType<typeof IModelData> {
   public static table: Nano.DocumentScope<any>
@@ -20,13 +22,12 @@ export class Base implements ReturnType<typeof IModelData> {
     // NOTE: Must use set/get functions in Base constructor since the Proxy isn't setup yet. Subclasses can access
     // and set properties directly
     this.set(data)
-    if (!this.get('_id'))
-      this.set('_id', id)
+    if (!this.get('_id')) this.set('_id', id)
 
     return new Proxy(this, {
       set(target: Base, key: PropertyKey, value: any): any {
         // @ts-expect-error
-        return key in target ? target[key] = value : target.set(key, value)
+        return key in target ? (target[key] = value) : target.set(key, value)
       },
       get(target: Base, key: PropertyKey): any {
         // @ts-expect-error
@@ -36,7 +37,7 @@ export class Base implements ReturnType<typeof IModelData> {
   }
 
   public validate() {
-    (this.constructor as typeof Base).asType(this.dataValues)
+    ;(this.constructor as typeof Base).asType(this.dataValues)
   }
 
   public processAPIResponse(response: Nano.DocumentInsertResponse) {
@@ -46,13 +47,20 @@ export class Base implements ReturnType<typeof IModelData> {
     }
   }
 
-  public static async create<T extends typeof Base>(this: InstanceClass<T>, data: Nano.MaybeDocument = {}, id?: string): Promise<InstanceType<T>> {
+  public static async create<T extends typeof Base>(
+    this: InstanceClass<T>,
+    data: Nano.MaybeDocument = {},
+    id?: string
+  ): Promise<InstanceType<T>> {
     const item = new this(data, id)
     await item.save()
     return item
   }
 
-  public static async fetch<T extends typeof Base>(this: InstanceClass<T>, id: string): Promise<InstanceType<T>> {
+  public static async fetch<T extends typeof Base>(
+    this: InstanceClass<T>,
+    id: string
+  ): Promise<InstanceType<T>> {
     // @ts-expect-error
     let item: InstanceType<T> = null
 
@@ -72,10 +80,12 @@ export class Base implements ReturnType<typeof IModelData> {
     return item
   }
 
-  public static async all<T extends typeof Base>(this: InstanceClass<T>): Promise<Array<InstanceType<T>>> {
+  public static async all<T extends typeof Base>(
+    this: InstanceClass<T>
+  ): Promise<Array<InstanceType<T>>> {
     try {
       const response = await this.table.list({ include_docs: true })
-      return response.rows.map((row) => {
+      return response.rows.map(row => {
         // @ts-ignore
         const item: InstanceType<T> = new this(row.doc)
         item.validate()
@@ -86,10 +96,13 @@ export class Base implements ReturnType<typeof IModelData> {
     }
   }
 
-  public static async where<T extends typeof Base>(this: InstanceClass<T>, where: Nano.MangoQuery): Promise<Array<InstanceType<T>>> {
+  public static async where<T extends typeof Base>(
+    this: InstanceClass<T>,
+    where: Nano.MangoQuery
+  ): Promise<Array<InstanceType<T>>> {
     try {
       const response = await this.table.find(where)
-      return response.docs.map((doc) => {
+      return response.docs.map(doc => {
         // @ts-ignore
         const item: InstanceType<T> = new this(doc)
         item.validate()
@@ -105,7 +118,7 @@ export class Base implements ReturnType<typeof IModelData> {
     return this.dataValues[key]
   }
 
-  public set(key: Nano.MaybeDocument | PropertyKey , value?: any): this {
+  public set(key: Nano.MaybeDocument | PropertyKey, value?: any): this {
     if (typeof key === 'object') {
       for (const prop in key) {
         if (key.hasOwnProperty(prop)) {
@@ -121,8 +134,11 @@ export class Base implements ReturnType<typeof IModelData> {
     return this
   }
 
-  public async save(key?: Nano.MaybeDocument | string, value?: any): Promise<this> {
-    let ItemClass = this.constructor as typeof Base
+  public async save(
+    key?: Nano.MaybeDocument | string,
+    value?: any
+  ): Promise<this> {
+    const ItemClass = this.constructor as typeof Base
     try {
       // @ts-expect-error
       this.set(key, value)
@@ -138,7 +154,9 @@ export class Base implements ReturnType<typeof IModelData> {
           throw new Error('Database does not exist')
 
         case 409:
-          console.log('Document already exists. Fetching current `_rev` and resaving.')
+          console.log(
+            'Document already exists. Fetching current `_rev` and resaving.'
+          )
           const { _rev } = await ItemClass.fetch(this._id)
           return await this.save('_rev', _rev)
 

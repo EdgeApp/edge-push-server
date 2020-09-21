@@ -11,7 +11,7 @@ export const views = {
           for (var hours in codes[currencyCode]) {
             var enabled = codes[currencyCode][hours]
             if (enabled) {
-              emit([ currencyCode, hours ], doc.devices)
+              emit([currencyCode, hours], doc.devices)
             }
           }
         }

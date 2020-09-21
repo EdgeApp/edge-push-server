@@ -1,18 +1,23 @@
 import * as io from '@pm2/io'
+import Counter from '@pm2/io/build/main/utils/metrics/counter'
 
 import { CurrencyThreshold } from '../models'
-import { getPrice } from './prices'
 import { NotificationPriceChange } from './checkPriceChanges'
-import Counter from '@pm2/io/build/main/utils/metrics/counter'
+import { getPrice } from './prices'
 
 const SLEEP_TIMEOUT = 1000 // in milliseconds
 
 const processMetrics: { [id: string]: Counter | undefined } = {}
 
 function sleep(ms = SLEEP_TIMEOUT) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
-export async function fetchThresholdPrice(currencyThreshold: CurrencyThreshold, hours: string | number, defaultPercent: number, anomalyPercent: number): Promise<NotificationPriceChange | undefined> {
+export async function fetchThresholdPrice(
+  currencyThreshold: CurrencyThreshold,
+  hours: string | number,
+  defaultPercent: number,
+  anomalyPercent: number
+): Promise<NotificationPriceChange | undefined> {
   if (currencyThreshold.disabled) return
 
   const currencyCode = currencyThreshold._id
@@ -24,7 +29,7 @@ export async function fetchThresholdPrice(currencyThreshold: CurrencyThreshold, 
     return
   }
 
-  const hoursAgo = Date.now() - (Number(hours) * 60 * 60 * 1000)
+  const hoursAgo = Date.now() - Number(hours) * 60 * 60 * 1000
   let threshold = currencyThreshold.thresholds[hours]
   if (!threshold) {
     threshold = {
@@ -33,9 +38,10 @@ export async function fetchThresholdPrice(currencyThreshold: CurrencyThreshold, 
     }
   }
 
-  const before = threshold.lastUpdated === 0 || hoursAgo > threshold.lastUpdated
-    ? hoursAgo
-    : threshold.lastUpdated
+  const before =
+    threshold.lastUpdated === 0 || hoursAgo > threshold.lastUpdated
+      ? hoursAgo
+      : threshold.lastUpdated
 
   let priceBefore
   try {
@@ -44,7 +50,9 @@ export async function fetchThresholdPrice(currencyThreshold: CurrencyThreshold, 
     return
   }
 
-  const priceChange = parseFloat((100 * (priceNow - priceBefore) / priceBefore).toFixed(2))
+  const priceChange = parseFloat(
+    ((100 * (priceNow - priceBefore)) / priceBefore).toFixed(2)
+  )
   const now = new Date().toISOString()
   const priceData: NotificationPriceChange = {
     currencyCode,
@@ -69,9 +77,9 @@ export async function fetchThresholdPrice(currencyThreshold: CurrencyThreshold, 
 
   const percent = threshold.custom ?? defaultPercent
   if (Math.abs(priceChange) >= percent) {
-
-    await currencyThreshold.update(hours, Date.parse(now), priceNow)
-      .catch((err) => {
+    await currencyThreshold
+      .update(hours, Date.parse(now), priceNow)
+      .catch(err => {
         console.error(`Could not update ${currencyCode} threshold data.`)
         console.error(err)
       })

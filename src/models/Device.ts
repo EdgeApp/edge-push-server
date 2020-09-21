@@ -1,5 +1,5 @@
-import * as Nano from 'nano'
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
+import * as Nano from 'nano'
 
 import { Base } from '.'
 const CONFIG = require('../../serverConfig.json')
@@ -16,7 +16,9 @@ const IDevice = asObject({
   edgeBuildNumber: asNumber
 })
 
-type asDevice = Omit<ReturnType<typeof IDevice>, 'tokenId'> & { tokenId?: string }
+type asDevice = Omit<ReturnType<typeof IDevice>, 'tokenId'> & {
+  tokenId?: string
+}
 
 export class Device extends Base implements asDevice {
   public static table = dbDevices

@@ -1,5 +1,5 @@
-import * as admin from 'firebase-admin'
 import * as io from '@pm2/io'
+import * as admin from 'firebase-admin'
 
 import { ApiKey } from './models'
 
@@ -11,33 +11,39 @@ const successCounter = io.counter({
 })
 const failureCounter = io.counter({
   id: 'notifications:failure:total',
-  name: 'Total Failed Notifications',
+  name: 'Total Failed Notifications'
 })
 
 export class NotificationManager {
-  private constructor(
-    private readonly app: admin.app.App
-  ) {
-  }
+  private constructor(private readonly app: admin.app.App) {}
 
-  public static async init(apiKey: ApiKey | string): Promise<NotificationManager> {
-    if (typeof apiKey === 'string')
-      apiKey = await ApiKey.fetch(apiKey) as ApiKey
+  public static async init(
+    apiKey: ApiKey | string
+  ): Promise<NotificationManager> {
+    if (typeof apiKey === 'string') apiKey = await ApiKey.fetch(apiKey)
 
     const name = `app:${apiKey.appId}`
     let app: admin.app.App
     try {
       app = admin.app(name)
     } catch (err) {
-      app = admin.initializeApp({
-        credential: admin.credential.cert(apiKey.adminsdk)
-      }, name)
+      app = admin.initializeApp(
+        {
+          credential: admin.credential.cert(apiKey.adminsdk)
+        },
+        name
+      )
     }
 
     return new NotificationManager(app)
   }
 
-  public async send(title: string, body: string, tokens: Array<string>, data = {}): Promise<BatchResponse> {
+  public async send(
+    title: string,
+    body: string,
+    tokens: string[],
+    data = {}
+  ): Promise<BatchResponse> {
     const message: admin.messaging.MulticastMessage = {
       notification: {
         title,

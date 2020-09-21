@@ -1,5 +1,5 @@
-import * as schedule from 'node-schedule'
 import * as io from '@pm2/io'
+import * as schedule from 'node-schedule'
 
 import { NotificationManager } from '../NotificationManager'
 import { checkPriceChanges } from './checkPriceChanges'
@@ -19,9 +19,9 @@ const runCounter = io.counter({
 
 async function start() {
   // @ts-expect-error
-  managers = await Promise.all(CONFIG.apiKeys.map(partner => 
-    NotificationManager.init(partner.apiKey)
-  ))
+  managers = await Promise.all(
+    CONFIG.apiKeys.map(partner => NotificationManager.init(partner.apiKey))
+  )
 
   run()
 }
@@ -45,4 +45,3 @@ async function run() {
 
   isRunning = false
 }
-

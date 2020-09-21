@@ -1,5 +1,5 @@
-import * as Nano from 'nano'
 import { asBoolean, asMap, asObject, asOptional, asString } from 'cleaners'
+import * as Nano from 'nano'
 
 import { Base } from '.'
 const CONFIG = require('../../serverConfig.json')
