@@ -34,7 +34,7 @@ NotificationController.post('/send', async (req, res) => {
       }
     }
 
-    const response = await manager.sendNotifications(title, body, tokens, data)
+    const response = await manager.send(title, body, tokens, data)
     const { successCount, failureCount } = response
     console.log(`Sent notifications to user ${userId} devices: ${successCount} success - ${failureCount} failure`)
 
