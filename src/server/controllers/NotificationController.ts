@@ -26,7 +26,7 @@ NotificationController.post('/send', async (req, res) => {
     if (!user)
       return res.status(404).send('User does not exist.')
 
-    const tokens = []
+    const tokens: string[] = []
     const devices = await user.fetchDevices()
     for (const device of devices) {
       if (device.tokenId) {
