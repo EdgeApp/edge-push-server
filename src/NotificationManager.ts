@@ -34,6 +34,8 @@ export class NotificationManager {
   }
 
   public async sendNotifications(title: string, body: string, tokens: Array<string>, data = {}) {
+    tokens = tokens.filter((token) => token != null)
+
     const message: admin.messaging.MulticastMessage = {
       notification: {
         title,

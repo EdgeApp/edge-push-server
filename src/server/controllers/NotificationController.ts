@@ -26,14 +26,13 @@ NotificationController.post('/send', async (req, res) => {
     if (!user)
       return res.status(404).send('User does not exist.')
 
-    const tokenPromises = []
-    for (const deviceId in user.devices) {
-      tokenPromises.push(
-        Device.fetch(deviceId)
-          .then((device: Device) => device.tokenId)
-      )
+    const tokens = []
+    const devices = await user.fetchDevices()
+    for (const device of devices) {
+      if (device.tokenId) {
+        tokens.push(device.tokenId)
+      }
     }
-    const tokens = await Promise.all(tokenPromises)
 
     const response = await manager.sendNotifications(title, body, tokens, data)
     const { successCount, failureCount } = response
