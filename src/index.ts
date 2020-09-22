@@ -103,7 +103,7 @@ async function sendNotifications(priceMap: NotificationPriceMap) {
         const start = i * 500
         const end = start + 500
         const tokens = priceChange.deviceTokens.slice(start, end)
-        const response = await manager.sendNotifications(title, body, tokens, data)
+        const response = await manager.send(title, body, tokens, data)
           .catch((err) => console.log(JSON.stringify(err, null, 2)))
         console.log('FCM notification response', JSON.stringify(response, null, 2))
       }
