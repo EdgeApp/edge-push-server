@@ -47,22 +47,21 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
     }
 
     const priceChange = parseFloat((100 * (price - priceBefore) / priceBefore).toFixed(2))
-    const today = Date.parse(new Date().toISOString())
-    const percent = HOURS_PERCENT_MAP[hours]
-
-    const logData = {
+    const now = new Date().toISOString()
+    const priceData: NotificationPriceChange = {
       currencyCode,
-      now: new Date().toISOString(),
+      now,
       before: new Date(before).toISOString(),
       hourChange: hours,
       price,
       priceBefore,
       priceChange
     }
-    console.log(logData)
+    console.log(priceData)
 
+    const percent = HOURS_PERCENT_MAP[hours]
     if (priceChange <= -percent || priceChange >= percent) {
-      currencyThreshold.thresholds[hours] = { lastUpdated: today, price }
+      currencyThreshold.thresholds[hours] = { lastUpdated: Date.parse(now), price }
       await currencyThreshold.save()
         .catch((err) => {
           console.error(`Could not update ${currencyCode} threshold data.`)
@@ -74,15 +73,9 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
       let sigIndex = numSplit[1].search(/[1-9]/)
       numSplit[1] = numSplit[1].substring(0, sigIndex + 2)
       const displayPrice = Number(numSplit.join('.'))
+      priceData.price = displayPrice
 
-      response[hours] = {
-        currencyCode,
-        hours,
-        price: displayPrice,
-        priceChange,
-        timestamp: today,
-        deviceTokens: []
-      }
+      response[hours] = priceData
     }
   }
 

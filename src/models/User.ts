@@ -10,10 +10,11 @@ const nanoDb = Nano(CONFIG.dbFullpath)
 const dbUserSettings = nanoDb.db.use<ReturnType<typeof IUser>>('db_user_settings')
 
 const IUserDevices = asMap(asBoolean)
-const IUserCurrencyCodes = asMap(asObject({
+const IUserCurrencyHours = asObject({
   '1': asBoolean,
   '24': asBoolean
-}))
+})
+const IUserCurrencyCodes = asMap(IUserCurrencyHours)
 const IUserNotifications = asObject({
   enabled: asOptional(asBoolean),
   currencyCodes: IUserCurrencyCodes
@@ -27,6 +28,8 @@ export interface INotificationsEnabledViewResponse {
   devices: ReturnType<typeof IUserDevices>
   currencyCodes: ReturnType<typeof IUserCurrencyCodes>
 }
+
+export type IDevicesByCurrencyHoursViewResponse = ReturnType<typeof IUserDevices>
 
 export class User extends Base implements ReturnType<typeof IUser> {
   public static table = dbUserSettings
@@ -49,9 +52,9 @@ export class User extends Base implements ReturnType<typeof IUser> {
   }
 
   // Fetch data for users that have notifications enabled using CouchDB Design Document View
-  // https://notif1.edge.app:6984/_utils/#/database/db_user_settings/_design/filter/_view/notifications-enabled
-  public static notificationsEnabled() {
-    return User.table.view<INotificationsEnabledViewResponse>('filter','notifications-enabled')
+  // https://notif1.edge.app:6984/_utils/#/database/db_user_settings/_design/filter/_view/by-currency
+  public static devicesByCurrencyHours(currencyCode: string, hours: string) {
+    return User.table.view<IDevicesByCurrencyHoursViewResponse>('filter','by-currency', { key: [currencyCode, hours] })
   }
 
   public async attachDevice(deviceId: string) {

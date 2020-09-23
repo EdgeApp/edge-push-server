@@ -5,7 +5,7 @@ import { Base } from '.'
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
-const dbDevices = nanoDb.db.use('db_devices')
+const dbDevices = nanoDb.db.use<ReturnType<typeof IDevice>>('db_devices')
 
 const IDevice = asObject({
   appId: asString,

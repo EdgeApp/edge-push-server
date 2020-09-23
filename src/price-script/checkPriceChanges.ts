@@ -1,85 +1,45 @@
-import { CurrencyThreshold, Device, INotificationsEnabledViewResponse, User } from '../models'
-import { DocumentResponseRowMeta } from 'nano'
+import { CurrencyThreshold, Device, User } from '../models'
 import { fetchThresholdPrices } from './fetchThresholdPrices'
 import { NotificationManager } from '../NotificationManager'
 
+// Firebase Messaging API limits batch messages to 500
+const NOTIFICATION_LIMIT = 500
+const MANGO_FIND_LIMIT = 200
+
 interface NotificationPriceMap {
-  [currencyCode: string]: {
-    [hours: string]: NotificationPriceChange
-  }
+  [currencyCode: string]: NotificationPriceHoursChange
+}
+
+interface NotificationPriceHoursChange {
+  [hours: string]: NotificationPriceChange
 }
 
 export interface NotificationPriceChange {
   currencyCode: string
-  hours: string
+  now: string
+  before: string
+  hourChange: string
   price: number
+  priceBefore: number
   priceChange: number
-  timestamp: number
-  deviceTokens: Array<string>
 }
 
 export async function checkPriceChanges(manager: NotificationManager) {
-  const priceMap: NotificationPriceMap = {}
-  const thresholdMap: { [currencyCode: string]: CurrencyThreshold } = {}
-
-  // Only fetch currency prices once per iteration
-  async function fetchPriceChanges(currencyCode: string) {
-    if (currencyCode in priceMap) return
-
-    // Check if theres a threshold object created
-    // Create and save in database if not
-    if (!thresholdMap[currencyCode]) {
-      thresholdMap[currencyCode] = await CurrencyThreshold.fromCode(currencyCode) as CurrencyThreshold
-    }
-
-    // Fetch price changes for all currency hours stored in threshold model
-    priceMap[currencyCode] = await fetchThresholdPrices(thresholdMap[currencyCode])
-  }
-
-  // Fetches Threshold models and their currency price changes
-  async function fetchAndUpdateThresholdPrices({ id: currencyCode }: DocumentResponseRowMeta) {
-    thresholdMap[currencyCode] = await CurrencyThreshold.fetch(currencyCode)
-    await fetchPriceChanges(currencyCode)
-  }
-
-  async function fetchDeviceTokens(deviceIds: string[]) {
-    const devices = await Device.fetchAll(deviceIds)
-    return devices.map((device) => device.tokenId)
-  }
-
-  // Sends notifications to a user based on the currency codes and hour changes they are following if
-  // the price change crossed the threshold change
-  async function sendUserNotifications({ value: userData }: { value: INotificationsEnabledViewResponse }) {
-    let deviceTokens: string[]
-
-    const { currencyCodes } = userData
-    for (const currencyCode in currencyCodes) {
-      await fetchPriceChanges(currencyCode)
-
-      for (const hours in currencyCodes[currencyCode]) {
-        // Check if we have a price for the hour change AND user has notifications enabled for that hour change
-        if (hours in priceMap[currencyCode] && currencyCodes[currencyCode][hours]) {
-          // Fetch user's device tokens if we don't have they already
-          if (!deviceTokens) deviceTokens = await fetchDeviceTokens(Object.keys(userData.devices))
-
-          // Send notification to user about price change
-          await sendNotification(currencyCode, hours, deviceTokens)
-        }
-      }
-    }
-  }
-
   // Sends a notification to devices about a price change
-  async function sendNotification(currencyCode: string, hours: string, deviceTokens: string[]) {
-    const { priceChange, price } = priceMap[currencyCode][hours]
+  async function sendNotification(thresholdPrice: NotificationPriceChange, deviceTokens: string[]) {
+    const { currencyCode, hourChange, priceChange, price } = thresholdPrice
 
     const direction = priceChange > 0 ? 'up' : 'down'
     const symbol = priceChange > 0 ? '+' : ''
-    const time = Number(hours) === 1 ? '1 hour' : `${hours} hours`
+    const time = Number(hourChange) === 1 ? '1 hour' : `${hourChange} hours`
 
     const title = 'Price Alert'
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${price} in the last ${time}.`
     const data = {}
+
+    console.log('=================')
+    console.log(`Sending ${deviceTokens.length} notifications for ${currencyCode}.`)
+    console.log('=================')
 
     await manager.sendNotifications(title, body, deviceTokens, data)
       .catch(() => {})
@@ -87,15 +47,71 @@ export async function checkPriceChanges(manager: NotificationManager) {
 
   // Fetch list of threshold items and their prices
   const thresholdList = await CurrencyThreshold.table.list()
-  for (const threshold of thresholdList.rows) {
-    await fetchAndUpdateThresholdPrices(threshold)
+  for (const { id: currencyCode } of thresholdList.rows) {
+    const threshold = await CurrencyThreshold.fetch(currencyCode)
+
+    const thresholdPrices = await fetchThresholdPrices(threshold)
+    for (const hours in thresholdPrices) {
+      const thresholdPrice = thresholdPrices[hours]
+
+      const { rows: usersDevices } = await User.devicesByCurrencyHours(currencyCode, hours)
+      // Skip if no users registered to currency
+      if (usersDevices.length === 0) continue
+
+      const deviceIds: string[] = []
+      for (const { value: userDevices } of usersDevices) {
+        for (const deviceId in userDevices) {
+          deviceIds.push(deviceId)
+        }
+      }
+      const tokenGenerator = deviceTokenGenerator(deviceIds)
+      while(true) {
+        const { value: deviceTokens, done } = await tokenGenerator.next()
+
+        if (deviceTokens) {
+          // Send notification to user about price change
+          await sendNotification(thresholdPrice, deviceTokens)
+        }
+
+        if (done) break
+      }
+    }
+  }
+}
+
+async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string[], string[]> {
+  let tokens: string[] = []
+  let bookmark: string
+  while (true) {
+    const response = await Device.table.find({
+      bookmark,
+      selector: {
+        _id: {
+          "$in": deviceIds
+        },
+        tokenId: {
+          "$exists": true,
+          "$ne": null
+        }
+      },
+      fields: [ 'tokenId' ],
+      limit: MANGO_FIND_LIMIT
+    })
+    bookmark = response.bookmark
+
+    for (const { tokenId } of response.docs) {
+      tokens.push(tokenId)
+
+      if (tokens.length === NOTIFICATION_LIMIT) {
+        yield tokens
+        tokens = []
+      }
+    }
+
+    if (response.docs.length < MANGO_FIND_LIMIT) {
+      break
+    }
   }
 
-  // Fetch data for users that have notifications enabled using CouchDB Design Document View
-  const userView = await User.notificationsEnabled()
-  for (const user of userView.rows) {
-    await sendUserNotifications(user)
-  }
-
-  console.log('price map: ', JSON.stringify(priceMap, null, 2))
+  return tokens
 }
