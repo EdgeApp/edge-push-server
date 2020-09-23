@@ -41,7 +41,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
     console.log(`Sending ${deviceTokens.length} notifications for ${currencyCode}.`)
     console.log('=================')
 
-    await manager.sendNotifications(title, body, deviceTokens, data)
+    await manager.send(title, body, deviceTokens, data)
       .catch(() => {})
   }
 

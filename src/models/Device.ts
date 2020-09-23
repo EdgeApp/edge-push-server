@@ -16,12 +16,14 @@ const IDevice = asObject({
   edgeBuildNumber: asNumber
 })
 
-export class Device extends Base implements ReturnType<typeof IDevice> {
+type asDevice = Omit<ReturnType<typeof IDevice>, 'tokenId'> & { tokenId?: string }
+
+export class Device extends Base implements asDevice {
   public static table = dbDevices
   public static asType = IDevice
 
   public appId: string
-  public tokenId: string
+  public tokenId?: string
   public deviceDescription: string
   public osType: string
   public edgeVersion: string
