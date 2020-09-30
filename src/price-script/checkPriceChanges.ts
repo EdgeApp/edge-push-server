@@ -80,6 +80,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
 }
 
 async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string[], string[]> {
+  const tokenSet: Set<string> = new Set()
   let tokens: string[] = []
   let bookmark: string
   while (true) {
@@ -100,6 +101,9 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
     bookmark = response.bookmark
 
     for (const { tokenId } of response.docs) {
+      if (tokenSet.has(tokenId)) continue
+
+      tokenSet.add(tokenId)
       tokens.push(tokenId)
 
       if (tokens.length === NOTIFICATION_LIMIT) {
