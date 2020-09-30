@@ -1,6 +1,10 @@
+import * as io from '@pm2/io'
+
 import { CurrencyThreshold } from '../models'
 import { getPrice } from './prices'
 import { NotificationPriceChange } from './checkPriceChanges'
+
+const CONFIG = require('../../serverConfig.json')
 
 const HOURS_PERCENT_MAP = {
   1: 3,
@@ -56,8 +60,20 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
     }
     console.log(priceData)
 
+    if (Math.abs(priceChange) >= CONFIG.significantThresholdChange) {
+      io.notifyError(new Error('Rates Server Significant Price Change'), {
+        custom: priceData
+      })
+    }
+
     const percent = HOURS_PERCENT_MAP[hours]
-    if (priceChange <= -percent || priceChange >= percent) {
+    if (Math.abs(priceChange) >= percent) {
+      const thresholdCounter = io.counter({
+        id: `threshold:crossed:${currencyCode}:${hours}`,
+        name: `Threshold Crossed for ${currencyCode} - ${hours} Hour`,
+      })
+      thresholdCounter.inc()
+
       currencyThreshold.thresholds[hours] = { lastUpdated: Date.parse(now), price: priceNow }
       await currencyThreshold.save()
         .catch((err) => {

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import * as io from '@pm2/io'
 
 const CONFIG = require('../../serverConfig.json')
 const TIMEOUT = 10000 // in milliseconds
@@ -27,6 +28,14 @@ export async function getPrice(base: string, quote: string, at?: number): Promis
     const { data: { exchangeRate } } = await rates.get(`?currency_pair=${base}_${quote}${dateString}`)
     return parseFloat(exchangeRate)
   } catch (err) {
+    const lookupDate = new Date(at).toISOString()
+    io.notifyError(err, {
+      custom: {
+        base,
+        quote,
+        lookupDate
+      }
+    })
     console.log(`Cannot fetch prices for ${base}/${quote} - ${err.response.data.error}`)
     throw err
   }

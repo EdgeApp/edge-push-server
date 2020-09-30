@@ -1,6 +1,7 @@
 import * as express from 'express'
 import * as bodyParser from 'body-parser'
 import * as cors from 'cors'
+import * as io from '@pm2/io'
 
 import { UserController } from './controllers/UserController'
 import { DeviceController } from './controllers/DeviceController'
@@ -8,6 +9,11 @@ import { NotificationController } from './controllers/NotificationController'
 import { ApiKey } from '../models'
 
 export const app = express()
+
+const requestMeter = io.meter({
+  id: 'request:meter',
+  name: 'Total Request Frequency'
+})
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json({ limit: '50mb' }))
@@ -33,6 +39,7 @@ declare global {
 
 // middleware to use for all requests
 router.use(async (req, res, next) => {
+  requestMeter.mark()
   console.log(` => ${req.method} ${req.url}`)
 
   const apiKey = req.header('X-Api-Key')
