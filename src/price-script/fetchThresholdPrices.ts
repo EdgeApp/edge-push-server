@@ -6,12 +6,13 @@ const HOURS_PERCENT_MAP = {
   1: 3,
   24: 10
 }
+const SLEEP_TIMEOUT = 1000 // in milliseconds
 
 interface IThresholdPricesResponse {
   [hours: string]: NotificationPriceChange
 }
 
-function sleep(ms = 1000) {
+function sleep(ms = SLEEP_TIMEOUT) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
@@ -20,10 +21,10 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
 
   const currencyCode = currencyThreshold._id
 
-  let price: number
+  let priceNow: number
   try {
     await sleep()
-    price = await getPrice(currencyCode, 'USD')
+    priceNow = await getPrice(currencyCode, 'USD')
   } catch {
     return response
   }
@@ -31,13 +32,9 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
   for (const hours in currencyThreshold.thresholds) {
     const hoursAgo = Date.now() - (Number(hours) * 60 * 60 * 1000)
     let threshold = currencyThreshold.thresholds[hours]
-    let before
-    if (threshold.lastUpdated === 0)
-      before = hoursAgo
-    else if (hoursAgo > threshold.lastUpdated)
-      before = hoursAgo
-    else
-      before = threshold.lastUpdated
+    const before = threshold.lastUpdated === 0 || hoursAgo > threshold.lastUpdated
+      ? hoursAgo
+      : threshold.lastUpdated
 
     let priceBefore
     try {
@@ -46,14 +43,14 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
       continue
     }
 
-    const priceChange = parseFloat((100 * (price - priceBefore) / priceBefore).toFixed(2))
+    const priceChange = parseFloat((100 * (priceNow - priceBefore) / priceBefore).toFixed(2))
     const now = new Date().toISOString()
     const priceData: NotificationPriceChange = {
       currencyCode,
       now,
       before: new Date(before).toISOString(),
       hourChange: hours,
-      price,
+      priceNow,
       priceBefore,
       priceChange
     }
@@ -61,19 +58,12 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
 
     const percent = HOURS_PERCENT_MAP[hours]
     if (priceChange <= -percent || priceChange >= percent) {
-      currencyThreshold.thresholds[hours] = { lastUpdated: Date.parse(now), price }
+      currencyThreshold.thresholds[hours] = { lastUpdated: Date.parse(now), price: priceNow }
       await currencyThreshold.save()
         .catch((err) => {
           console.error(`Could not update ${currencyCode} threshold data.`)
           console.error(err)
         })
-
-      // Set decimal place to 2 significant digits
-      let numSplit = price.toString().split('.')
-      let sigIndex = numSplit[1].search(/[1-9]/)
-      numSplit[1] = numSplit[1].substring(0, sigIndex + 2)
-      const displayPrice = Number(numSplit.join('.'))
-      priceData.price = displayPrice
 
       response[hours] = priceData
     }

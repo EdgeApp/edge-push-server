@@ -1,10 +1,11 @@
 import axios from 'axios'
 
 const CONFIG = require('../../serverConfig.json')
+const TIMEOUT = 10000 // in milliseconds
 
 const rates = axios.create({
   baseURL: `https://rates1.edge.app/v${CONFIG.ratesServerVersion}/exchangeRate`,
-  timeout: 10000
+  timeout: TIMEOUT
 })
 
 export async function getPriceChange(base: string, quote: string): Promise<number> {

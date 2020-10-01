@@ -19,7 +19,7 @@ export interface NotificationPriceChange {
   now: string
   before: string
   hourChange: string
-  price: number
+  priceNow: number
   priceBefore: number
   priceChange: number
 }
@@ -27,19 +27,16 @@ export interface NotificationPriceChange {
 export async function checkPriceChanges(manager: NotificationManager) {
   // Sends a notification to devices about a price change
   async function sendNotification(thresholdPrice: NotificationPriceChange, deviceTokens: string[]) {
-    const { currencyCode, hourChange, priceChange, price } = thresholdPrice
+    const { currencyCode, hourChange, priceChange, priceNow } = thresholdPrice
 
     const direction = priceChange > 0 ? 'up' : 'down'
     const symbol = priceChange > 0 ? '+' : ''
     const time = Number(hourChange) === 1 ? '1 hour' : `${hourChange} hours`
 
     const title = 'Price Alert'
-    const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${price} in the last ${time}.`
+    const displayPrice = formatDisplayPrice(priceNow)
+    const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
-
-    console.log('=================')
-    console.log(`Sending ${deviceTokens.length} notifications for ${currencyCode}.`)
-    console.log('=================')
 
     await manager.send(title, body, deviceTokens, data)
       .catch(() => {})
@@ -65,16 +62,19 @@ export async function checkPriceChanges(manager: NotificationManager) {
         }
       }
       const tokenGenerator = deviceTokenGenerator(deviceIds)
-      while(true) {
-        const { value: deviceTokens, done } = await tokenGenerator.next()
+      let done = false
+      const notificationPromises: Promise<void>[] = []
+      while(!done) {
+        const next = await tokenGenerator.next()
+        done = next.done
 
-        if (deviceTokens) {
+        if (next.value) {
           // Send notification to user about price change
-          await sendNotification(thresholdPrice, deviceTokens)
+          const promise = sendNotification(thresholdPrice, next.value)
+          notificationPromises.push(promise)
         }
-
-        if (done) break
       }
+      await Promise.all(notificationPromises)
     }
   }
 }
@@ -82,7 +82,8 @@ export async function checkPriceChanges(manager: NotificationManager) {
 async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string[], string[]> {
   let tokens: string[] = []
   let bookmark: string
-  while (true) {
+  let done = false
+  while (!done) {
     const response = await Device.table.find({
       bookmark,
       selector: {
@@ -109,9 +110,17 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
     }
 
     if (response.docs.length < MANGO_FIND_LIMIT) {
-      break
+      done = true
     }
   }
 
   return tokens
+}
+
+// Set decimal place to 2 significant digits
+function formatDisplayPrice(priceNow: number) {
+  let numSplit = priceNow.toString().split('.')
+  let sigIndex = numSplit[1].search(/[1-9]/)
+  numSplit[1] = numSplit[1].substring(0, sigIndex + 2)
+  return Number(numSplit.join('.'))
 }

@@ -44,9 +44,7 @@ export class NotificationManager {
     }
 
     try {
-      const response = await this.app.messaging().sendMulticast(message)
-      console.log('Messages sent:', response)
-      return response
+      return this.app.messaging().sendMulticast(message)
     } catch (err) {
       console.error(JSON.stringify(err, null, 2))
       throw err
