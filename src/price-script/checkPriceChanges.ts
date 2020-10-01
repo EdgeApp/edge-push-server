@@ -1,5 +1,5 @@
 import { CurrencyThreshold, Device, User } from '../models'
-import { fetchThresholdPrices } from './fetchThresholdPrices'
+import { fetchThresholdPrice } from './fetchThresholdPrices'
 import { NotificationManager } from '../NotificationManager'
 import * as io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
@@ -7,6 +7,7 @@ import { MetricType } from '@pm2/io/build/main/services/metrics'
 // Firebase Messaging API limits batch messages to 500
 const NOTIFICATION_LIMIT = 500
 const MANGO_FIND_LIMIT = 200
+const THRESHOLD_FETCH_LIMIT = 200
 
 export interface NotificationPriceChange {
   currencyCode: string
@@ -36,13 +37,24 @@ export async function checkPriceChanges(manager: NotificationManager) {
   }
 
   // Fetch list of threshold items and their prices
-  const thresholdList = await CurrencyThreshold.table.list()
-  for (const { id: currencyCode } of thresholdList.rows) {
-    const threshold = await CurrencyThreshold.fetch(currencyCode)
-
-    const thresholdPrices = await fetchThresholdPrices(threshold)
-    for (const hours in thresholdPrices) {
-      const thresholdPrice = thresholdPrices[hours]
+  const thresholds = await CurrencyThreshold.where({
+    selector: {
+      $or: [
+        { disabled: { $exists: false } },
+        { disabled: false }
+      ]
+    },
+    limit: THRESHOLD_FETCH_LIMIT
+  })
+  // Fetch default values to use if otherwise not defined
+  const defaultThresholds = await CurrencyThreshold.defaultThresholds()
+  const defaultAnomaly = await CurrencyThreshold.defaultAnomaly()
+  for (const threshold of thresholds) {
+    const currencyCode = threshold._id
+    const anomalyPercent = threshold.anomaly ?? defaultAnomaly
+    for (const hours in defaultThresholds) {
+      const priceData = await fetchThresholdPrice(threshold, hours, defaultThresholds[hours], anomalyPercent)
+      if (!priceData) continue
 
       const { rows: usersDevices } = await User.devicesByCurrencyHours(currencyCode, hours)
       // Skip if no users registered to currency
@@ -60,16 +72,22 @@ export async function checkPriceChanges(manager: NotificationManager) {
       let failureCount = 0
       while(!done) {
         const next = await tokenGenerator.next()
-        done = next.done
+        done = !!next.done
 
         if (next.value) {
           // Send notification to user about price change
           try {
-            const response = await sendNotification(thresholdPrice, next.value)
+            const response = await sendNotification(priceData, next.value)
             successCount += response.successCount
             failureCount += response.failureCount
           } catch (err) {
-
+            io.notifyError(err, {
+              custom: {
+                message: 'Failed to batch send notifications for currency hours threshold change',
+                currencyCode,
+                hours
+              }
+            })
           }
         }
       }
@@ -113,7 +131,7 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
       },
       fields: [ 'tokenId' ],
       limit: MANGO_FIND_LIMIT
-    })
+    }) as { docs: { tokenId: string }[] }
     bookmark = response.bookmark
 
     for (const { tokenId } of response.docs) {
