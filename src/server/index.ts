@@ -1,8 +1,8 @@
 import * as fs from 'fs'
 
-import { app } from './server/app'
+import { app } from './app'
 
-const CONFIG = require('../serverConfig.json')
+const CONFIG = require('../../serverConfig.json')
 
 // START THE SERVER
 // =============================================================================

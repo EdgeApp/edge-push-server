@@ -1,4 +1,12 @@
-import rates from './ratesServer'
+import axios from 'axios'
+
+const CONFIG = require('../../serverConfig.json')
+const TIMEOUT = 10000 // in milliseconds
+
+const rates = axios.create({
+  baseURL: `https://rates1.edge.app/v${CONFIG.ratesServerVersion}/exchangeRate`,
+  timeout: TIMEOUT
+})
 
 export async function getPriceChange(base: string, quote: string): Promise<number> {
   const today = Date.now()
@@ -16,10 +24,10 @@ export async function getPrice(base: string, quote: string, at?: number): Promis
   }
 
   try {
-    const { exchangeRate } = await rates.get(`exchangeRate?currency_pair=${base}_${quote}${dateString}`)
+    const { data: { exchangeRate } } = await rates.get(`?currency_pair=${base}_${quote}${dateString}`)
     return parseFloat(exchangeRate)
   } catch (err) {
-    console.log(`Cannot fetch prices for ${base} - ${err.response.data.error}`)
+    console.log(`Cannot fetch prices for ${base}/${quote} - ${err.response.data.error}`)
     throw err
   }
 }

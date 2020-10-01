@@ -43,6 +43,11 @@ export class NotificationManager {
       tokens
     }
 
-    return await this.app.messaging().sendMulticast(message)
+    try {
+      return this.app.messaging().sendMulticast(message)
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2))
+      throw err
+    }
   }
 }
