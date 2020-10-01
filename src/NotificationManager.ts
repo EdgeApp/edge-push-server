@@ -1,14 +1,18 @@
 import * as admin from 'firebase-admin'
+import * as io from '@pm2/io'
 
 import { ApiKey } from './models'
 
-interface IMessage {
-  data: object
-  notification: {
-    title: string
-    body: string
-  }
-}
+import BatchResponse = admin.messaging.BatchResponse
+
+const successCounter = io.counter({
+  id: 'notifications:success:total',
+  name: 'Total Successful Notifications'
+})
+const failureCounter = io.counter({
+  id: 'notifications:failure:total',
+  name: 'Total Failed Notifications',
+})
 
 export class NotificationManager {
   private constructor(
@@ -33,7 +37,7 @@ export class NotificationManager {
     return new NotificationManager(app)
   }
 
-  public async send(title: string, body: string, tokens: Array<string>, data = {}) {
+  public async send(title: string, body: string, tokens: Array<string>, data = {}): Promise<BatchResponse> {
     const message: admin.messaging.MulticastMessage = {
       notification: {
         title,
@@ -44,7 +48,12 @@ export class NotificationManager {
     }
 
     try {
-      return this.app.messaging().sendMulticast(message)
+      const response = await this.app.messaging().sendMulticast(message)
+
+      successCounter.inc(response.successCount)
+      failureCounter.inc(response.failureCount)
+
+      return response
     } catch (err) {
       console.error(JSON.stringify(err, null, 2))
       throw err

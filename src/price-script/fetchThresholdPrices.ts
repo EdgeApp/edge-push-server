@@ -3,6 +3,7 @@ import * as io from '@pm2/io'
 import { CurrencyThreshold } from '../models'
 import { getPrice } from './prices'
 import { NotificationPriceChange } from './checkPriceChanges'
+import Counter from '@pm2/io/build/main/utils/metrics/counter'
 
 const CONFIG = require('../../serverConfig.json')
 
@@ -11,6 +12,8 @@ const HOURS_PERCENT_MAP = {
   24: 10
 }
 const SLEEP_TIMEOUT = 1000 // in milliseconds
+
+const processMetrics: { [id: string]: Counter | undefined } = {}
 
 interface IThresholdPricesResponse {
   [hours: string]: NotificationPriceChange
@@ -68,18 +71,22 @@ export async function fetchThresholdPrices(currencyThreshold: CurrencyThreshold)
 
     const percent = HOURS_PERCENT_MAP[hours]
     if (Math.abs(priceChange) >= percent) {
-      const thresholdCounter = io.counter({
-        id: `threshold:crossed:${currencyCode}:${hours}`,
-        name: `Threshold Crossed for ${currencyCode} - ${hours} Hour`,
-      })
-      thresholdCounter.inc()
 
-      currencyThreshold.thresholds[hours] = { lastUpdated: Date.parse(now), price: priceNow }
-      await currencyThreshold.save()
+      await currencyThreshold.update(hours, Date.parse(now), priceNow)
         .catch((err) => {
           console.error(`Could not update ${currencyCode} threshold data.`)
           console.error(err)
         })
+
+      const counterId = `threshold:crossed:${currencyCode}:${hours}`
+      let counter = processMetrics[counterId]
+      if (!counter) {
+        counter = processMetrics[counterId] = io.counter({
+          id: counterId,
+          name: `Threshold Crossed for ${currencyCode} - ${hours} Hour`
+        })
+      }
+      counter.inc()
 
       response[hours] = priceData
     }

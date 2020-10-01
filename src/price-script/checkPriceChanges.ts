@@ -1,18 +1,12 @@
 import { CurrencyThreshold, Device, User } from '../models'
 import { fetchThresholdPrices } from './fetchThresholdPrices'
 import { NotificationManager } from '../NotificationManager'
+import * as io from '@pm2/io'
+import { MetricType } from '@pm2/io/build/main/services/metrics'
 
 // Firebase Messaging API limits batch messages to 500
 const NOTIFICATION_LIMIT = 500
 const MANGO_FIND_LIMIT = 200
-
-interface NotificationPriceMap {
-  [currencyCode: string]: NotificationPriceHoursChange
-}
-
-interface NotificationPriceHoursChange {
-  [hours: string]: NotificationPriceChange
-}
 
 export interface NotificationPriceChange {
   currencyCode: string
@@ -38,8 +32,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
 
-    await manager.send(title, body, deviceTokens, data)
-      .catch(() => {})
+    return manager.send(title, body, deviceTokens, data)
   }
 
   // Fetch list of threshold items and their prices
@@ -63,18 +56,40 @@ export async function checkPriceChanges(manager: NotificationManager) {
       }
       const tokenGenerator = deviceTokenGenerator(deviceIds)
       let done = false
-      const notificationPromises: Promise<void>[] = []
+      let successCount = 0
+      let failureCount = 0
       while(!done) {
         const next = await tokenGenerator.next()
         done = next.done
 
         if (next.value) {
           // Send notification to user about price change
-          const promise = sendNotification(thresholdPrice, next.value)
-          notificationPromises.push(promise)
+          try {
+            const response = await sendNotification(thresholdPrice, next.value)
+            successCount += response.successCount
+            failureCount += response.failureCount
+          } catch (err) {
+
+          }
         }
       }
-      await Promise.all(notificationPromises)
+
+      const idPostfix = `${currencyCode}:${hours}`
+      const namePostfix = `Notifications For ${currencyCode} - ${hours} Hour`
+      io.metrics([
+        {
+          type: MetricType.metric,
+          id: `notifications:success:${idPostfix}`,
+          name: `Successful ${namePostfix}`,
+          value: () => successCount
+        },
+        {
+          type: MetricType.metric,
+          id: `notifications:failure:${idPostfix}`,
+          name: `Failed ${namePostfix}`,
+          value: () => failureCount
+        }
+      ])
     }
   }
 }

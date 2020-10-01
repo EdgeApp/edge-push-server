@@ -39,10 +39,8 @@ export class CurrencyThreshold extends Base implements ReturnType<typeof ICurren
   }
 
   public async update(hours: string, timestamp: number, price: number): Promise<CurrencyThreshold> {
-    this.thresholds[hours] = {
-      lastUpdated: timestamp,
-      price
-    }
+    this.thresholds[hours].lastUpdated = timestamp
+    this.thresholds[hours].price = price
     return await this.save() as CurrencyThreshold
   }
 }
