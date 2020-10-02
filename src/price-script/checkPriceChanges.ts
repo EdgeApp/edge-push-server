@@ -115,7 +115,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
 async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string[], string[]> {
   const tokenSet: Set<string> = new Set()
   let tokens: string[] = []
-  let bookmark: string
+  let bookmark: string | undefined
   let done = false
   while (!done) {
     const response = await Device.table.find({
@@ -131,11 +131,11 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
       },
       fields: [ 'tokenId' ],
       limit: MANGO_FIND_LIMIT
-    }) as { docs: { tokenId: string }[] }
+    })
     bookmark = response.bookmark
 
     for (const { tokenId } of response.docs) {
-      if (tokenSet.has(tokenId)) continue
+      if (!tokenId || tokenSet.has(tokenId)) continue
 
       tokenSet.add(tokenId)
       tokens.push(tokenId)
