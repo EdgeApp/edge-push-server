@@ -10,8 +10,8 @@ export class Base implements ReturnType<typeof IModelData> {
   public static table: Nano.DocumentScope<any>
   public static asType: Cleaner<any> = IModelData
 
-  public _id?: string
-  public _rev?: string
+  public _id!: string
+  public _rev!: string
   public readonly dataValues: object
 
   constructor(data: Nano.MaybeDocument = {}, id?: string) {

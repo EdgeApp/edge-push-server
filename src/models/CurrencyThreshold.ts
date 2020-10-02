@@ -1,48 +1,73 @@
 import * as Nano from 'nano'
-import { asMap, asNumber, asObject } from 'cleaners'
+import { asBoolean, asMap, asNumber, asObject, asOptional } from 'cleaners'
 
 import { Base } from '.'
+import { Defaults } from './Defaults'
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
-const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
+const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds_test')
 
-const IThresholds = asMap(asObject({
+interface IThreshold {
+  custom?: number
+  lastUpdated: number
+  price: number
+}
+
+const asThreshold = asObject<IThreshold>({
+  custom: asOptional(asNumber),
   lastUpdated: asNumber,
   price: asNumber
-}))
+})
+const IThresholds = asMap<IThreshold | undefined>(asThreshold)
 
-const ICurrencyThreshold = asObject({
+interface ICurrencyThreshold {
+  disabled?: boolean
+  anomaly?: number
+  thresholds: ReturnType<typeof IThresholds>
+}
+const asCurrencyThreshold = asObject<ICurrencyThreshold>({
+  disabled: asOptional(asBoolean),
+  anomaly: asOptional(asNumber),
   thresholds: IThresholds
 })
 
-export class CurrencyThreshold extends Base implements ReturnType<typeof ICurrencyThreshold> {
+const defaultData: IThreshold = {
+  lastUpdated: 0,
+  price: 0
+}
+
+export class CurrencyThreshold extends Base implements ICurrencyThreshold {
   public static table = dbCurrencyThreshold
-  public static asType = ICurrencyThreshold
+  public static asType = asCurrencyThreshold
 
-  public thresholds: ReturnType<typeof IThresholds>
+  public disabled?: boolean
+  public anomaly?: number
+  public thresholds!: ReturnType<typeof IThresholds>
 
-  constructor(...args) {
-    super(...args)
+  public static async defaultAnomaly(): Promise<number> {
+    const threshold = await Defaults.fetch('thresholds')
+    return threshold.get('anomaly')
+  }
 
-    if (!this.thresholds)
-      this.thresholds = {}
+  public static async defaultThresholds(): Promise<{ [hours: string]: number }> {
+    const threshold = await Defaults.fetch('thresholds')
+    return threshold.get('hours')
   }
 
   public static async fromCode(currencyCode: string): Promise<CurrencyThreshold> {
-    const threshold = new CurrencyThreshold(null, currencyCode)
-    const obj = { lastUpdated: 0, price: 0 }
-    threshold.thresholds[1] = obj
-    threshold.thresholds[24] = obj
-    await threshold.save()
-    return threshold
+    const threshold = new CurrencyThreshold(undefined, currencyCode)
+    return threshold.save()
   }
 
-  public async update(hours: string, timestamp: number, price: number): Promise<CurrencyThreshold> {
-    this.thresholds[hours] = {
-      lastUpdated: timestamp,
-      price
+  public async update(hours: string | number, timestamp: number, price: number): Promise<CurrencyThreshold> {
+    const threshold: IThreshold = this.thresholds[hours] ?? {
+      lastUpdated: 0,
+      price: 0
     }
+    threshold.lastUpdated = timestamp
+    threshold.price = price
+    this.thresholds[hours] = threshold
     return await this.save() as CurrencyThreshold
   }
 }

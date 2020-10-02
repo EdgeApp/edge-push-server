@@ -1,18 +1,13 @@
 import { CurrencyThreshold, Device, User } from '../models'
-import { fetchThresholdPrices } from './fetchThresholdPrices'
+import { fetchThresholdPrice } from './fetchThresholdPrices'
 import { NotificationManager } from '../NotificationManager'
+import * as io from '@pm2/io'
+import { MetricType } from '@pm2/io/build/main/services/metrics'
 
 // Firebase Messaging API limits batch messages to 500
 const NOTIFICATION_LIMIT = 500
 const MANGO_FIND_LIMIT = 200
-
-interface NotificationPriceMap {
-  [currencyCode: string]: NotificationPriceHoursChange
-}
-
-interface NotificationPriceHoursChange {
-  [hours: string]: NotificationPriceChange
-}
+const THRESHOLD_FETCH_LIMIT = 200
 
 export interface NotificationPriceChange {
   currencyCode: string
@@ -38,18 +33,28 @@ export async function checkPriceChanges(manager: NotificationManager) {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
 
-    await manager.send(title, body, deviceTokens, data)
-      .catch(() => {})
+    return manager.send(title, body, deviceTokens, data)
   }
 
   // Fetch list of threshold items and their prices
-  const thresholdList = await CurrencyThreshold.table.list()
-  for (const { id: currencyCode } of thresholdList.rows) {
-    const threshold = await CurrencyThreshold.fetch(currencyCode)
-
-    const thresholdPrices = await fetchThresholdPrices(threshold)
-    for (const hours in thresholdPrices) {
-      const thresholdPrice = thresholdPrices[hours]
+  const thresholds = await CurrencyThreshold.where({
+    selector: {
+      $or: [
+        { disabled: { $exists: false } },
+        { disabled: false }
+      ]
+    },
+    limit: THRESHOLD_FETCH_LIMIT
+  })
+  // Fetch default values to use if otherwise not defined
+  const defaultThresholds = await CurrencyThreshold.defaultThresholds()
+  const defaultAnomaly = await CurrencyThreshold.defaultAnomaly()
+  for (const threshold of thresholds) {
+    const currencyCode = threshold._id
+    const anomalyPercent = threshold.anomaly ?? defaultAnomaly
+    for (const hours in defaultThresholds) {
+      const priceData = await fetchThresholdPrice(threshold, hours, defaultThresholds[hours], anomalyPercent)
+      if (!priceData) continue
 
       const { rows: usersDevices } = await User.devicesByCurrencyHours(currencyCode, hours)
       // Skip if no users registered to currency
@@ -63,18 +68,46 @@ export async function checkPriceChanges(manager: NotificationManager) {
       }
       const tokenGenerator = deviceTokenGenerator(deviceIds)
       let done = false
-      const notificationPromises: Promise<void>[] = []
+      let successCount = 0
+      let failureCount = 0
       while(!done) {
         const next = await tokenGenerator.next()
-        done = next.done
+        done = !!next.done
 
         if (next.value) {
           // Send notification to user about price change
-          const promise = sendNotification(thresholdPrice, next.value)
-          notificationPromises.push(promise)
+          try {
+            const response = await sendNotification(priceData, next.value)
+            successCount += response.successCount
+            failureCount += response.failureCount
+          } catch (err) {
+            io.notifyError(err, {
+              custom: {
+                message: 'Failed to batch send notifications for currency hours threshold change',
+                currencyCode,
+                hours
+              }
+            })
+          }
         }
       }
-      await Promise.all(notificationPromises)
+
+      const idPostfix = `${currencyCode}:${hours}`
+      const namePostfix = `Notifications For ${currencyCode} - ${hours} Hour`
+      io.metrics([
+        {
+          type: MetricType.metric,
+          id: `notifications:success:${idPostfix}`,
+          name: `Successful ${namePostfix}`,
+          value: () => successCount
+        },
+        {
+          type: MetricType.metric,
+          id: `notifications:failure:${idPostfix}`,
+          name: `Failed ${namePostfix}`,
+          value: () => failureCount
+        }
+      ])
     }
   }
 }
@@ -82,7 +115,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
 async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string[], string[]> {
   const tokenSet: Set<string> = new Set()
   let tokens: string[] = []
-  let bookmark: string
+  let bookmark: string | undefined
   let done = false
   while (!done) {
     const response = await Device.table.find({
@@ -102,7 +135,7 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
     bookmark = response.bookmark
 
     for (const { tokenId } of response.docs) {
-      if (tokenSet.has(tokenId)) continue
+      if (!tokenId || tokenSet.has(tokenId)) continue
 
       tokenSet.add(tokenId)
       tokens.push(tokenId)

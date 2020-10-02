@@ -1,4 +1,5 @@
 import * as schedule from 'node-schedule'
+import * as io from '@pm2/io'
 
 import { NotificationManager } from '../NotificationManager'
 import { checkPriceChanges } from './checkPriceChanges'
@@ -11,6 +12,11 @@ schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
 let isRunning = false
 let manager: NotificationManager
 
+const runCounter = io.counter({
+  id: 'price:script:counter',
+  name: 'Price Script Runner Count'
+})
+
 async function start() {
   manager = await NotificationManager.init(CONFIG.apiKey)
 
@@ -22,7 +28,14 @@ async function run() {
   if (isRunning) return
   isRunning = true
 
-  await checkPriceChanges(manager)
+  runCounter.inc()
+
+  try {
+    await checkPriceChanges(manager)
+  } catch (err) {
+    io.notifyError(err)
+    throw err
+  }
 
   isRunning = false
 }
