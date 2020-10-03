@@ -6,7 +6,7 @@ import { Defaults } from './Defaults'
 const CONFIG = require('../../serverConfig.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
-const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds_test')
+const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
 
 interface IThreshold {
   custom?: number
