@@ -1,5 +1,6 @@
 import axios from 'axios'
 import * as io from '@pm2/io'
+import { asNumber } from 'cleaners'
 
 const CONFIG = require('../../serverConfig.json')
 const TIMEOUT = 10000 // in milliseconds
@@ -26,7 +27,11 @@ export async function getPrice(base: string, quote: string, at?: number): Promis
 
   try {
     const { data: { exchangeRate } } = await rates.get(`?currency_pair=${base}_${quote}${dateString}`)
-    return parseFloat(exchangeRate)
+    const rate = asNumber(parseFloat(exchangeRate))
+    if (!/^\d+(\.\d+)?/.test(exchangeRate.toString())) {
+      throw new Error(`${base}/${quote} rate given was ${exchangeRate}`)
+    }
+    return rate
   } catch (err) {
     const lookupDate = new Date(at).toISOString()
     io.notifyError(err, {
