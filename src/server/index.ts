@@ -2,7 +2,7 @@ import * as fs from 'fs'
 
 import { app } from './app'
 
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 
 // START THE SERVER
 // =============================================================================

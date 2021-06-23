@@ -2,7 +2,7 @@ import * as Nano from 'nano'
 import { asMap } from 'cleaners'
 
 import { Base } from '.'
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbCurrencyThreshold = nanoDb.db.use('defaults')

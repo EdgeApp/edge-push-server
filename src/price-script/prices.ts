@@ -2,7 +2,7 @@ import axios from 'axios'
 import * as io from '@pm2/io'
 import { asNumber } from 'cleaners'
 
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 const TIMEOUT = 10000 // in milliseconds
 
 const rates = axios.create({

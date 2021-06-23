@@ -4,7 +4,7 @@ import { asBoolean, asMap, asObject, asOptional } from 'cleaners'
 import { Base } from '.'
 import { Device } from './Device'
 
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbUserSettings = nanoDb.db.use<ReturnType<typeof IUser>>('db_user_settings')

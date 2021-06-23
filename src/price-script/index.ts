@@ -4,7 +4,7 @@ import * as io from '@pm2/io'
 import { NotificationManager } from '../NotificationManager'
 import { checkPriceChanges } from './checkPriceChanges'
 
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 
 // Schedule job to run
 schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)

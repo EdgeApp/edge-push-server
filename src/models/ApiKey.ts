@@ -2,7 +2,7 @@ import * as Nano from 'nano'
 import { asBoolean, asMap, asObject, asOptional, asString } from 'cleaners'
 
 import { Base } from '.'
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbDevices = nanoDb.db.use('db_api_keys')

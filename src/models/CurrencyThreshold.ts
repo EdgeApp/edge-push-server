@@ -3,7 +3,7 @@ import { asBoolean, asMap, asNumber, asObject, asOptional } from 'cleaners'
 
 import { Base } from '.'
 import { Defaults } from './Defaults'
-const CONFIG = require('../../serverConfig.json')
+const CONFIG = require('../../config.json')
 
 const nanoDb = Nano(CONFIG.dbFullpath)
 const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
