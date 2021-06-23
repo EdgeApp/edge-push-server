@@ -1,0 +1,9 @@
+{
+    "apps": [{
+        "name": "notifications-server",
+        "script": "build/server/index.js",
+        "instances": "1",
+        "error_file": "logs/server/error.log",
+        "out_file": "logs/server/log.log"
+    }]
+}
