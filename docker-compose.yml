@@ -1,0 +1,12 @@
+services:
+  edge_notifications:
+    image: edge_notifications:latest
+    container_name: edge-notifications
+    network_mode: "host"
+    volumes:
+      - server-logs:/usr/app/logs
+configs:
+  server-config:
+    file: ./config.json
+volumes:
+  server-logs:
