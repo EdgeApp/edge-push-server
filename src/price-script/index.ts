@@ -10,7 +10,7 @@ const CONFIG = require('../../serverConfig.json')
 schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
 
 let isRunning = false
-let manager: NotificationManager
+let managers: NotificationManager[] = []
 
 const runCounter = io.counter({
   id: 'price:script:counter',
@@ -18,7 +18,9 @@ const runCounter = io.counter({
 })
 
 async function start() {
-  manager = await NotificationManager.init(CONFIG.apiKey)
+  managers = await Promise.all(CONFIG.apiKeys.map(partner => 
+    NotificationManager.init(partner.apiKey)
+  ))
 
   run()
 }
@@ -31,7 +33,10 @@ async function run() {
   runCounter.inc()
 
   try {
-    await checkPriceChanges(manager)
+    if (managers.length === 0) throw new Error('No partner apiKeys')
+    for (const manager of managers) {
+      await checkPriceChanges(manager)
+    }
   } catch (err) {
     io.notifyError(err)
     throw err
