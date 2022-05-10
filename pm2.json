@@ -1,0 +1,15 @@
+{
+    "apps": [{
+            "name": "price-script",
+            "script": "build/price-script/index.js",
+            "error_file": "logs/price-script/error.log",
+            "out_file": "logs/price-script/price-script.log"
+        },
+        {
+            "name": "server",
+            "script": "build/server/index.js",
+            "error_file": "logs/server/error.log",
+            "out_file": "logs/server/out.log"
+        }
+    ]
+}
