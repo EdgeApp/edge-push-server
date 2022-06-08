@@ -1,7 +1,11 @@
 {
   "name": "edge-push-notifications",
   "version": "1.0.0",
+  "private": true,
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "build/index.js",
   "scripts": {
     "price:script": "node build/index.js",
@@ -10,9 +14,6 @@
     "server:pm2": "pm2 start build/server/index.js --name server --log logs/server.log --time",
     "compile": "tsc"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@pm2/io": "^4.3.5",
     "axios": "^0.19.2",
