@@ -1,5 +1,5 @@
-import * as io from '@pm2/io'
-import * as schedule from 'node-schedule'
+import io from '@pm2/io'
+import { scheduleJob } from 'node-schedule'
 
 import { NotificationManager } from '../NotificationManager'
 import { checkPriceChanges } from './checkPriceChanges'
@@ -9,7 +9,7 @@ const CONFIG = require('../../serverConfig.json')
 
 // Schedule job to run
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-schedule.scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
+scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
 
 let isRunning = false
 let managers: NotificationManager[] = []

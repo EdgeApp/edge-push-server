@@ -1,4 +1,4 @@
-import * as io from '@pm2/io'
+import io from '@pm2/io'
 import axios from 'axios'
 import { asNumber } from 'cleaners'
 

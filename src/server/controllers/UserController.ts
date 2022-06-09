@@ -1,5 +1,5 @@
 import { asArray, asBoolean, asObject, asString } from 'cleaners'
-import * as express from 'express'
+import express from 'express'
 
 import { User } from '../../models'
 

@@ -1,4 +1,4 @@
-import * as io from '@pm2/io'
+import io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
 
 import { CurrencyThreshold, Device, User } from '../models'

@@ -1,5 +1,5 @@
 import { asBoolean, asMap, asObject, asOptional, asString } from 'cleaners'
-import * as Nano from 'nano'
+import Nano from 'nano'
 
 import { Base } from '.'
 

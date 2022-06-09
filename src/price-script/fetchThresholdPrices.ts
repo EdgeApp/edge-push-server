@@ -1,5 +1,4 @@
-import * as io from '@pm2/io'
-import Counter from '@pm2/io/build/main/utils/metrics/counter'
+import io from '@pm2/io'
 
 import { CurrencyThreshold } from '../models'
 import { NotificationPriceChange } from './checkPriceChanges'
@@ -7,6 +6,7 @@ import { getPrice } from './prices'
 
 const SLEEP_TIMEOUT = 1000 // in milliseconds
 
+type Counter = ReturnType<typeof io.counter>
 const processMetrics: { [id: string]: Counter | undefined } = {}
 
 async function sleep(ms = SLEEP_TIMEOUT) {

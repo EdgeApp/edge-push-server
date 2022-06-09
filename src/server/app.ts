@@ -1,7 +1,7 @@
-import * as io from '@pm2/io'
-import * as bodyParser from 'body-parser'
-import * as cors from 'cors'
-import * as express from 'express'
+import io from '@pm2/io'
+import bodyParser from 'body-parser'
+import cors from 'cors'
+import express from 'express'
 
 import { ApiKey } from '../models'
 import { DeviceController } from './controllers/DeviceController'
