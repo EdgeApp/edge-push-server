@@ -52,9 +52,8 @@ export async function getPrice(
         lookupDate
       }
     })
-    console.log(
-      `Cannot fetch prices for ${base}/${quote} - ${err.response.data.error}`
-    )
+    const reason: string = err.response.data.error
+    console.log(`Cannot fetch prices for ${base}/${quote} - ${reason}`)
     throw err
   }
 }

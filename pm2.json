@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "name": "pushServer",
+      "script": "./lib/server/index.js",
+      "out_file": "/var/log/pushServer.log"
+    },
+    {
+      "name": "priceDaemon",
+      "script": "./lib/price-script/index.js",
+      "out_file": "/var/log/priceDaemon.log"
+    }
+  ]
+}
