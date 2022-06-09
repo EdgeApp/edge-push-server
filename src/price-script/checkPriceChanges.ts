@@ -1,8 +1,9 @@
-import { CurrencyThreshold, Device, User } from '../models'
-import { fetchThresholdPrice } from './fetchThresholdPrices'
-import { NotificationManager } from '../NotificationManager'
 import * as io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
+
+import { CurrencyThreshold, Device, User } from '../models'
+import { NotificationManager } from '../NotificationManager'
+import { fetchThresholdPrice } from './fetchThresholdPrices'
 
 // Firebase Messaging API limits batch messages to 500
 const NOTIFICATION_LIMIT = 500
@@ -21,7 +22,10 @@ export interface NotificationPriceChange {
 
 export async function checkPriceChanges(manager: NotificationManager) {
   // Sends a notification to devices about a price change
-  async function sendNotification(thresholdPrice: NotificationPriceChange, deviceTokens: string[]) {
+  async function sendNotification(
+    thresholdPrice: NotificationPriceChange,
+    deviceTokens: string[]
+  ) {
     const { currencyCode, hourChange, priceChange, priceNow } = thresholdPrice
 
     const direction = priceChange > 0 ? 'up' : 'down'
@@ -39,10 +43,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
   // Fetch list of threshold items and their prices
   const thresholds = await CurrencyThreshold.where({
     selector: {
-      $or: [
-        { disabled: { $exists: false } },
-        { disabled: false }
-      ]
+      $or: [{ disabled: { $exists: false } }, { disabled: false }]
     },
     limit: THRESHOLD_FETCH_LIMIT
   })
@@ -53,10 +54,18 @@ export async function checkPriceChanges(manager: NotificationManager) {
     const currencyCode = threshold._id
     const anomalyPercent = threshold.anomaly ?? defaultAnomaly
     for (const hours in defaultThresholds) {
-      const priceData = await fetchThresholdPrice(threshold, hours, defaultThresholds[hours], anomalyPercent)
+      const priceData = await fetchThresholdPrice(
+        threshold,
+        hours,
+        defaultThresholds[hours],
+        anomalyPercent
+      )
       if (!priceData) continue
 
-      const { rows: usersDevices } = await User.devicesByCurrencyHours(currencyCode, hours)
+      const { rows: usersDevices } = await User.devicesByCurrencyHours(
+        currencyCode,
+        hours
+      )
       // Skip if no users registered to currency
       if (usersDevices.length === 0) continue
 
@@ -70,7 +79,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
       let done = false
       let successCount = 0
       let failureCount = 0
-      while(!done) {
+      while (!done) {
         const next = await tokenGenerator.next()
         done = !!next.done
 
@@ -83,7 +92,8 @@ export async function checkPriceChanges(manager: NotificationManager) {
           } catch (err) {
             io.notifyError(err, {
               custom: {
-                message: 'Failed to batch send notifications for currency hours threshold change',
+                message:
+                  'Failed to batch send notifications for currency hours threshold change',
                 currencyCode,
                 hours
               }
@@ -112,7 +122,9 @@ export async function checkPriceChanges(manager: NotificationManager) {
   }
 }
 
-async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string[], string[]> {
+async function* deviceTokenGenerator(
+  deviceIds: string[]
+): AsyncGenerator<string[], string[]> {
   const tokenSet: Set<string> = new Set()
   let tokens: string[] = []
   let bookmark: string | undefined
@@ -122,14 +134,14 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
       bookmark,
       selector: {
         _id: {
-          "$in": deviceIds
+          $in: deviceIds
         },
         tokenId: {
-          "$exists": true,
-          "$ne": null
+          $exists: true,
+          $ne: null
         }
       },
-      fields: [ 'tokenId' ],
+      fields: ['tokenId'],
       limit: MANGO_FIND_LIMIT
     })
     bookmark = response.bookmark
@@ -156,8 +168,8 @@ async function* deviceTokenGenerator(deviceIds: string[]): AsyncGenerator<string
 
 // Set decimal place to 2 significant digits
 function formatDisplayPrice(priceNow: number) {
-  let numSplit = priceNow.toString().split('.')
-  let sigIndex = numSplit[1].search(/[1-9]/)
+  const numSplit = priceNow.toString().split('.')
+  const sigIndex = numSplit[1].search(/[1-9]/)
   numSplit[1] = numSplit[1].substring(0, sigIndex + 2)
   return Number(numSplit.join('.'))
 }

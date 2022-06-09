@@ -1,12 +1,12 @@
-import * as express from 'express'
+import * as io from '@pm2/io'
 import * as bodyParser from 'body-parser'
 import * as cors from 'cors'
-import * as io from '@pm2/io'
+import * as express from 'express'
 
-import { UserController } from './controllers/UserController'
+import { ApiKey } from '../models'
 import { DeviceController } from './controllers/DeviceController'
 import { NotificationController } from './controllers/NotificationController'
-import { ApiKey } from '../models'
+import { UserController } from './controllers/UserController'
 
 export const app = express()
 
@@ -30,6 +30,7 @@ app.use('/v1', router)
 
 // Define our custom fields that we add to the Express Request object
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       apiKey: ApiKey
@@ -43,12 +44,10 @@ router.use(async (req, res, next) => {
   console.log(` => ${req.method} ${req.url}`)
 
   const apiKey = req.header('X-Api-Key')
-  if (!apiKey)
-    return res.sendStatus(401)
+  if (!apiKey) return res.sendStatus(401)
 
-  const key = await ApiKey.fetch(apiKey) as ApiKey
-  if (!key)
-    return res.sendStatus(401)
+  const key = await ApiKey.fetch(apiKey)
+  if (!key) return res.sendStatus(401)
 
   req.apiKey = key
 

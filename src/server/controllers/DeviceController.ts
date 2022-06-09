@@ -1,5 +1,5 @@
-import * as express from 'express'
 import { asObject, asString } from 'cleaners'
+import * as express from 'express'
 
 import { Device } from '../../models'
 
@@ -7,12 +7,11 @@ export const DeviceController = express.Router()
 
 DeviceController.post('/', async (req, res) => {
   try {
-    const Query = asObject({
+    const asQuery = asObject({
       deviceId: asString
     })
-    Query(req.query)
 
-    const { deviceId } = req.query as ReturnType<typeof Query>
+    const { deviceId } = asQuery(req.query)
 
     let device = await Device.fetch(deviceId)
     if (device) {
