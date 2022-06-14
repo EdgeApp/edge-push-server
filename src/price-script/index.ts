@@ -42,7 +42,7 @@ async function run() {
     for (const manager of managers) {
       await checkPriceChanges(manager)
     }
-  } catch (err) {
+  } catch (err: any) {
     io.notifyError(err)
     throw err
   }

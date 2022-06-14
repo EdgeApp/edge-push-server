@@ -89,7 +89,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
             const response = await sendNotification(priceData, next.value)
             successCount += response.successCount
             failureCount += response.failureCount
-          } catch (err) {
+          } catch (err: any) {
             io.notifyError(err, {
               custom: {
                 message:

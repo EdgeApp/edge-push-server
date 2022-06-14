@@ -42,7 +42,7 @@ export async function getPrice(
       throw new Error(`${base}/${quote} rate given was ${exchangeRate}`)
     }
     return rate
-  } catch (err) {
+  } catch (err: any) {
     // @ts-expect-error
     const lookupDate = new Date(at).toISOString()
     io.notifyError(err, {

@@ -69,7 +69,7 @@ export class Base implements ReturnType<typeof asModelData> {
       item = new this(doc)
       item.validate()
       return item
-    } catch (err) {
+    } catch (err: any) {
       if (err.statusCode === 404) {
         console.log(`Item with ID "${id}" does not exist`)
       } else {
@@ -141,7 +141,7 @@ export class Base implements ReturnType<typeof asModelData> {
       const response = await ItemClass.table.insert(this)
       this.processAPIResponse(response)
       return this
-    } catch (err) {
+    } catch (err: any) {
       switch (err.statusCode) {
         case 404:
           throw new Error('Database does not exist')
