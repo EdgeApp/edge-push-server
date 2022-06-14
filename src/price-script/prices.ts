@@ -2,12 +2,10 @@ import io from '@pm2/io'
 import axios from 'axios'
 import { asNumber } from 'cleaners'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CONFIG = require('../../serverConfig.json')
 const TIMEOUT = 10000 // in milliseconds
 
 const rates = axios.create({
-  baseURL: `https://rates1.edge.app/v${CONFIG.ratesServerVersion}/exchangeRate`,
+  baseURL: `https://rates1.edge.app/v1/exchangeRate`,
   timeout: TIMEOUT
 })
 

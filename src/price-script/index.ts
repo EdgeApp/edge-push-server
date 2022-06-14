@@ -1,51 +1,53 @@
 import io from '@pm2/io'
-import { scheduleJob } from 'node-schedule'
+import { makePeriodicTask } from 'edge-server-tools'
+import nano from 'nano'
 
+import { setupDatabases, syncedSettings } from '../couchSetup'
 import { NotificationManager } from '../NotificationManager'
+import { serverConfig } from '../serverConfig'
 import { checkPriceChanges } from './checkPriceChanges'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CONFIG = require('../../serverConfig.json')
-
-// Schedule job to run
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-scheduleJob(`*/${CONFIG.priceCheckInMinutes} * * * *`, run)
-
-let isRunning = false
-let managers: NotificationManager[] = []
 
 const runCounter = io.counter({
   id: 'price:script:counter',
   name: 'Price Script Runner Count'
 })
 
-async function start() {
-  managers = await Promise.all(
-    // @ts-expect-error
-    CONFIG.apiKeys.map(async partner =>
+async function main(): Promise<void> {
+  const { couchUri } = serverConfig
+
+  // Set up databases:
+  const connection = nano(couchUri)
+  await setupDatabases(connection)
+
+  // Read the API keys from settings:
+  const managers = await Promise.all(
+    syncedSettings.doc.apiKeys.map(async partner =>
       NotificationManager.init(partner.apiKey)
     )
   )
 
-  await run()
-}
-start().catch(error => console.error(error))
+  // Check the prices every few minutes:
+  const task = makePeriodicTask(
+    async () => {
+      runCounter.inc()
 
-async function run() {
-  if (isRunning) return
-  isRunning = true
-
-  runCounter.inc()
-
-  try {
-    if (managers.length === 0) throw new Error('No partner apiKeys')
-    for (const manager of managers) {
-      await checkPriceChanges(manager)
+      if (managers.length === 0) throw new Error('No partner apiKeys')
+      for (const manager of managers) {
+        await checkPriceChanges(manager)
+      }
+    },
+    60 * 1000 * syncedSettings.doc.priceCheckInMinutes,
+    {
+      onError(error) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        io.notifyError(error as any)
+      }
     }
-  } catch (err: any) {
-    io.notifyError(err)
-    throw err
-  }
-
-  isRunning = false
+  )
+  task.start()
 }
+
+main().catch(error => {
+  console.error(error)
+  process.exit(1)
+})

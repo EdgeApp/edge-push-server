@@ -2,6 +2,7 @@
 /lib/
 /logs/
 /serverConfig.json
+/pushServerConfig.json
 
 # Package managers:
 node_modules/
