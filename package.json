@@ -25,7 +25,7 @@
     "@pm2/io": "^4.3.5",
     "axios": "^0.21.2",
     "body-parser": "^1.19.0",
-    "cleaners": "^0.3.1",
+    "cleaners": "^0.3.12",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "firebase-admin": "^8.12.1",
