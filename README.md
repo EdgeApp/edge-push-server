@@ -6,6 +6,17 @@ This server sends push notifications to Edge client apps. It contains an HTTP se
 
 This server requires a working copies of Node.js, Yarn, PM2, and CouchDB. We also recommend using Caddy to terminate SSL connections.
 
+### Set up logging
+
+Run these commands as a server admin:
+
+```sh
+touch /var/log/pushServer.log
+touch /var/log/priceDaemon.log
+chown edgy /var/log/pushServer.log /var/log/priceDaemon.log
+cp ./docs/logrotate /etc/logrotate.d/pushServer
+```
+
 ### Manage server using `pm2`
 
 First, tell pm2 how to run the server script:
