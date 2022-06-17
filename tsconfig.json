@@ -1,20 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "sourceMap": true,
-    "outDir": "./build",
-    "declaration": true,
-    "composite": true,
-    "allowSyntheticDefaultImports": true,
-    "rootDir": "./src",
+    "lib": ["es2020"],
+    "target": "es2020",
+
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+
+    "noEmit": true,
     "strict": true
-  },
-  "include": [
-    "src/**/*",
-    "node_modules/@types/node/globals.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  }
 }

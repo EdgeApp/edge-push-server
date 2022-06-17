@@ -1,10 +1,22 @@
+import nano from 'nano'
+
+import { setupDatabases } from '../couchSetup'
+import { serverConfig } from '../serverConfig'
 import { app } from './app'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CONFIG = require('../../serverConfig.json')
+async function main(): Promise<void> {
+  const { couchUri, listenHost, listenPort } = serverConfig
 
-// START THE SERVER
-// =============================================================================
-app.listen(CONFIG.httpPort, () => {
-  console.log(`Express server listening on port: ${CONFIG.httpPort}`)
+  // Set up databases:
+  const connection = nano(couchUri)
+  await setupDatabases(connection)
+
+  // Start the HTTP server:
+  app.listen(listenPort, listenHost)
+  console.log(`HTTP server listening on port ${listenPort}`)
+}
+
+main().catch(error => {
+  console.error(error)
+  process.exit(1)
 })

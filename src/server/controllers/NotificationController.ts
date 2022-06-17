@@ -1,5 +1,5 @@
 import { asMap, asObject, asOptional, asString, asUnknown } from 'cleaners'
-import * as express from 'express'
+import express from 'express'
 
 import { User } from '../../models'
 import { NotificationManager } from '../../NotificationManager'

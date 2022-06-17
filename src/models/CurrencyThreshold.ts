@@ -1,13 +1,11 @@
 import { asBoolean, asMap, asNumber, asObject, asOptional } from 'cleaners'
-import * as Nano from 'nano'
+import Nano from 'nano'
 
+import { serverConfig } from '../serverConfig'
 import { Base } from '.'
 import { Defaults } from './Defaults'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CONFIG = require('../../serverConfig.json')
-
-const nanoDb = Nano(CONFIG.dbFullpath)
+const nanoDb = Nano(serverConfig.couchUri)
 const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
 
 const asThreshold = asObject({

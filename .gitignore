@@ -1,7 +1,16 @@
-.idea
-node_modules
+# Build output:
+/lib/
+/logs/
+/serverConfig.json
+/pushServerConfig.json
 
-build
-serverConfig.json
-tsconfig.tsbuildinfo
-logs
+# Package managers:
+node_modules/
+npm-debug.log
+package-lock.json
+yarn-error.log
+
+# Editors:
+.DS_Store
+.idea/
+.vscode/
