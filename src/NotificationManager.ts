@@ -1,5 +1,5 @@
-import * as io from '@pm2/io'
-import * as admin from 'firebase-admin'
+import io from '@pm2/io'
+import admin from 'firebase-admin'
 
 import { ApiKey } from './models'
 

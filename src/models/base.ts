@@ -1,5 +1,5 @@
 import { asObject, Cleaner } from 'cleaners'
-import * as Nano from 'nano'
+import Nano from 'nano'
 
 const asModelData = asObject<Nano.MaybeDocument>({})
 

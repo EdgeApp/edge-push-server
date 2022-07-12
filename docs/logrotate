@@ -1,0 +1,17 @@
+# /etc/logrotate.d/pushServer
+
+/var/log/pushServer.log {
+  copytruncate
+  daily
+  missingok
+  notifempty
+  rotate 10
+}
+
+/var/log/priceDaemon.log {
+  copytruncate
+  daily
+  missingok
+  notifempty
+  rotate 10
+}

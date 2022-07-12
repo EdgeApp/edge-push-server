@@ -1,5 +1,5 @@
 import { asObject, asString } from 'cleaners'
-import * as express from 'express'
+import express from 'express'
 
 import { Device } from '../../models'
 

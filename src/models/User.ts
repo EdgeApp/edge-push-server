@@ -1,13 +1,11 @@
 import { asBoolean, asMap, asObject, asOptional } from 'cleaners'
-import * as Nano from 'nano'
+import Nano from 'nano'
 
+import { serverConfig } from '../serverConfig'
 import { Base } from '.'
 import { Device } from './Device'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CONFIG = require('../../serverConfig.json')
-
-const nanoDb = Nano(CONFIG.dbFullpath)
+const nanoDb = Nano(serverConfig.couchUri)
 const dbUserSettings =
   nanoDb.db.use<ReturnType<typeof asUser>>('db_user_settings')
 
