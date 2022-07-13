@@ -4,7 +4,7 @@ import cors from 'cors'
 import express, { type RequestHandler } from 'express'
 import morgan from 'morgan'
 
-import { asConfig } from '../config'
+import { asServerConfig } from '../config'
 
 const BodyParseError = {
   message: 'error parsing body data',
@@ -26,7 +26,7 @@ const corsHandler: any = cors()
 
 export const createServer = (
   router: express.RequestHandler,
-  config: ReturnType<typeof asConfig>
+  config: ReturnType<typeof asServerConfig>
 ): express.Application => {
   const app = express()
   // Gzip compression
