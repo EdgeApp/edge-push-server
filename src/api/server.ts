@@ -1,7 +1,7 @@
 import bodyParser from 'body-parser'
 import compression from 'compression'
 import cors from 'cors'
-import express, { type RequestHandler } from 'express'
+import express, { RequestHandler } from 'express'
 import morgan from 'morgan'
 
 import { asServerConfig } from '../config'

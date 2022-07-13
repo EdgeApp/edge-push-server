@@ -1,10 +1,5 @@
 import { asArray, asObject, asString, asUnknown } from 'cleaners'
-import {
-  type HttpRequest,
-  type HttpResponse,
-  pickMethod,
-  pickPath
-} from 'serverlet'
+import { HttpRequest, HttpResponse, pickMethod, pickPath } from 'serverlet'
 
 import {
   jsonResponse,

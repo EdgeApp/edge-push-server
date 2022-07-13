@@ -79,13 +79,14 @@ export async function setupDatabases(
     replicatorSetup: syncedReplicators,
     disableWatching
   }
+  const uri = connection.config.url
 
-  await setupDatabase(connection, settingsSetup, options)
+  await setupDatabase(uri, settingsSetup, options)
   await Promise.all([
-    setupDatabase(connection, apiKeysSetup, options),
-    setupDatabase(connection, thresholdsSetup, options),
-    setupDatabase(connection, devicesSetup, options),
-    setupDatabase(connection, usersSetup, options),
-    setupDatabase(connection, defaultsSetup, options)
+    setupDatabase(uri, apiKeysSetup, options),
+    setupDatabase(uri, thresholdsSetup, options),
+    setupDatabase(uri, devicesSetup, options),
+    setupDatabase(uri, usersSetup, options),
+    setupDatabase(uri, defaultsSetup, options)
   ])
 }
