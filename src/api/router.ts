@@ -1,4 +1,4 @@
-import { asArray, asObject, asString, asUnknown } from 'cleaners'
+import { asArray, asObject, asString } from 'cleaners'
 import {
   type HttpRequest,
   type HttpResponse,
@@ -10,10 +10,13 @@ import {
   jsonResponse,
   statusCodes,
   statusResponse
-} from '../types/response-types'
+} from '../types/http/response-types'
+import { asAction } from '../types/task/Action'
+import { asActionEffect } from '../types/task/ActionEffect'
 import {
-  DbDoc,
+  asTaskDoc,
   logger,
+  TaskDoc,
   wrappedDeleteFromDb,
   wrappedGetFromDb,
   wrappedSaveToDb
@@ -51,31 +54,34 @@ const getTaskRoute = async (request: HttpRequest): Promise<HttpResponse> => {
 }
 
 // Construct a body and returns it as an HttpResponse.
-// The body should have triggers, action, and taskId.
+// The body should have actionEffects, action, userId, _id and taskId.
 const createTaskRoute = async (request: HttpRequest): Promise<HttpResponse> => {
   try {
     const asBody = asObject({
       taskId: asString,
-      triggers: asArray(asUnknown),
-      action: asUnknown
+      actionEffects: asArray(asActionEffect),
+      action: asAction
     })
 
     const queryObject = getQueryParamObject(
-      ['taskId', 'triggers', 'action'],
+      ['taskId', 'actionEffects', 'action'],
       request.path
     )
-    const triggersAsString = queryObject.triggers
-    const triggersAsArray = convertStringToArray(triggersAsString)
-    queryObject.triggers = triggersAsArray ?? []
-    const { taskId, triggers, action } = asBody(queryObject)
+    const actionEffectsAsString = queryObject.actionEffects
+    const actionEffectsAsArray = convertStringToArray(actionEffectsAsString)
+    queryObject.actionEffects = actionEffectsAsArray ?? []
+    const { taskId, actionEffects, action } = asBody(queryObject)
+    const cleanedAction = asAction(action)
 
-    const doc: DbDoc = {
-      taskId,
+    const doc: TaskDoc = asTaskDoc({
+      taskId: taskId,
       userId: request.headers.userId,
-      triggers,
-      action,
+      actionEffects: actionEffects.map(actionEffect =>
+        asActionEffect(actionEffect)
+      ),
+      cleanedAction,
       _id: `${request.headers.userId}:${taskId}` // To help with partitioning
-    }
+    })
 
     await wrappedSaveToDb([doc])
     return statusResponse(statusCodes.SUCCESS, 'Successfully created the task')
@@ -85,6 +91,8 @@ const createTaskRoute = async (request: HttpRequest): Promise<HttpResponse> => {
   }
 }
 
+// Remove tasks from the database. If the taskIds array is empty, it
+// will delete all tasks under the userId.
 const deleteTaskRoute = async (request: HttpRequest): Promise<HttpResponse> => {
   try {
     const asQuery = asObject({

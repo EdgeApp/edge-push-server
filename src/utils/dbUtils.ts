@@ -1,55 +1,37 @@
-import { asArray, asMaybe, asObject, asString, asUnknown } from 'cleaners'
+import { Cleaner } from 'cleaners'
+import { asCouchDoc, CouchDoc } from 'edge-server-tools'
 import nano from 'nano'
 
-import { config } from './../config'
+import { asTask, Task } from '../types/task/Task'
+import { serverConfig } from './../serverConfig'
 
-export interface DbDoc
-  extends nano.IdentifiedDocument,
-    nano.MaybeRevisionedDocument {
-  taskId: string
-  userId: string
-  triggers: any[]
-  action: any
-}
-
-export const asDbDoc = (raw: any): DbDoc => {
-  return {
-    ...asObject({
-      taskId: asString,
-      userId: asString,
-      triggers: asArray(asUnknown),
-      action: asUnknown,
-      _id: asString
-    })(raw),
-    ...asObject(asMaybe(asString))(raw)
-  }
-}
-
-const { couchUri } = config
-
+const { couchUri } = serverConfig
 const nanoDb = nano(couchUri)
-const dbTasks: nano.DocumentScope<DbDoc> = nanoDb.db.use('db_tasks')
 
 // ------------------------------------------------------------------------------
-// Public API
+// Public APIs for the 'db_tasks' database
 // ------------------------------------------------------------------------------
+export type TaskDoc = CouchDoc<Task>
+export const asTaskDoc: Cleaner<CouchDoc<Task>> = asCouchDoc(asTask)
+export const dbTasks: nano.DocumentScope<TaskDoc> = nanoDb.db.use('db_tasks')
 
-export const wrappedSaveToDb = (docs: DbDoc[]): void => saveToDb(dbTasks, docs)
+export const wrappedSaveToDb = (docs: TaskDoc[]): void =>
+  saveToDb(dbTasks, docs)
 export const wrappedGetFromDb = async (
   keys: string[],
   userId: string
-): Promise<DbDoc[]> => getFromDb(dbTasks, keys, userId)
+): Promise<TaskDoc[]> => getFromDb(dbTasks, keys, userId, asTaskDoc)
 export const wrappedDeleteFromDb = async (
   keys: string[],
   userId: string
 ): Promise<void> => deleteFromDb(dbTasks, keys, userId)
 
 // ------------------------------------------------------------------------------
-// Public Helpers
+// Public Helpers - Agnostic of the database
 // ------------------------------------------------------------------------------
-export const saveToDb = (
-  db: nano.DocumentScope<DbDoc>,
-  docs: DbDoc[]
+export const saveToDb = <T>(
+  db: nano.DocumentScope<CouchDoc<T>>,
+  docs: Array<CouchDoc<T>>
 ): void => {
   if (docs.length === 0) return
   db.bulk({ docs })
@@ -59,16 +41,18 @@ export const saveToDb = (
     .catch(logger)
 }
 
-export const deleteFromDb = async (
-  db: nano.DocumentScope<DbDoc>,
+export const deleteFromDb = async <T>(
+  db: nano.DocumentScope<CouchDoc<T>>,
   keys: string[],
   userId: string
 ): Promise<void> => {
-  const docs = await getFromDb(db, keys, userId)
+  // TODO: NOT SURE HOW TO HANDLE THE TYPE ERROR. SOMEONE HELP.
+  // @ts-ignore
+  const docs = await getFromDb(db, keys, userId, asTaskDoc)
   const docsToDelete: any[] = []
 
   docs.forEach(element => {
-    docsToDelete.push({ _id: element._id, _deleted: true, _rev: element._rev })
+    docsToDelete.push({ _id: element.id, _deleted: true, _rev: element.rev })
   })
 
   db.bulk({ docs: docsToDelete })
@@ -78,21 +62,22 @@ export const deleteFromDb = async (
     .catch(logger)
 }
 
-export const getFromDb = async (
-  db: nano.DocumentScope<DbDoc>,
+export const getFromDb = async <T>(
+  db: nano.DocumentScope<CouchDoc<T>>,
   keys: string[],
-  userId: string
-): Promise<DbDoc[]> => {
+  userId: string,
+  cleaner: Cleaner<CouchDoc<T>>
+): Promise<Array<CouchDoc<T>>> => {
   // Grab existing db data for requested dates
   const response = await db.partitionedList(userId).catch(logger)
-  if (response == null) return []
+  if (response == null || !(response instanceof Object)) return []
   return response.rows
     .filter(element => !('error' in element) && element.doc != null)
     .filter(
       element => keys.length === 0 || keys.includes(element.id.split(':')[1])
     )
     .map(({ doc }) => doc)
-    .map(asDbDoc)
+    .map(cleaner)
 }
 
 export const logger = (...args: any): void => {
