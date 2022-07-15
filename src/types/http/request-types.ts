@@ -1,6 +1,6 @@
 import { ExpressRequest } from 'serverlet/express'
 
-import { ApiKey } from '../models'
+import { ApiKey } from '../../models'
 
 export interface ExtendedRequest extends ExpressRequest {
   readonly body: any
