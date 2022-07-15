@@ -8,6 +8,7 @@ import {
 } from 'edge-server-tools'
 import { ServerScope } from 'nano'
 
+import { tasksListening, tasksPublishing } from './database/views/couch-tasks'
 import { serverConfig } from './serverConfig'
 
 // ---------------------------------------------------------------------------
@@ -48,21 +49,18 @@ export const settingsSetup: DatabaseSetup = {
 
 const apiKeysSetup: DatabaseSetup = { name: 'db_api_keys' }
 
-const thresholdsSetup: DatabaseSetup = { name: 'db_currency_thresholds' }
-
-const devicesSetup: DatabaseSetup = { name: 'db_devices' }
-
-const usersSetup: DatabaseSetup = {
-  name: 'db_user_settings'
-  // documents: {
-  //   '_design/filter': makeJsDesign('by-currency', ?),
-  //   '_design/map': makeJsDesign('currency-codes', ?)
-  // }
-}
-
-const defaultsSetup: DatabaseSetup = {
-  name: 'defaults'
-  // syncedDocuments: ['thresholds']
+const tasksSetup: DatabaseSetup = {
+  name: 'db_tasks',
+  // Turn on partition by userId for performance and security reasons.
+  // https://docs.couchdb.org/en/3.2.2/partitioned-dbs/index.html
+  options: {
+    partitioned: true
+  },
+  // Set up the views
+  documents: {
+    '_design/tasks_listening': tasksListening,
+    '_design/tasks_publishing': tasksPublishing
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -79,13 +77,12 @@ export async function setupDatabases(
     replicatorSetup: syncedReplicators,
     disableWatching
   }
-
+  // @ts-expect-error
   await setupDatabase(connection, settingsSetup, options)
   await Promise.all([
+    // @ts-expect-error
     setupDatabase(connection, apiKeysSetup, options),
-    setupDatabase(connection, thresholdsSetup, options),
-    setupDatabase(connection, devicesSetup, options),
-    setupDatabase(connection, usersSetup, options),
-    setupDatabase(connection, defaultsSetup, options)
+    // @ts-expect-error
+    setupDatabase(connection, tasksSetup, options)
   ])
 }

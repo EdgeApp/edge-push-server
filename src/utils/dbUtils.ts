@@ -106,6 +106,19 @@ export const logger = (...args: any): void => {
   console.log(result)
 }
 
+/**
+ * Convert a {@link Task} object into a {@link TaskDoc} object that
+ * implements {@link CouchDoc}.
+ * @param doc - A {@link Task} object.
+ * @returns {TaskDoc} - A {@link TaskDoc} object wrapping `doc`.
+ */
+export const packChange = <T>(doc: T, id: string): CouchDoc<T> => {
+  return {
+    id: id,
+    doc: doc
+  }
+}
+
 // ------------------------------------------------------------------------------
 // Private Helpers
 // ------------------------------------------------------------------------------
