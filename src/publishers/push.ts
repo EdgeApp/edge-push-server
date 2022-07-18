@@ -46,7 +46,9 @@ const RETRY_LIMIT = 5
  */
 export const runPushPublisher = async (): Promise<number> => {
   for await (const doc of viewToStream(async params =>
-    dbTasks.view('tasks_publishing', 'tasks_publishing', params)
+    Promise.resolve(
+      dbTasks.view('tasks_publishing', 'tasks_publishing', params)
+    )
   )) {
     const clean: TaskDoc = asTaskDoc(doc)
     const currentTask = clean.doc
@@ -81,6 +83,7 @@ export const runPushPublisher = async (): Promise<number> => {
 const canExecute = (task: Task): boolean => {
   return (
     task.action.inProgress == null &&
+    task.action.type === 'push' &&
     task.action.repeat == null &&
     task.action.inProgress === false
   )
