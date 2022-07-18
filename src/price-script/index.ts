@@ -21,8 +21,8 @@ async function main(): Promise<void> {
 
   // Read the API keys from settings:
   const managers = await Promise.all(
-    syncedSettings.doc.apiKeys.map(async partner =>
-      NotificationManager.init(partner.apiKey)
+    syncedSettings.doc.apiKeys.map(
+      async partner => await NotificationManager.init(partner.apiKey)
     )
   )
 

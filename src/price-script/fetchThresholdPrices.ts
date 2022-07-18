@@ -10,7 +10,7 @@ type Counter = ReturnType<typeof io.counter>
 const processMetrics: { [id: string]: Counter | undefined } = {}
 
 async function sleep(ms = SLEEP_TIMEOUT) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return await new Promise(resolve => setTimeout(resolve, ms))
 }
 export async function fetchThresholdPrice(
   currencyThreshold: CurrencyThreshold,
@@ -87,7 +87,7 @@ export async function fetchThresholdPrice(
 
     const counterId = `threshold:crossed:${currencyCode}:${hours}`
     let counter = processMetrics[counterId]
-    if (!counter) {
+    if (counter == null) {
       counter = processMetrics[counterId] = io.counter({
         id: counterId,
         name: `Threshold Crossed for ${currencyCode} - ${hours} Hour`

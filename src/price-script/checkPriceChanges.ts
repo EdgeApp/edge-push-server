@@ -37,7 +37,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
 
-    return manager.send(title, body, deviceTokens, data)
+    return await manager.send(title, body, deviceTokens, data)
   }
 
   // Fetch list of threshold items and their prices
@@ -60,7 +60,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
         defaultThresholds[hours],
         anomalyPercent
       )
-      if (!priceData) continue
+      if (priceData == null) continue
 
       const { rows: usersDevices } = await User.devicesByCurrencyHours(
         currencyCode,
