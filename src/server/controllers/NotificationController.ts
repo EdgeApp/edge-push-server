@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { asMap, asObject, asOptional, asString, asUnknown } from 'cleaners'
 import express from 'express'
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { asObject, asString } from 'cleaners'
 import express from 'express'
 

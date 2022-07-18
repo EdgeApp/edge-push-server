@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { asArray, asBoolean, asObject, asString } from 'cleaners'
 import express from 'express'
 
@@ -5,6 +6,7 @@ import { User } from '../../models'
 
 export const UserController = express.Router()
 
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 UserController.get('/', async (req, res) => {
   try {
     const asQuery = asObject({
