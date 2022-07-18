@@ -1,5 +1,7 @@
 # edge-push-server
 
+[![Build Status](https://app.travis-ci.com/EdgeApp/edge-push-server.svg?branch=master)](https://app.travis-ci.com/EdgeApp/edge-push-server)
+
 This server sends push notifications to Edge client apps. It contains an HTTP server that clients can use to register for notifications, and a background process that checks for price changes and actually sends the messages.
 
 ## Setup
