@@ -37,7 +37,7 @@ export async function getPrice(
     } = await rates.get(`?currency_pair=${base}_${quote}${dateString}`)
     const rate = asNumber(parseFloat(exchangeRate))
     if (!/^\d+(\.\d+)?/.test(exchangeRate.toString())) {
-      throw new Error(`${base}/${quote} rate given was ${exchangeRate}`)
+      throw new Error(`${base}/${quote} rate given was ${String(exchangeRate)}`)
     }
     return rate
   } catch (err: any) {

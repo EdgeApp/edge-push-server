@@ -41,7 +41,7 @@ NotificationController.post('/send', async (req, res) => {
     res.json(response)
   } catch (err) {
     console.error(
-      `Failed to send notifications to user ${req.body.userId} devices`,
+      `Failed to send notifications to user ${String(req.body.userId)} devices`,
       err
     )
     res.status(500).json(err)
