@@ -82,9 +82,9 @@ export const runPushPublisher = async (): Promise<number> => {
  */
 const canExecute = (task: Task): boolean => {
   return (
-    task.action.inProgress == null &&
+    task.action.inProgress != null &&
     task.action.type === 'push' &&
-    task.action.repeat == null &&
+    task.action.repeat != null &&
     task.action.inProgress === false
   )
 }
