@@ -1,6 +1,6 @@
 import nano from 'nano'
 
-import { setupDatabases } from '../couchSetup'
+import { setupDatabases } from '../db/couchSetup'
 import { serverConfig } from '../serverConfig'
 import { app } from './app'
 

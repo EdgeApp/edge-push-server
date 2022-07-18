@@ -2,7 +2,7 @@ import io from '@pm2/io'
 import { makePeriodicTask } from 'edge-server-tools'
 import nano from 'nano'
 
-import { setupDatabases, syncedSettings } from '../couchSetup'
+import { setupDatabases, syncedSettings } from '../db/couchSetup'
 import { NotificationManager } from '../NotificationManager'
 import { serverConfig } from '../serverConfig'
 import { checkPriceChanges } from './checkPriceChanges'

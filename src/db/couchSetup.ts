@@ -8,7 +8,7 @@ import {
 } from 'edge-server-tools'
 import { ServerScope } from 'nano'
 
-import { serverConfig } from './serverConfig'
+import { serverConfig } from '../serverConfig'
 
 // ---------------------------------------------------------------------------
 // Synced documents
