@@ -10,7 +10,7 @@
   "scripts": {
     "build": "sucrase -q -t typescript,imports -d ./lib ./src",
     "clean": "rimraf lib",
-    "fix": "eslint . --fix",
+    "fix": "yarn-deduplicate && eslint . --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types prepare",
     "prepare": "husky install && npm-run-all clean build",
@@ -53,6 +53,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.2",
     "sucrase": "^3.21.0",
-    "typescript": "^4.7.3"
+    "typescript": "^4.7.3",
+    "yarn-deduplicate": "^5.0.0"
   }
 }
