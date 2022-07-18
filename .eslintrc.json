@@ -4,6 +4,15 @@
     "standard-kit/prettier/node",
     "standard-kit/prettier/typescript"
   ],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "warn",
+        "@typescript-eslint/strict-boolean-expressions": "warn"
+      }
+    }
+  ],
   "parserOptions": {
     "project": "tsconfig.json"
   },
@@ -11,8 +20,6 @@
     "simple-import-sort"
   ],
   "rules": {
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "@typescript-eslint/strict-boolean-expressions": "warn",
     "simple-import-sort/sort": "error"
   }
 }
