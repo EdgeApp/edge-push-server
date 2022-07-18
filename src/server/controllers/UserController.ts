@@ -1,7 +1,9 @@
 import { asArray, asBoolean, asObject, asString, asValue } from 'cleaners'
+import { Serverlet } from 'serverlet'
 
 import { User } from '../../models/User'
-import { asyncRoute } from '../asyncRoute'
+import { ApiRequest } from '../../types/requestTypes'
+import { jsonResponse } from '../../types/responseTypes'
 
 /**
  * The GUI names this `getNotificationState`,
@@ -11,14 +13,15 @@ import { asyncRoute } from '../asyncRoute'
  * Request body: none
  * Response body: { notifications: { enabled: boolean } }
  */
-export const fetchStateV1Route = asyncRoute(async (req, res) => {
-  const { userId } = asUserIdQuery(req.query)
+export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
+  const { query } = request
+  const { userId } = asUserIdQuery(query)
   const result = await User.fetch(userId)
 
   console.log(`Got user settings for ${userId}`)
 
-  res.json(result)
-})
+  return jsonResponse(result)
+}
 
 /**
  * The GUI names this `attachToUser`, and calls it at login.
@@ -27,8 +30,9 @@ export const fetchStateV1Route = asyncRoute(async (req, res) => {
  * Request body: none
  * Response body: unused
  */
-export const attachUserV1Route = asyncRoute(async (req, res) => {
-  const { deviceId, userId } = asAttachUserQuery(req.query)
+export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
+  const { query } = request
+  const { deviceId, userId } = asAttachUserQuery(query)
 
   let user = await User.fetch(userId)
   if (!user) user = new User(null, userId)
@@ -37,8 +41,8 @@ export const attachUserV1Route = asyncRoute(async (req, res) => {
 
   console.log(`Successfully attached device "${deviceId}" to user "${userId}"`)
 
-  res.json(user)
-})
+  return jsonResponse(user)
+}
 
 /**
  * The GUI names this `registerNotifications`,
@@ -48,9 +52,12 @@ export const attachUserV1Route = asyncRoute(async (req, res) => {
  * Request body: { currencyCodes: string[] }
  * Response body: unused
  */
-export const registerCurrenciesV1Route = asyncRoute(async (req, res) => {
-  const { userId } = asUserIdQuery(req.query)
-  const { currencyCodes } = asRegisterCurrenciesBody(req.body)
+export const registerCurrenciesV1Route: Serverlet<
+  ApiRequest
+> = async request => {
+  const { json, query } = request
+  const { userId } = asUserIdQuery(query)
+  const { currencyCodes } = asRegisterCurrenciesBody(json)
 
   const user = await User.fetch(userId)
   await user.registerNotifications(currencyCodes)
@@ -59,8 +66,8 @@ export const registerCurrenciesV1Route = asyncRoute(async (req, res) => {
     `Registered notifications for user ${userId}: ${String(currencyCodes)}`
   )
 
-  res.json(user)
-})
+  return jsonResponse(user)
+}
 
 /**
  * The GUI names this `fetchSettings`,
@@ -70,9 +77,11 @@ export const registerCurrenciesV1Route = asyncRoute(async (req, res) => {
  * Request body: none
  * Response body: { '24': number, '1': number }
  */
-export const fetchCurrencyV1Route = asyncRoute(async (req, res) => {
-  const { userId } = asUserIdQuery(req.query)
-  const { currencyCode } = asCurrencyParams(req.params)
+export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
+  const { path, query } = request
+  const { userId } = asUserIdQuery(query)
+  const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
+  const currencyCode = match != null ? match[1] : ''
 
   const user = await User.fetch(userId)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
@@ -84,8 +93,8 @@ export const fetchCurrencyV1Route = asyncRoute(async (req, res) => {
     `Got notification settings for ${currencyCode} for user ${userId}`
   )
 
-  res.json(currencySettings)
-})
+  return jsonResponse(currencySettings)
+}
 
 /**
  * The GUI names this `enableNotifications`,
@@ -95,10 +104,12 @@ export const fetchCurrencyV1Route = asyncRoute(async (req, res) => {
  * Request body: { hours: string, enabled: boolean }
  * Response body: unused
  */
-export const enableCurrencyV1Route = asyncRoute(async (req, res) => {
-  const { userId } = asUserIdQuery(req.query)
-  const { currencyCode } = asCurrencyParams(req.params)
-  const { hours, enabled } = asEnableCurrencyBody(req.body)
+export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
+  const { json, path, query } = request
+  const { userId } = asUserIdQuery(query)
+  const { hours, enabled } = asEnableCurrencyBody(json)
+  const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
+  const currencyCode = match != null ? match[1] : ''
 
   const user = await User.fetch(userId)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
@@ -113,8 +124,8 @@ export const enableCurrencyV1Route = asyncRoute(async (req, res) => {
     `Updated notification settings for user ${userId} for ${currencyCode}`
   )
 
-  res.json(currencySettings)
-})
+  return jsonResponse(currencySettings)
+}
 
 /**
  * This GUI calls this `setNotificationState`,
@@ -124,11 +135,12 @@ export const enableCurrencyV1Route = asyncRoute(async (req, res) => {
  * Request body: { enabled: boolean }
  * Response body: unused
  */
-export const toggleStateV1Route = asyncRoute(async (req, res) => {
-  console.log(req.body)
+export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
+  const { json, query } = request
+  console.log(json)
 
-  const { userId } = asUserIdQuery(req.query)
-  const { enabled } = asToggleStateBody(req.body)
+  const { userId } = asUserIdQuery(query)
+  const { enabled } = asToggleStateBody(json)
 
   let user = await User.fetch(userId)
   if (!user) user = new User(null, userId)
@@ -137,8 +149,8 @@ export const toggleStateV1Route = asyncRoute(async (req, res) => {
 
   console.log(`User notifications toggled to: ${String(enabled)}`)
 
-  res.json(user)
-})
+  return jsonResponse(user)
+}
 
 const asAttachUserQuery = asObject({
   deviceId: asString,
@@ -151,10 +163,6 @@ const asUserIdQuery = asObject({
 
 const asRegisterCurrenciesBody = asObject({
   currencyCodes: asArray(asString)
-})
-
-const asCurrencyParams = asObject({
-  currencyCode: asString
 })
 
 const asEnableCurrencyBody = asObject({

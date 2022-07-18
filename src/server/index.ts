@@ -1,8 +1,11 @@
+import express from 'express'
 import nano from 'nano'
+import { withCors } from 'serverlet'
+import { ExpressRequest, makeExpressRoute } from 'serverlet/express'
 
 import { setupDatabases } from '../db/couchSetup'
 import { serverConfig } from '../serverConfig'
-import { app } from './app'
+import { allRoutes } from './urls'
 
 async function main(): Promise<void> {
   const { couchUri, listenHost, listenPort } = serverConfig
@@ -10,6 +13,17 @@ async function main(): Promise<void> {
   // Set up databases:
   const connection = nano(couchUri)
   await setupDatabases(connection)
+
+  // Bind the database to the request:
+  const server = withCors<ExpressRequest>(request =>
+    allRoutes({ ...request, connection })
+  )
+
+  // Set up Express:
+  const app = express()
+  app.enable('trust proxy')
+  app.use(express.json({ limit: '1mb' }))
+  app.use('/', makeExpressRoute(server))
 
   // Start the HTTP server:
   app.listen(listenPort, listenHost)

@@ -1,8 +1,10 @@
 import { asObject, asOptional, asString, asUnknown } from 'cleaners'
+import { Serverlet } from 'serverlet'
 
 import { User } from '../../models/User'
 import { NotificationManager } from '../../NotificationManager'
-import { asyncRoute } from '../asyncRoute'
+import { ApiRequest } from '../../types/requestTypes'
+import { errorResponse, jsonResponse } from '../../types/responseTypes'
 
 /**
  * The login server names this `sendNotification`,
@@ -12,14 +14,15 @@ import { asyncRoute } from '../asyncRoute'
  * Request body: asSendNotificationBody
  * Response body: unused
  */
-export const sendNotificationV1Route = asyncRoute(async (req, res) => {
-  const { title, body, data, userId } = asSendNotificationBody(req.body)
+export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
+  const { apiKey, json } = request
+  const { title, body, data, userId } = asSendNotificationBody(json)
 
-  if (!req.apiKey.admin) return res.sendStatus(401)
-  const manager = await NotificationManager.init(req.apiKey)
+  if (!apiKey.admin) return errorResponse('Not an admin', { status: 401 })
+  const manager = await NotificationManager.init(apiKey)
 
   const user = await User.fetch(userId)
-  if (!user) return res.status(404).send('User does not exist.')
+  if (!user) return errorResponse('User does not exist.', { status: 404 })
 
   const tokens: string[] = []
   const devices = await user.fetchDevices()
@@ -35,8 +38,8 @@ export const sendNotificationV1Route = asyncRoute(async (req, res) => {
     `Sent notifications to user ${userId} devices: ${successCount} success - ${failureCount} failure`
   )
 
-  res.json(response)
-})
+  return jsonResponse(response)
+}
 
 const asSendNotificationBody = asObject({
   title: asString,
