@@ -51,7 +51,7 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
     currencyCode: string
   ): Promise<CurrencyThreshold> {
     const threshold = new CurrencyThreshold(undefined, currencyCode)
-    return threshold.save()
+    return await threshold.save()
   }
 
   public async update(

@@ -61,7 +61,7 @@ export class User extends Base implements ReturnType<typeof asUser> {
     currencyCode: string,
     hours: string
   ) {
-    return User.table.view<IDevicesByCurrencyHoursViewResponse>(
+    return await User.table.view<IDevicesByCurrencyHoursViewResponse>(
       'filter',
       'by-currency',
       { key: [currencyCode, hours] }

@@ -41,7 +41,7 @@ export class Base implements ReturnType<typeof asModelData> {
   }
 
   public processAPIResponse(response: Nano.DocumentInsertResponse) {
-    if (response.ok === true) {
+    if (response.ok) {
       this._id = response.id
       this._rev = response.rev
     }
@@ -85,7 +85,6 @@ export class Base implements ReturnType<typeof asModelData> {
   ): Promise<Array<InstanceType<T>>> {
     const response = await this.table.list({ include_docs: true })
     return response.rows.map(row => {
-      // @ts-ignore
       const item: InstanceType<T> = new this(row.doc)
       item.validate()
       return item
@@ -98,7 +97,6 @@ export class Base implements ReturnType<typeof asModelData> {
   ): Promise<Array<InstanceType<T>>> {
     const response = await this.table.find(where)
     return response.docs.map(doc => {
-      // @ts-ignore
       const item: InstanceType<T> = new this(doc)
       item.validate()
       return item
@@ -151,7 +149,7 @@ export class Base implements ReturnType<typeof asModelData> {
             'Document already exists. Fetching current `_rev` and resaving.'
           )
           const { _rev } = await ItemClass.fetch(this._id)
-          return this.save('_rev', _rev)
+          return await this.save('_rev', _rev)
         }
         default:
           throw err

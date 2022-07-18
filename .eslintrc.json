@@ -1,8 +1,20 @@
 {
   "extends": [
     "standard-kit/prettier",
-    "standard-kit/prettier/node",
-    "standard-kit/prettier/typescript"
+    "standard-kit/prettier/typescript",
+    "standard-kit/prettier/node"
+  ],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "warn",
+        "@typescript-eslint/no-dynamic-delete": "warn",
+        "@typescript-eslint/restrict-template-expressions": "warn",
+        "@typescript-eslint/prefer-optional-chain": "warn",
+        "@typescript-eslint/strict-boolean-expressions": "warn"
+      }
+    }
   ],
   "parserOptions": {
     "project": "tsconfig.json"
@@ -11,8 +23,6 @@
     "simple-import-sort"
   ],
   "rules": {
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "@typescript-eslint/strict-boolean-expressions": "warn",
-    "simple-import-sort/sort": "error"
+    "simple-import-sort/imports": "error"
   }
 }
