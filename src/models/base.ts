@@ -85,7 +85,6 @@ export class Base implements ReturnType<typeof asModelData> {
   ): Promise<Array<InstanceType<T>>> {
     const response = await this.table.list({ include_docs: true })
     return response.rows.map(row => {
-      // @ts-ignore
       const item: InstanceType<T> = new this(row.doc)
       item.validate()
       return item
@@ -98,7 +97,6 @@ export class Base implements ReturnType<typeof asModelData> {
   ): Promise<Array<InstanceType<T>>> {
     const response = await this.table.find(where)
     return response.docs.map(doc => {
-      // @ts-ignore
       const item: InstanceType<T> = new this(doc)
       item.validate()
       return item
