@@ -26,21 +26,19 @@ export class Base implements ReturnType<typeof asModelData> {
 
     return new Proxy(this, {
       set(target: Base, key: PropertyKey, value: any): any {
-        // @ts-expect-error
         return key in target ? (target[key] = value) : target.set(key, value)
       },
       get(target: Base, key: PropertyKey): any {
-        // @ts-expect-error
         return key in target ? target[key] : target.get(key)
       }
     })
   }
 
-  public validate() {
+  public validate(): void {
     ;(this.constructor as typeof Base).asType(this.dataValues)
   }
 
-  public processAPIResponse(response: Nano.DocumentInsertResponse) {
+  public processAPIResponse(response: Nano.DocumentInsertResponse): void {
     if (response.ok === true) {
       this._id = response.id
       this._rev = response.rev
@@ -106,7 +104,6 @@ export class Base implements ReturnType<typeof asModelData> {
   }
 
   public get(key: PropertyKey): any {
-    // @ts-expect-error
     return this.dataValues[key]
   }
 
@@ -115,12 +112,10 @@ export class Base implements ReturnType<typeof asModelData> {
       for (const prop in key) {
         // eslint-disable-next-line no-prototype-builtins
         if (key.hasOwnProperty(prop)) {
-          // @ts-expect-error
           this.dataValues[prop] = key[prop]
         }
       }
     } else {
-      // @ts-expect-error
       this.dataValues[key] = value
     }
 

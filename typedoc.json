@@ -1,0 +1,4 @@
+{
+    "entryPoints": ["src/api/", "src/database/views/", "src/types/**/*.ts", "src/utils/**/*.ts", "src/publishers/**"],
+    "out": "docs/references"
+}

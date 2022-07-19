@@ -40,14 +40,12 @@ export class User extends Base implements ReturnType<typeof asUser> {
   public devices: ReturnType<typeof asUserDevices>
   public notifications: ReturnType<typeof asUserNotifications>
 
-  // @ts-expect-error
   constructor(...args) {
     super(...args)
-
     // @ts-expect-error
-    if (!this.devices) this.devices = {}
+    if (this.devices == null) this.devices = {}
     // @ts-expect-error
-    if (!this.notifications) {
+    if (this.notifications == null) {
       this.notifications = {
         enabled: true,
         currencyCodes: {}

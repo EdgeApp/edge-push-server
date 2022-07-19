@@ -5,7 +5,7 @@ import { asNumber, asObject, asOptional, asString } from 'cleaners'
  * Configures the server process as a whole,
  * such as where to listen and how to talk to the database.
  */
-const asServerConfig = asObject({
+export const asServerConfig = asObject({
   // HTTP server options:
   listenHost: asOptional(asString, '127.0.0.1'),
   listenPort: asOptional(asNumber, 8008),

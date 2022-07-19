@@ -60,12 +60,14 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
     price: number
   ): Promise<CurrencyThreshold> {
     const threshold = this.thresholds[hours] ?? {
+      custom: undefined,
       lastUpdated: 0,
       price: 0
     }
     threshold.lastUpdated = timestamp
     threshold.price = price
     this.thresholds[hours] = threshold
+
     return (await this.save()) as CurrencyThreshold
   }
 }
