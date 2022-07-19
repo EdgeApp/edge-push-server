@@ -8,13 +8,14 @@
   "author": "",
   "main": "build/index.js",
   "scripts": {
-    "build": "sucrase -q -t typescript,imports -d ./lib ./src",
-    "clean": "rimraf lib",   
+    "build.lib": "sucrase -q -t typescript,imports -d ./lib ./src",
+    "build.types": "tsc",
+    "clean": "rm -rf lib",   
     "compile": "tsc",
     "fix": "npm run lint -- --fix",
     "lint": "eslint --ext .js,.ts .",
-    "precommit": "lint-staged && tsc",
-    "prepare": "husky install",
+    "precommit": "lint-staged && yarn prepare",
+    "prepare": "npm-run-all clean -p build.*",
     "start-server": "node -r sucrase/register src/server/index.ts",
     "server:pm2": "pm2 start build/server/index.js --name server --log logs/server.log --time",
     "server": "node build/server.js"

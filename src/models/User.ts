@@ -40,7 +40,6 @@ export class User extends Base implements ReturnType<typeof asUser> {
   public devices: ReturnType<typeof asUserDevices>
   public notifications: ReturnType<typeof asUserNotifications>
 
-  // @ts-expect-error
   constructor(...args) {
     super(...args)
 
