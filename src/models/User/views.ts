@@ -5,7 +5,7 @@ export const views = {
     // @ts-expect-error
     byCurrency(doc) {
       const notifs = doc.notifications
-      if (notifs && notifs.enabled && notifs.currencyCodes) {
+      if (notifs?.enabled && notifs.currencyCodes) {
         const codes = notifs.currencyCodes
         for (const currencyCode in codes) {
           for (const hours in codes[currencyCode]) {
