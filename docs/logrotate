@@ -1,6 +1,6 @@
 # /etc/logrotate.d/pushServer
 
-/var/log/pushServer.log {
+/var/log/pm2/pushServer.log {
   copytruncate
   daily
   missingok
@@ -8,7 +8,7 @@
   rotate 10
 }
 
-/var/log/priceDaemon.log {
+/var/log/pm2/priceDaemon.log {
   copytruncate
   daily
   missingok
