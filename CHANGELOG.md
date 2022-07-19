@@ -1,5 +1,10 @@
 # edge-notification-server
 
+## 1.1.1 (2022-07-19)
+
+- added: Travis CI integration.
+- fixed: Upgrade vulnerable dependencies.
+
 ## 1.1.0 (2022-06-17)
 
 - added: Document the deployment process.
