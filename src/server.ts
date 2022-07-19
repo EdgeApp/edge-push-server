@@ -1,10 +1,10 @@
 import bodyParser from 'body-parser'
 import compression from 'compression'
 import cors from 'cors'
-import express, { type RequestHandler } from 'express'
+import express from 'express'
 import morgan from 'morgan'
 
-import { asServerConfig } from '../config'
+import { asServerConfig } from './serverConfig'
 
 const BodyParseError = {
   message: 'error parsing body data',
@@ -33,8 +33,8 @@ export const createServer = (
   app.use(compressionHandler)
   // Create throttled slack poster
   // Set local app params
-  app.set('httpPort', config.httpPort)
-  app.set('httpHost', config.httpHost)
+  app.set('httpPort', config.listenPort)
+  app.set('httpHost', config.listenHost)
   // Morgan Logging
   app.use(morgan(MorganTemplate))
   // configure app to use bodyParser() and return 400 error if body is not json

@@ -13,6 +13,7 @@
   "rules": {
     "@typescript-eslint/explicit-function-return-type": "warn",
     "@typescript-eslint/strict-boolean-expressions": "warn",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "simple-import-sort/sort": "error"
   }
 }

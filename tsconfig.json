@@ -7,7 +7,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "noImplicitAny": false,
-
     "noEmit": true,
     "strict": true
   }
