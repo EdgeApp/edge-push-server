@@ -13,10 +13,9 @@ This server requires a working copies of Node.js, Yarn, PM2, and CouchDB. We als
 Run these commands as a server admin:
 
 ```sh
-touch /var/log/pushServer.log
-touch /var/log/priceDaemon.log
-chown edgy /var/log/pushServer.log /var/log/priceDaemon.log
-cp ./docs/logrotate /etc/logrotate.d/pushServer
+mkdir /var/log/pm2
+chown edgy /var/log/pm2
+cp ./docs/logrotate /etc/logrotate.d/loginServer
 ```
 
 ### Manage server using `pm2`

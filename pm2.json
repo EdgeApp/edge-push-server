@@ -3,12 +3,12 @@
     {
       "name": "pushServer",
       "script": "./lib/server/index.js",
-      "out_file": "/var/log/pushServer.log"
+      "out_file": "/var/log/pm2/pushServer.log"
     },
     {
       "name": "priceDaemon",
       "script": "./lib/price-script/index.js",
-      "out_file": "/var/log/priceDaemon.log"
+      "out_file": "/var/log/pm2/priceDaemon.log"
     }
   ]
 }
