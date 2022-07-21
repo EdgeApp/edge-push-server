@@ -14,11 +14,11 @@ import { jsonResponse } from '../../types/responseTypes'
  * Response body: { notifications: { enabled: boolean } }
  */
 export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
-  const { query } = request
+  const { log, query } = request
   const { userId } = asUserIdQuery(query)
   const result = await User.fetch(userId)
 
-  console.log(`Got user settings for ${userId}`)
+  log(`Got user settings for ${userId}`)
 
   return jsonResponse(result)
 }
@@ -31,7 +31,7 @@ export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
-  const { query } = request
+  const { log, query } = request
   const { deviceId, userId } = asAttachUserQuery(query)
 
   let user = await User.fetch(userId)
@@ -39,7 +39,7 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
 
   await user.attachDevice(deviceId)
 
-  console.log(`Successfully attached device "${deviceId}" to user "${userId}"`)
+  log(`Successfully attached device "${deviceId}" to user "${userId}"`)
 
   return jsonResponse(user)
 }
@@ -55,16 +55,14 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
 export const registerCurrenciesV1Route: Serverlet<
   ApiRequest
 > = async request => {
-  const { json, query } = request
+  const { log, json, query } = request
   const { userId } = asUserIdQuery(query)
   const { currencyCodes } = asRegisterCurrenciesBody(json)
 
   const user = await User.fetch(userId)
   await user.registerNotifications(currencyCodes)
 
-  console.log(
-    `Registered notifications for user ${userId}: ${String(currencyCodes)}`
-  )
+  log(`Registered notifications for user ${userId}: ${String(currencyCodes)}`)
 
   return jsonResponse(user)
 }
@@ -78,7 +76,7 @@ export const registerCurrenciesV1Route: Serverlet<
  * Response body: { '24': number, '1': number }
  */
 export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
-  const { path, query } = request
+  const { log, path, query } = request
   const { userId } = asUserIdQuery(query)
   const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
   const currencyCode = match != null ? match[1] : ''
@@ -89,9 +87,7 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
     '24': false
   }
 
-  console.log(
-    `Got notification settings for ${currencyCode} for user ${userId}`
-  )
+  log(`Got notification settings for ${currencyCode} for user ${userId}`)
 
   return jsonResponse(currencySettings)
 }
@@ -105,7 +101,7 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
-  const { json, path, query } = request
+  const { log, json, path, query } = request
   const { userId } = asUserIdQuery(query)
   const { hours, enabled } = asEnableCurrencyBody(json)
   const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
@@ -120,9 +116,7 @@ export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   currencySettings[hours] = enabled
   await user.save()
 
-  console.log(
-    `Updated notification settings for user ${userId} for ${currencyCode}`
-  )
+  log(`Updated notification settings for user ${userId} for ${currencyCode}`)
 
   return jsonResponse(currencySettings)
 }
@@ -136,18 +130,18 @@ export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
-  const { json, query } = request
-  console.log(json)
+  const { log, json, query } = request
 
   const { userId } = asUserIdQuery(query)
   const { enabled } = asToggleStateBody(json)
+  log(`enabled: ${String(enabled)}`)
 
   let user = await User.fetch(userId)
   if (!user) user = new User(null, userId)
   user.notifications.enabled = enabled
   await user.save()
 
-  console.log(`User notifications toggled to: ${String(enabled)}`)
+  log(`User notifications toggled to: ${String(enabled)}`)
 
   return jsonResponse(user)
 }

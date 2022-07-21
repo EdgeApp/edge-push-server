@@ -11,7 +11,7 @@ import { errorResponse } from '../types/responseTypes'
 export const withApiKey =
   (server: Serverlet<ApiRequest>): Serverlet<DbRequest> =>
   async request => {
-    const { connection, headers } = request
+    const { connection, headers, log } = request
 
     // Parse the key out of the headers:
     const header = headers['x-api-key']
@@ -20,7 +20,10 @@ export const withApiKey =
     }
 
     // Look up the key in the database:
-    const apiKey = await getApiKeyByKey(connection, header)
+    const apiKey = await log.debugTime(
+      'getApiKeyByKey',
+      getApiKeyByKey(connection, header)
+    )
     if (apiKey == null) {
       return errorResponse('Incorrect API key', { status: 401 })
     }

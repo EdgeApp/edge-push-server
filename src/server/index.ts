@@ -1,9 +1,10 @@
 import express from 'express'
 import nano from 'nano'
 import { withCors } from 'serverlet'
-import { ExpressRequest, makeExpressRoute } from 'serverlet/express'
+import { makeExpressRoute } from 'serverlet/express'
 
 import { setupDatabases } from '../db/couchSetup'
+import { withLogging } from '../middleware/withLogging'
 import { serverConfig } from '../serverConfig'
 import { allRoutes } from './urls'
 
@@ -15,8 +16,8 @@ async function main(): Promise<void> {
   await setupDatabases(connection)
 
   // Bind the database to the request:
-  const server = withCors<ExpressRequest>(request =>
-    allRoutes({ ...request, connection })
+  const server = withCors(
+    withLogging(request => allRoutes({ ...request, connection }))
   )
 
   // Set up Express:

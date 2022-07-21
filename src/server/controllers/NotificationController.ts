@@ -15,7 +15,7 @@ import { errorResponse, jsonResponse } from '../../types/responseTypes'
  * Response body: unused
  */
 export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, json } = request
+  const { apiKey, json, log } = request
   const { title, body, data, userId } = asSendNotificationBody(json)
 
   if (!apiKey.admin) return errorResponse('Not an admin', { status: 401 })
@@ -34,7 +34,7 @@ export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
 
   const response = await manager.send(title, body, tokens, data)
   const { successCount, failureCount } = response
-  console.log(
+  log(
     `Sent notifications to user ${userId} devices: ${successCount} success - ${failureCount} failure`
   )
 

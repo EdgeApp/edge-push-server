@@ -13,18 +13,18 @@ import { jsonResponse } from '../../types/responseTypes'
  * Response body: unused
  */
 export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
-  const { json, query } = request
+  const { json, log, query } = request
   const { deviceId } = asRegisterDeviceQuery(query)
   const clean = asRegisterDeviceRequest(json)
 
   let device = await Device.fetch(deviceId)
   if (device) {
     await device.save(clean as any)
-    console.log('Device updated.')
+    log('Device updated.')
   } else {
     device = new Device(clean as any, deviceId)
     await device.save()
-    console.log(`Device registered.`)
+    log(`Device registered.`)
   }
 
   return jsonResponse(device)
