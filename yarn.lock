@@ -1176,10 +1176,10 @@ ecdsa-sig-formatter@1.0.11, ecdsa-sig-formatter@^1.0.11:
   dependencies:
     safe-buffer "^5.0.1"
 
-edge-server-tools@^0.2.11:
-  version "0.2.11"
-  resolved "https://registry.yarnpkg.com/edge-server-tools/-/edge-server-tools-0.2.11.tgz#802310ba12d09dc45d359338026dd68861e28ba6"
-  integrity sha512-dLvyD0TSZM30VsXkAV8nH3Xq7hA3NOUFnhYehCsVLe4BBt0WHjgwyB460xglxrWHx7HzYBKcED4o98rFiQ0ihg==
+edge-server-tools@^0.2.15:
+  version "0.2.15"
+  resolved "https://registry.yarnpkg.com/edge-server-tools/-/edge-server-tools-0.2.15.tgz#7e2a6c7a12ee0ae583cfa5ea6930d574cbdb9935"
+  integrity sha512-8Xy3vmq30R22UIkk0Q/9NyAPvRkGKIer8y9LXrm/emClb06lQgNhAQr2prIWgYxls00UxFlRx9uplCNMWHly8g==
   dependencies:
     cleaners "^0.3.11"
     nano "^9.0.4"
