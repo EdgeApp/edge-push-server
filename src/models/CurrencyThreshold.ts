@@ -2,7 +2,7 @@ import { asBoolean, asMap, asNumber, asObject, asOptional } from 'cleaners'
 import Nano from 'nano'
 
 import { serverConfig } from '../serverConfig'
-import { Base } from '.'
+import { Base } from './base'
 import { Defaults } from './Defaults'
 
 const nanoDb = Nano(serverConfig.couchUri)

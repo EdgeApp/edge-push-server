@@ -1,7 +1,7 @@
 import io from '@pm2/io'
 import admin from 'firebase-admin'
 
-import { ApiKey } from './models'
+import { ApiKey } from './models/ApiKey'
 
 import BatchResponse = admin.messaging.BatchResponse
 

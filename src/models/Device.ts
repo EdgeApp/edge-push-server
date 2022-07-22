@@ -2,7 +2,7 @@ import { asNumber, asObject, asOptional, asString } from 'cleaners'
 import Nano from 'nano'
 
 import { serverConfig } from '../serverConfig'
-import { Base } from '.'
+import { Base } from './base'
 
 const nanoDb = Nano(serverConfig.couchUri)
 const dbDevices = nanoDb.db.use<ReturnType<typeof asDevice>>('db_devices')

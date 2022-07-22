@@ -2,7 +2,7 @@
 import { asObject, asString } from 'cleaners'
 import express from 'express'
 
-import { Device } from '../../models'
+import { Device } from '../../models/Device'
 
 export const DeviceController = express.Router()
 

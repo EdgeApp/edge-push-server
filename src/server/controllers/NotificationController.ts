@@ -2,7 +2,7 @@
 import { asMap, asObject, asOptional, asString, asUnknown } from 'cleaners'
 import express from 'express'
 
-import { User } from '../../models'
+import { User } from '../../models/User'
 import { NotificationManager } from '../../NotificationManager'
 
 export const NotificationController = express.Router()

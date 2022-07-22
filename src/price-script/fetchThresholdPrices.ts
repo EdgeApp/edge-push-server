@@ -1,6 +1,6 @@
 import io from '@pm2/io'
 
-import { CurrencyThreshold } from '../models'
+import { CurrencyThreshold } from '../models/CurrencyThreshold'
 import { NotificationPriceChange } from './checkPriceChanges'
 import { getPrice } from './prices'
 

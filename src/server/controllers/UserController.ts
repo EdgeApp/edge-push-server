@@ -2,7 +2,7 @@
 import { asArray, asBoolean, asObject, asString } from 'cleaners'
 import express from 'express'
 
-import { User } from '../../models'
+import { User } from '../../models/User'
 
 export const UserController = express.Router()
 
