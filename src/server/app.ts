@@ -2,8 +2,11 @@ import io from '@pm2/io'
 import bodyParser from 'body-parser'
 import cors from 'cors'
 import express from 'express'
+import nano from 'nano'
 
-import { ApiKey } from '../models/ApiKey'
+import { getApiKeyByKey } from '../db/couchApiKeys'
+import { serverConfig } from '../serverConfig'
+import { ApiKey } from '../types/pushTypes'
 import { DeviceController } from './controllers/DeviceController'
 import { NotificationController } from './controllers/NotificationController'
 import { UserController } from './controllers/UserController'
@@ -46,8 +49,8 @@ router.use(async (req, res, next) => {
   const apiKey = req.header('X-Api-Key')
   if (!apiKey) return res.sendStatus(401)
 
-  const key = await ApiKey.fetch(apiKey)
-  if (!key) return res.sendStatus(401)
+  const key = await getApiKeyByKey(nano(serverConfig.couchUri), apiKey)
+  if (key == null) return res.sendStatus(401)
 
   req.apiKey = key
 
