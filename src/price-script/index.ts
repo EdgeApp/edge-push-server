@@ -2,6 +2,7 @@ import io from '@pm2/io'
 import { makePeriodicTask } from 'edge-server-tools'
 import nano from 'nano'
 
+import { getApiKeyByKey } from '../db/couchApiKeys'
 import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
 import { NotificationManager } from '../NotificationManager'
@@ -22,9 +23,13 @@ async function main(): Promise<void> {
 
   // Read the API keys from settings:
   const managers = await Promise.all(
-    syncedSettings.doc.apiKeys.map(
-      async partner => await NotificationManager.init(partner.apiKey)
-    )
+    syncedSettings.doc.apiKeys.map(async partner => {
+      const apiKey = await getApiKeyByKey(nano(couchUri), partner.apiKey)
+      if (apiKey == null) {
+        throw new Error(`Cannot find API key ${partner.apiKey}`)
+      }
+      return await NotificationManager.init(apiKey)
+    })
   )
 
   // Check the prices every few minutes:

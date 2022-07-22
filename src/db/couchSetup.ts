@@ -6,13 +6,12 @@ import {
 import { ServerScope } from 'nano'
 
 import { serverConfig } from '../serverConfig'
+import { couchApiKeysSetup } from './couchApiKeys'
 import { settingsSetup, syncedReplicators } from './couchSettings'
 
 // ---------------------------------------------------------------------------
 // Databases
 // ---------------------------------------------------------------------------
-
-const apiKeysSetup: DatabaseSetup = { name: 'db_api_keys' }
 
 const thresholdsSetup: DatabaseSetup = { name: 'db_currency_thresholds' }
 
@@ -48,7 +47,7 @@ export async function setupDatabases(
 
   await setupDatabase(connection, settingsSetup, options)
   await Promise.all([
-    setupDatabase(connection, apiKeysSetup, options),
+    setupDatabase(connection, couchApiKeysSetup, options),
     setupDatabase(connection, thresholdsSetup, options),
     setupDatabase(connection, devicesSetup, options),
     setupDatabase(connection, usersSetup, options),
