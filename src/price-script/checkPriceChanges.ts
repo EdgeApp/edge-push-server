@@ -1,7 +1,9 @@
 import io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
 
-import { CurrencyThreshold, Device, User } from '../models'
+import { CurrencyThreshold } from '../models/CurrencyThreshold'
+import { Device } from '../models/Device'
+import { User } from '../models/User'
 import { NotificationManager } from '../NotificationManager'
 import { fetchThresholdPrice } from './fetchThresholdPrices'
 

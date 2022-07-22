@@ -2,7 +2,7 @@ import { asMap } from 'cleaners'
 import Nano from 'nano'
 
 import { serverConfig } from '../serverConfig'
-import { Base } from '.'
+import { Base } from './base'
 
 const nanoDb = Nano(serverConfig.couchUri)
 const dbCurrencyThreshold = nanoDb.db.use('defaults')

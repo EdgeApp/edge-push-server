@@ -3,7 +3,7 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import express from 'express'
 
-import { ApiKey } from '../models'
+import { ApiKey } from '../models/ApiKey'
 import { registerDeviceV1Route } from './controllers/DeviceController'
 import { sendNotificationV1Route } from './controllers/NotificationController'
 import {

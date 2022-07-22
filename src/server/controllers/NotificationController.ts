@@ -1,6 +1,6 @@
 import { asObject, asOptional, asString, asUnknown } from 'cleaners'
 
-import { User } from '../../models'
+import { User } from '../../models/User'
 import { NotificationManager } from '../../NotificationManager'
 import { asyncRoute } from '../asyncRoute'
 

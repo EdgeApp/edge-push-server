@@ -1,6 +1,6 @@
 import { asArray, asBoolean, asObject, asString, asValue } from 'cleaners'
 
-import { User } from '../../models'
+import { User } from '../../models/User'
 import { asyncRoute } from '../asyncRoute'
 
 /**

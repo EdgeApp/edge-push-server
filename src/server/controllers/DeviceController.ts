@@ -1,6 +1,6 @@
 import { asNumber, asObject, asString } from 'cleaners'
 
-import { Device } from '../../models'
+import { Device } from '../../models/Device'
 import { asyncRoute } from '../asyncRoute'
 
 /**
