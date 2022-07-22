@@ -1,4 +1,4 @@
-import { asArray, asMaybe, asNumber, asObject, asString } from 'cleaners'
+import { asArray, asBoolean, asMaybe, asNumber, asObject, asString } from 'cleaners'
 import {
   asReplicatorSetupDocument,
   DatabaseSetup,
@@ -21,14 +21,22 @@ const asSettings = asObject({
   priceCheckInMinutes: asMaybe(asNumber, 5)
 })
 
+const asDefaultThresholds = asObject({
+  anomaly: asBoolean
+})
+
 export const syncedReplicators = syncedDocument(
   'replicators',
   asReplicatorSetupDocument
 )
 
 export const syncedSettings = syncedDocument('settings', asSettings.withRest)
+export const syncedDefaultThresholds = syncedDocument(
+  'defaultThresholds',
+  asDefaultThresholds.withRest
+)
 
 export const settingsSetup: DatabaseSetup = {
   name: 'push-settings',
-  syncedDocuments: [syncedReplicators, syncedSettings]
+  syncedDocuments: [syncedReplicators, syncedSettings, syncedDefaultThresholds]
 }
