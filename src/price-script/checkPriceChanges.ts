@@ -64,7 +64,8 @@ export async function checkPriceChanges(sender: PushSender): Promise<void> {
       )
       if (priceData == null) continue
 
-      const { rows: usersDevices } = await User.devicesByCurrencyHours(
+      const { rows: usersDevices } = await devicesByCurrencyHours(
+        connection,
         currencyCode,
         hours
       )
