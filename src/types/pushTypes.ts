@@ -28,3 +28,37 @@ export interface ApiKey {
   admin: boolean
   adminsdk?: FirebaseAdminKey
 }
+
+export interface UserDevices {
+  [deviceId: string]: boolean
+}
+
+export interface UserNotifications {
+  enabled?: boolean
+  currencyCodes: UserCurrencyCodes
+}
+
+export interface UserCurrencyCodes {
+  [currencyCode: string]: UserCurrencyHours
+}
+
+export interface UserCurrencyHours {
+  '1': boolean
+  '24': boolean
+}
+
+export interface User {
+  userId: string
+  devices: UserDevices
+  notifications: UserNotifications
+}
+
+export interface Device {
+  deviceId: string
+  appId: string
+  tokenId?: string
+  deviceDescription: string
+  osType: string
+  edgeVersion: string
+  edgeBuildNumber: number
+}
