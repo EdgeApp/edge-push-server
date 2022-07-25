@@ -1,19 +1,19 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import { asArray, asBoolean, asObject, asString, asValue } from 'cleaners'
-import express from 'express'
+import { RequestHandler } from 'express'
 
 import { User } from '../../models'
 
-export const UserController = express.Router()
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-UserController.get('/', async (req, res) => {
+/**
+ * The GUI names this `getNotificationState`,
+ * and calls it on the notification scene.
+ *
+ * GET /v1/user?userId=...
+ * Request body: none
+ * Response body: { notifications: { enabled: boolean } }
+ */
+export const fetchStateV1Route: RequestHandler = async (req, res) => {
   try {
-    const asQuery = asObject({
-      userId: asString
-    })
-
-    const { userId } = asQuery(req.query)
+    const { userId } = asUserIdQuery(req.query)
     const result = await User.fetch(userId)
 
     console.log(`Got user settings for ${userId}`)
@@ -26,16 +26,18 @@ UserController.get('/', async (req, res) => {
     )
     res.status(500).json(err)
   }
-})
+}
 
-UserController.post('/device/attach', async (req, res) => {
+/**
+ * The GUI names this `attachToUser`, and calls it at login.
+ *
+ * POST v1/user/device/attach?userId=...&deviceId=...
+ * Request body: none
+ * Response body: unused
+ */
+export const attachUserV1Route: RequestHandler = async (req, res) => {
   try {
-    const asQuery = asObject({
-      deviceId: asString,
-      userId: asString
-    })
-
-    const { deviceId, userId } = asQuery(req.query)
+    const { deviceId, userId } = asAttachUserQuery(req.query)
 
     let user = await User.fetch(userId)
     if (!user) user = new User(null, userId)
@@ -54,19 +56,20 @@ UserController.post('/device/attach', async (req, res) => {
     )
     res.status(500).json(err)
   }
-})
+}
 
-UserController.post('/notifications', async (req, res) => {
+/**
+ * The GUI names this `registerNotifications`,
+ * and calls it at login and when the wallet list changes.
+ *
+ * POST /v1/user/notifications?userId=...
+ * Request body: { currencyCodes: string[] }
+ * Response body: unused
+ */
+export const registerCurrenciesV1Route: RequestHandler = async (req, res) => {
   try {
-    const asQuery = asObject({
-      userId: asString
-    })
-    const asBody = asObject({
-      currencyCodes: asArray(asString)
-    })
-
-    const { userId } = asQuery(req.query)
-    const { currencyCodes } = asBody(req.body)
+    const { userId } = asUserIdQuery(req.query)
+    const { currencyCodes } = asRegisterCurrenciesBody(req.body)
 
     const user = await User.fetch(userId)
     await user.registerNotifications(currencyCodes)
@@ -85,19 +88,20 @@ UserController.post('/notifications', async (req, res) => {
     )
     res.status(500).json(err)
   }
-})
+}
 
-UserController.get('/notifications/:currencyCode', async (req, res) => {
+/**
+ * The GUI names this `fetchSettings`,
+ * and calls it on the currency notification scene.
+ *
+ * GET /v1/user/notifications/...?userId=...&deviceId=...
+ * Request body: none
+ * Response body: { '24': number, '1': number }
+ */
+export const fetchCurrencyV1Route: RequestHandler = async (req, res) => {
   try {
-    const asQuery = asObject({
-      userId: asString
-    })
-    const asParams = asObject({
-      currencyCode: asString
-    })
-
-    const { userId } = asQuery(req.query)
-    const { currencyCode } = asParams(req.params)
+    const { userId } = asUserIdQuery(req.query)
+    const { currencyCode } = asCurrencyParams(req.params)
 
     const user = await User.fetch(userId)
     const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
@@ -119,24 +123,21 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
     )
     res.status(500).json(err)
   }
-})
+}
 
-UserController.put('/notifications/:currencyCode', async (req, res) => {
+/**
+ * The GUI names this `enableNotifications`,
+ * and calls it on the currency notification scene.
+ *
+ * PUT /v1/user/notifications/...?userId=...&deviceId=...
+ * Request body: { hours: string, enabled: boolean }
+ * Response body: unused
+ */
+export const enableCurrencyV1Route: RequestHandler = async (req, res) => {
   try {
-    const asQuery = asObject({
-      userId: asString
-    })
-    const asParams = asObject({
-      currencyCode: asString
-    })
-    const asBody = asObject({
-      hours: asValue('1', '24'),
-      enabled: asBoolean
-    })
-
-    const { userId } = asQuery(req.query)
-    const { currencyCode } = asParams(req.params)
-    const { hours, enabled } = asBody(req.body)
+    const { userId } = asUserIdQuery(req.query)
+    const { currencyCode } = asCurrencyParams(req.params)
+    const { hours, enabled } = asEnableCurrencyBody(req.body)
 
     const user = await User.fetch(userId)
     const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
@@ -161,20 +162,22 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     )
     res.status(500).json(err)
   }
-})
+}
 
-UserController.post('/notifications/toggle', async (req, res) => {
+/**
+ * This GUI calls this `setNotificationState`,
+ * and calls it on the notifications scene.
+ *
+ * POST /v1/user/notifications/toggle?userId=...
+ * Request body: { enabled: boolean }
+ * Response body: unused
+ */
+export const toggleStateV1Route: RequestHandler = async (req, res) => {
   try {
-    const asQuery = asObject({
-      userId: asString
-    })
-    const asBody = asObject({
-      enabled: asBoolean
-    })
     console.log(req.body)
 
-    const { userId } = asQuery(req.query)
-    const { enabled } = asBody(req.body)
+    const { userId } = asUserIdQuery(req.query)
+    const { enabled } = asToggleStateBody(req.body)
 
     let user = await User.fetch(userId)
     if (!user) user = new User(null, userId)
@@ -188,4 +191,30 @@ UserController.post('/notifications/toggle', async (req, res) => {
     console.error(`Failed to toggle user notifications`, err)
     res.status(500).json(err)
   }
+}
+
+const asAttachUserQuery = asObject({
+  deviceId: asString,
+  userId: asString
+})
+
+const asUserIdQuery = asObject({
+  userId: asString
+})
+
+const asRegisterCurrenciesBody = asObject({
+  currencyCodes: asArray(asString)
+})
+
+const asCurrencyParams = asObject({
+  currencyCode: asString
+})
+
+const asEnableCurrencyBody = asObject({
+  hours: asValue('1', '24'),
+  enabled: asBoolean
+})
+
+const asToggleStateBody = asObject({
+  enabled: asBoolean
 })

@@ -1,25 +1,22 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
-import { asMap, asObject, asOptional, asString, asUnknown } from 'cleaners'
-import express from 'express'
+import { asObject, asOptional, asString, asUnknown } from 'cleaners'
+import { RequestHandler } from 'express'
 
 import { User } from '../../models'
 import { NotificationManager } from '../../NotificationManager'
 
-export const NotificationController = express.Router()
-
-NotificationController.post('/send', async (req, res) => {
+/**
+ * The login server names this `sendNotification`,
+ * and calls it when there is a new device login.
+ *
+ * POST /v1/notification/send
+ * Request body: asSendNotificationBody
+ * Response body: unused
+ */
+export const sendNotificationV1Route: RequestHandler = async (req, res) => {
   try {
+    const { title, body, data, userId } = asSendNotificationBody(req.body)
+
     if (!req.apiKey.admin) return res.sendStatus(401)
-
-    const asBody = asObject({
-      title: asString,
-      body: asString,
-      data: asOptional(asMap(asUnknown)),
-      userId: asString
-    })
-
-    const { title, body, data, userId } = asBody(req.body)
-
     const manager = await NotificationManager.init(req.apiKey)
 
     const user = await User.fetch(userId)
@@ -47,4 +44,11 @@ NotificationController.post('/send', async (req, res) => {
     )
     res.status(500).json(err)
   }
+}
+
+const asSendNotificationBody = asObject({
+  title: asString,
+  body: asString,
+  data: asOptional(asObject(asUnknown)),
+  userId: asString // Should be named `loginId`
 })
