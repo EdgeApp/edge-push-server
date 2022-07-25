@@ -25,11 +25,6 @@ const usersSetup: DatabaseSetup = {
   // }
 }
 
-const defaultsSetup: DatabaseSetup = {
-  name: 'defaults'
-  // syncedDocuments: ['thresholds']
-}
-
 // ---------------------------------------------------------------------------
 // Setup routine
 // ---------------------------------------------------------------------------
@@ -50,7 +45,6 @@ export async function setupDatabases(
     setupDatabase(connection, couchApiKeysSetup, options),
     setupDatabase(connection, thresholdsSetup, options),
     setupDatabase(connection, devicesSetup, options),
-    setupDatabase(connection, usersSetup, options),
-    setupDatabase(connection, defaultsSetup, options)
+    setupDatabase(connection, usersSetup, options)
   ])
 }

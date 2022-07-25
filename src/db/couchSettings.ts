@@ -18,6 +18,11 @@ const asSettings = asObject({
     ),
     []
   ),
+
+  // Default thresholds:
+  defaultAnomaly: asMaybe(asNumber, 90),
+  defaultHours: asMaybe(asObject(asNumber), { '1': 3, '24': 10 }),
+
   priceCheckInMinutes: asMaybe(asNumber, 5)
 })
 

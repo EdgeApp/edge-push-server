@@ -1,6 +1,7 @@
 import io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
 
+import { syncedSettings } from '../db/couchSettings'
 import { CurrencyThreshold } from '../models/CurrencyThreshold'
 import { Device } from '../models/Device'
 import { User } from '../models/User'
@@ -50,16 +51,15 @@ export async function checkPriceChanges(manager: NotificationManager) {
     limit: THRESHOLD_FETCH_LIMIT
   })
   // Fetch default values to use if otherwise not defined
-  const defaultThresholds = await CurrencyThreshold.defaultThresholds()
-  const defaultAnomaly = await CurrencyThreshold.defaultAnomaly()
+  const { defaultAnomaly, defaultHours } = syncedSettings.doc
   for (const threshold of thresholds) {
     const currencyCode = threshold._id
     const anomalyPercent = threshold.anomaly ?? defaultAnomaly
-    for (const hours in defaultThresholds) {
+    for (const hours in defaultHours) {
       const priceData = await fetchThresholdPrice(
         threshold,
         hours,
-        defaultThresholds[hours],
+        defaultHours[hours],
         anomalyPercent
       )
       if (priceData == null) continue
