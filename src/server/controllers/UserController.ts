@@ -1,7 +1,7 @@
 import { asArray, asBoolean, asObject, asString, asValue } from 'cleaners'
-import { RequestHandler } from 'express'
 
 import { User } from '../../models'
+import { asyncRoute } from '../asyncRoute'
 
 /**
  * The GUI names this `getNotificationState`,
@@ -11,22 +11,14 @@ import { User } from '../../models'
  * Request body: none
  * Response body: { notifications: { enabled: boolean } }
  */
-export const fetchStateV1Route: RequestHandler = async (req, res) => {
-  try {
-    const { userId } = asUserIdQuery(req.query)
-    const result = await User.fetch(userId)
+export const fetchStateV1Route = asyncRoute(async (req, res) => {
+  const { userId } = asUserIdQuery(req.query)
+  const result = await User.fetch(userId)
 
-    console.log(`Got user settings for ${userId}`)
+  console.log(`Got user settings for ${userId}`)
 
-    res.json(result)
-  } catch (err) {
-    console.error(
-      `Failed to get user settings for ${String(req.query.userId)}`,
-      err
-    )
-    res.status(500).json(err)
-  }
-}
+  res.json(result)
+})
 
 /**
  * The GUI names this `attachToUser`, and calls it at login.
@@ -35,28 +27,18 @@ export const fetchStateV1Route: RequestHandler = async (req, res) => {
  * Request body: none
  * Response body: unused
  */
-export const attachUserV1Route: RequestHandler = async (req, res) => {
-  try {
-    const { deviceId, userId } = asAttachUserQuery(req.query)
+export const attachUserV1Route = asyncRoute(async (req, res) => {
+  const { deviceId, userId } = asAttachUserQuery(req.query)
 
-    let user = await User.fetch(userId)
-    if (!user) user = new User(null, userId)
+  let user = await User.fetch(userId)
+  if (!user) user = new User(null, userId)
 
-    await user.attachDevice(deviceId)
+  await user.attachDevice(deviceId)
 
-    console.log(
-      `Successfully attached device "${deviceId}" to user "${userId}"`
-    )
+  console.log(`Successfully attached device "${deviceId}" to user "${userId}"`)
 
-    res.json(user)
-  } catch (err) {
-    console.error(
-      `Failed to attach device to user ${String(req.query.userId)}`,
-      err
-    )
-    res.status(500).json(err)
-  }
-}
+  res.json(user)
+})
 
 /**
  * The GUI names this `registerNotifications`,
@@ -66,29 +48,19 @@ export const attachUserV1Route: RequestHandler = async (req, res) => {
  * Request body: { currencyCodes: string[] }
  * Response body: unused
  */
-export const registerCurrenciesV1Route: RequestHandler = async (req, res) => {
-  try {
-    const { userId } = asUserIdQuery(req.query)
-    const { currencyCodes } = asRegisterCurrenciesBody(req.body)
+export const registerCurrenciesV1Route = asyncRoute(async (req, res) => {
+  const { userId } = asUserIdQuery(req.query)
+  const { currencyCodes } = asRegisterCurrenciesBody(req.body)
 
-    const user = await User.fetch(userId)
-    await user.registerNotifications(currencyCodes)
+  const user = await User.fetch(userId)
+  await user.registerNotifications(currencyCodes)
 
-    console.log(
-      `Registered notifications for user ${userId}: ${String(currencyCodes)}`
-    )
+  console.log(
+    `Registered notifications for user ${userId}: ${String(currencyCodes)}`
+  )
 
-    res.json(user)
-  } catch (err) {
-    console.error(
-      `Failed to register for notifications for user ${String(
-        req.query.userId
-      )}`,
-      err
-    )
-    res.status(500).json(err)
-  }
-}
+  res.json(user)
+})
 
 /**
  * The GUI names this `fetchSettings`,
@@ -98,32 +70,22 @@ export const registerCurrenciesV1Route: RequestHandler = async (req, res) => {
  * Request body: none
  * Response body: { '24': number, '1': number }
  */
-export const fetchCurrencyV1Route: RequestHandler = async (req, res) => {
-  try {
-    const { userId } = asUserIdQuery(req.query)
-    const { currencyCode } = asCurrencyParams(req.params)
+export const fetchCurrencyV1Route = asyncRoute(async (req, res) => {
+  const { userId } = asUserIdQuery(req.query)
+  const { currencyCode } = asCurrencyParams(req.params)
 
-    const user = await User.fetch(userId)
-    const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
-      '1': false,
-      '24': false
-    }
-
-    console.log(
-      `Got notification settings for ${currencyCode} for user ${userId}`
-    )
-
-    res.json(currencySettings)
-  } catch (err) {
-    console.error(
-      `Failed to get notification settings for user ${String(
-        req.query.userId
-      )} for ${req.params.currencyCode}`,
-      err
-    )
-    res.status(500).json(err)
+  const user = await User.fetch(userId)
+  const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
+    '1': false,
+    '24': false
   }
-}
+
+  console.log(
+    `Got notification settings for ${currencyCode} for user ${userId}`
+  )
+
+  res.json(currencySettings)
+})
 
 /**
  * The GUI names this `enableNotifications`,
@@ -133,36 +95,26 @@ export const fetchCurrencyV1Route: RequestHandler = async (req, res) => {
  * Request body: { hours: string, enabled: boolean }
  * Response body: unused
  */
-export const enableCurrencyV1Route: RequestHandler = async (req, res) => {
-  try {
-    const { userId } = asUserIdQuery(req.query)
-    const { currencyCode } = asCurrencyParams(req.params)
-    const { hours, enabled } = asEnableCurrencyBody(req.body)
+export const enableCurrencyV1Route = asyncRoute(async (req, res) => {
+  const { userId } = asUserIdQuery(req.query)
+  const { currencyCode } = asCurrencyParams(req.params)
+  const { hours, enabled } = asEnableCurrencyBody(req.body)
 
-    const user = await User.fetch(userId)
-    const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
-      '1': false,
-      '24': false
-    }
-    user.notifications.currencyCodes[currencyCode] = currencySettings
-    currencySettings[hours] = enabled
-    await user.save()
-
-    console.log(
-      `Updated notification settings for user ${userId} for ${currencyCode}`
-    )
-
-    res.json(currencySettings)
-  } catch (err) {
-    console.error(
-      `Failed to update notification settings for user ${String(
-        req.query.userId
-      )} for ${req.params.currencyCode}`,
-      err
-    )
-    res.status(500).json(err)
+  const user = await User.fetch(userId)
+  const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
+    '1': false,
+    '24': false
   }
-}
+  user.notifications.currencyCodes[currencyCode] = currencySettings
+  currencySettings[hours] = enabled
+  await user.save()
+
+  console.log(
+    `Updated notification settings for user ${userId} for ${currencyCode}`
+  )
+
+  res.json(currencySettings)
+})
 
 /**
  * This GUI calls this `setNotificationState`,
@@ -172,26 +124,21 @@ export const enableCurrencyV1Route: RequestHandler = async (req, res) => {
  * Request body: { enabled: boolean }
  * Response body: unused
  */
-export const toggleStateV1Route: RequestHandler = async (req, res) => {
-  try {
-    console.log(req.body)
+export const toggleStateV1Route = asyncRoute(async (req, res) => {
+  console.log(req.body)
 
-    const { userId } = asUserIdQuery(req.query)
-    const { enabled } = asToggleStateBody(req.body)
+  const { userId } = asUserIdQuery(req.query)
+  const { enabled } = asToggleStateBody(req.body)
 
-    let user = await User.fetch(userId)
-    if (!user) user = new User(null, userId)
-    user.notifications.enabled = enabled
-    await user.save()
+  let user = await User.fetch(userId)
+  if (!user) user = new User(null, userId)
+  user.notifications.enabled = enabled
+  await user.save()
 
-    console.log(`User notifications toggled to: ${String(enabled)}`)
+  console.log(`User notifications toggled to: ${String(enabled)}`)
 
-    res.json(user)
-  } catch (err) {
-    console.error(`Failed to toggle user notifications`, err)
-    res.status(500).json(err)
-  }
-}
+  res.json(user)
+})
 
 const asAttachUserQuery = asObject({
   deviceId: asString,
