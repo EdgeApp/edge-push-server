@@ -4,9 +4,16 @@ import cors from 'cors'
 import express from 'express'
 
 import { ApiKey } from '../models'
-import { DeviceController } from './controllers/DeviceController'
-import { NotificationController } from './controllers/NotificationController'
-import { UserController } from './controllers/UserController'
+import { registerDeviceV1Route } from './controllers/DeviceController'
+import { sendNotificationV1Route } from './controllers/NotificationController'
+import {
+  attachUserV1Route,
+  enableCurrencyV1Route,
+  fetchCurrencyV1Route,
+  fetchStateV1Route,
+  registerCurrenciesV1Route,
+  toggleStateV1Route
+} from './controllers/UserController'
 
 export const app = express()
 
@@ -54,6 +61,11 @@ router.use(async (req, res, next) => {
   next()
 })
 
-router.use('/notification', NotificationController)
-router.use('/device', DeviceController)
-router.use('/user', UserController)
+router.post('/device', registerDeviceV1Route)
+router.post('/notification/send', sendNotificationV1Route)
+router.get('/user', fetchStateV1Route)
+router.post('/user/device/attach', attachUserV1Route)
+router.post('/user/notifications', registerCurrenciesV1Route)
+router.get('/user/notifications/:currencyCode', fetchCurrencyV1Route)
+router.put('/user/notifications/:currencyCode', enableCurrencyV1Route)
+router.post('/user/notifications/toggle', toggleStateV1Route)
