@@ -1,7 +1,7 @@
 import io from '@pm2/io'
 import admin from 'firebase-admin'
 
-import { ApiKey } from './models'
+import { ApiKey } from './types/pushTypes'
 
 import BatchResponse = admin.messaging.BatchResponse
 
@@ -17,11 +17,7 @@ const failureCounter = io.counter({
 export class NotificationManager {
   private constructor(private readonly app: admin.app.App) {}
 
-  public static async init(
-    apiKey: ApiKey | string
-  ): Promise<NotificationManager> {
-    if (typeof apiKey === 'string') apiKey = await ApiKey.fetch(apiKey)
-
+  public static async init(apiKey: ApiKey): Promise<NotificationManager> {
     const name = `app:${apiKey.appId}`
     let app: admin.app.App
     try {
@@ -29,7 +25,9 @@ export class NotificationManager {
     } catch (err) {
       app = admin.initializeApp(
         {
-          credential: admin.credential.cert(apiKey.adminsdk)
+          // TODO: We have never passed the correct data type here,
+          // so either update our database or write a translation layer:
+          credential: admin.credential.cert(apiKey.adminsdk as any)
         },
         name
       )

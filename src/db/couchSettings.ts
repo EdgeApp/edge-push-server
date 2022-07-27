@@ -1,4 +1,11 @@
-import { asArray, asMaybe, asNumber, asObject, asString } from 'cleaners'
+import {
+  asArray,
+  asBoolean,
+  asMaybe,
+  asNumber,
+  asObject,
+  asString
+} from 'cleaners'
 import {
   asReplicatorSetupDocument,
   DatabaseSetup,
@@ -18,7 +25,17 @@ const asSettings = asObject({
     ),
     []
   ),
-  priceCheckInMinutes: asMaybe(asNumber, 5)
+
+  // Default thresholds:
+  defaultAnomaly: asMaybe(asNumber, 90),
+  defaultHours: asMaybe(asObject(asNumber), { '1': 3, '24': 10 }),
+
+  // Mode toggles:
+  debugLogs: asMaybe(asBoolean, false),
+  priceCheckInMinutes: asMaybe(asNumber, 5),
+
+  // Other services we rely on:
+  slackUri: asMaybe(asString, '')
 })
 
 export const syncedReplicators = syncedDocument(

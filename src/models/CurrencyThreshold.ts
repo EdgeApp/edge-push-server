@@ -2,8 +2,7 @@ import { asBoolean, asMap, asNumber, asObject, asOptional } from 'cleaners'
 import Nano from 'nano'
 
 import { serverConfig } from '../serverConfig'
-import { Base } from '.'
-import { Defaults } from './Defaults'
+import { Base } from './base'
 
 const nanoDb = Nano(serverConfig.couchUri)
 const dbCurrencyThreshold = nanoDb.db.use('db_currency_thresholds')
@@ -34,18 +33,6 @@ export class CurrencyThreshold extends Base implements ICurrencyThreshold {
   public disabled?: boolean
   public anomaly?: number
   public thresholds!: ReturnType<typeof asThresholds>
-
-  public static async defaultAnomaly(): Promise<number> {
-    const threshold = await Defaults.fetch('thresholds')
-    return threshold.get('anomaly')
-  }
-
-  public static async defaultThresholds(): Promise<{
-    [hours: string]: number
-  }> {
-    const threshold = await Defaults.fetch('thresholds')
-    return threshold.get('hours')
-  }
 
   public static async fromCode(
     currencyCode: string

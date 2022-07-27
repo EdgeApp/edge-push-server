@@ -1,7 +1,9 @@
 import { asNumber, asObject, asString } from 'cleaners'
+import { Serverlet } from 'serverlet'
 
-import { Device } from '../../models'
-import { asyncRoute } from '../asyncRoute'
+import { Device } from '../../models/Device'
+import { ApiRequest } from '../../types/requestTypes'
+import { jsonResponse } from '../../types/responseTypes'
 
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
@@ -10,22 +12,23 @@ import { asyncRoute } from '../asyncRoute'
  * Request body: asRegisterDeviceRequest
  * Response body: unused
  */
-export const registerDeviceV1Route = asyncRoute(async (req, res) => {
-  const { deviceId } = asRegisterDeviceQuery(req.query)
-  const clean = asRegisterDeviceRequest(req.body)
+export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
+  const { json, log, query } = request
+  const { deviceId } = asRegisterDeviceQuery(query)
+  const clean = asRegisterDeviceRequest(json)
 
   let device = await Device.fetch(deviceId)
   if (device) {
     await device.save(clean as any)
-    console.log('Device updated.')
+    log('Device updated.')
   } else {
     device = new Device(clean as any, deviceId)
     await device.save()
-    console.log(`Device registered.`)
+    log(`Device registered.`)
   }
 
-  res.json(device)
-})
+  return jsonResponse(device)
+}
 
 const asRegisterDeviceQuery = asObject({
   deviceId: asString
