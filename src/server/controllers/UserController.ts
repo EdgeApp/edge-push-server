@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
-import { asArray, asBoolean, asObject, asString } from 'cleaners'
+import { asArray, asBoolean, asObject, asString, asValue } from 'cleaners'
 import express from 'express'
 
 import { User } from '../../models'
@@ -100,13 +100,16 @@ UserController.get('/notifications/:currencyCode', async (req, res) => {
     const { currencyCode } = asParams(req.params)
 
     const user = await User.fetch(userId)
-    const notificationSettings = user.notifications.currencyCodes[currencyCode]
+    const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
+      '1': false,
+      '24': false
+    }
 
     console.log(
       `Got notification settings for ${currencyCode} for user ${userId}`
     )
 
-    res.json(notificationSettings)
+    res.json(currencySettings)
   } catch (err) {
     console.error(
       `Failed to get notification settings for user ${String(
@@ -127,7 +130,7 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
       currencyCode: asString
     })
     const asBody = asObject({
-      hours: asString,
+      hours: asValue('1', '24'),
       enabled: asBoolean
     })
 
@@ -136,8 +139,11 @@ UserController.put('/notifications/:currencyCode', async (req, res) => {
     const { hours, enabled } = asBody(req.body)
 
     const user = await User.fetch(userId)
-    const currencySettings = user.notifications.currencyCodes[currencyCode]
-    // @ts-expect-error
+    const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
+      '1': false,
+      '24': false
+    }
+    user.notifications.currencyCodes[currencyCode] = currencySettings
     currencySettings[hours] = enabled
     await user.save()
 
