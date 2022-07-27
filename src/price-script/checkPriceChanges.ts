@@ -5,7 +5,7 @@ import { syncedSettings } from '../db/couchSettings'
 import { CurrencyThreshold } from '../models/CurrencyThreshold'
 import { Device } from '../models/Device'
 import { User } from '../models/User'
-import { NotificationManager } from '../NotificationManager'
+import { PushResult, PushSender } from '../util/pushSender'
 import { fetchThresholdPrice } from './fetchThresholdPrices'
 
 // Firebase Messaging API limits batch messages to 500
@@ -23,12 +23,12 @@ export interface NotificationPriceChange {
   priceChange: number
 }
 
-export async function checkPriceChanges(manager: NotificationManager) {
+export async function checkPriceChanges(sender: PushSender): Promise<void> {
   // Sends a notification to devices about a price change
   async function sendNotification(
     thresholdPrice: NotificationPriceChange,
     deviceTokens: string[]
-  ) {
+  ): Promise<PushResult> {
     const { currencyCode, hourChange, priceChange, priceNow } = thresholdPrice
 
     const direction = priceChange > 0 ? 'up' : 'down'
@@ -40,7 +40,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
 
-    return await manager.send(title, body, deviceTokens, data)
+    return await sender.send(title, body, deviceTokens, data)
   }
 
   // Fetch list of threshold items and their prices
