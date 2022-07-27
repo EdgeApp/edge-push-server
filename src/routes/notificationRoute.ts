@@ -1,10 +1,10 @@
 import { asObject, asOptional, asString, asUnknown } from 'cleaners'
 import { Serverlet } from 'serverlet'
 
-import { User } from '../../models/User'
-import { NotificationManager } from '../../NotificationManager'
-import { ApiRequest } from '../../types/requestTypes'
-import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { User } from '../models/User'
+import { NotificationManager } from '../NotificationManager'
+import { ApiRequest } from '../types/requestTypes'
+import { errorResponse, jsonResponse } from '../types/responseTypes'
 
 /**
  * The login server names this `sendNotification`,

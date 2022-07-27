@@ -1,18 +1,18 @@
 import { pickMethod, pickPath, Serverlet } from 'serverlet'
 
 import { withApiKey } from '../middleware/withApiKey'
-import { DbRequest } from '../types/requestTypes'
-import { errorResponse, jsonResponse } from '../types/responseTypes'
-import { registerDeviceV1Route } from './controllers/DeviceController'
-import { sendNotificationV1Route } from './controllers/NotificationController'
 import {
   attachUserV1Route,
   enableCurrencyV1Route,
   fetchCurrencyV1Route,
   fetchStateV1Route,
   registerCurrenciesV1Route,
+  registerDeviceV1Route,
   toggleStateV1Route
-} from './controllers/UserController'
+} from '../routes/legacyRoutes'
+import { sendNotificationV1Route } from '../routes/notificationRoute'
+import { DbRequest } from '../types/requestTypes'
+import { errorResponse, jsonResponse } from '../types/responseTypes'
 
 const missingRoute: Serverlet<DbRequest> = request =>
   errorResponse(`Unknown API endpoint ${request.path}`, { status: 404 })
