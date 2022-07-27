@@ -4,16 +4,6 @@
     "standard-kit/prettier/typescript",
     "standard-kit/prettier/node"
   ],
-  "overrides": [
-    {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {
-        "@typescript-eslint/explicit-function-return-type": "warn",
-        "@typescript-eslint/no-dynamic-delete": "warn",
-        "@typescript-eslint/strict-boolean-expressions": "warn"
-      }
-    }
-  ],
   "parserOptions": {
     "project": "tsconfig.json"
   },

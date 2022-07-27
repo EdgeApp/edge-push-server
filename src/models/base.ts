@@ -22,6 +22,7 @@ export class Base implements ReturnType<typeof asModelData> {
     // NOTE: Must use set/get functions in Base constructor since the Proxy isn't setup yet. Subclasses can access
     // and set properties directly
     this.set(data)
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!this.get('_id')) this.set('_id', id)
 
     return new Proxy(this, {
@@ -36,11 +37,11 @@ export class Base implements ReturnType<typeof asModelData> {
     })
   }
 
-  public validate() {
+  public validate(): void {
     ;(this.constructor as typeof Base).asType(this.dataValues)
   }
 
-  public processAPIResponse(response: Nano.DocumentInsertResponse) {
+  public processAPIResponse(response: Nano.DocumentInsertResponse): void {
     if (response.ok) {
       this._id = response.id
       this._rev = response.rev

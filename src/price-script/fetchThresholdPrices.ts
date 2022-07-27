@@ -9,7 +9,7 @@ const SLEEP_TIMEOUT = 1000 // in milliseconds
 type Counter = ReturnType<typeof io.counter>
 const processMetrics: { [id: string]: Counter | undefined } = {}
 
-async function sleep(ms = SLEEP_TIMEOUT) {
+async function sleep(ms = SLEEP_TIMEOUT): Promise<void> {
   return await new Promise(resolve => setTimeout(resolve, ms))
 }
 export async function fetchThresholdPrice(
@@ -18,7 +18,8 @@ export async function fetchThresholdPrice(
   defaultPercent: number,
   anomalyPercent: number
 ): Promise<NotificationPriceChange | undefined> {
-  if (currencyThreshold.disabled) return
+  const { disabled = false } = currencyThreshold
+  if (disabled) return
 
   const currencyCode = currencyThreshold._id
   let priceNow: number
@@ -31,7 +32,7 @@ export async function fetchThresholdPrice(
 
   const hoursAgo = Date.now() - Number(hours) * 60 * 60 * 1000
   let threshold = currencyThreshold.thresholds[hours]
-  if (!threshold) {
+  if (threshold == null) {
     threshold = {
       custom: undefined,
       lastUpdated: 0,

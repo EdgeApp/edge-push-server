@@ -26,7 +26,7 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
   const clean = asRegisterDeviceRequest(json)
 
   let device = await Device.fetch(deviceId)
-  if (device) {
+  if (device != null) {
     await device.save(clean as any)
     log('Device updated.')
   } else {
@@ -68,7 +68,7 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
   const { deviceId, userId } = asAttachUserQuery(query)
 
   let user = await User.fetch(userId)
-  if (!user) user = new User(null, userId)
+  if (user == null) user = new User(null, userId)
 
   await user.attachDevice(deviceId)
 
@@ -170,7 +170,7 @@ export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
   log(`enabled: ${String(enabled)}`)
 
   let user = await User.fetch(userId)
-  if (!user) user = new User(null, userId)
+  if (user == null) user = new User(null, userId)
   user.notifications.enabled = enabled
   await user.save()
 

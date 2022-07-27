@@ -22,12 +22,14 @@ export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
   const sender = await makePushSender(apiKey)
 
   const user = await User.fetch(userId)
-  if (!user) return errorResponse('User does not exist.', { status: 404 })
+  if (user == null) {
+    return errorResponse('User does not exist.', { status: 404 })
+  }
 
   const tokens: string[] = []
   const devices = await user.fetchDevices()
   for (const device of devices) {
-    if (device.tokenId) {
+    if (device.tokenId != null) {
       tokens.push(device.tokenId)
     }
   }

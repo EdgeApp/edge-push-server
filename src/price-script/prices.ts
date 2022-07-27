@@ -27,7 +27,7 @@ export async function getPrice(
   at?: number
 ): Promise<number> {
   let dateString: string = ''
-  if (at) {
+  if (at != null) {
     dateString = `&date=${new Date(at).toISOString()}`
   }
 

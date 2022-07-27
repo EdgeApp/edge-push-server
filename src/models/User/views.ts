@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
 declare function emit(...args: any[]): void
 
 export const views = {
