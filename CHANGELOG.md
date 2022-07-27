@@ -1,5 +1,10 @@
 # edge-notification-server
 
+## 1.2.0 (2022-07-27)
+
+- changed: Move the logs to `/var/log/pm2`.
+- fixed: Do not crash when accessing unregistered currency codes.
+
 ## 1.1.1 (2022-07-19)
 
 - added: Travis CI integration.
