@@ -1,6 +1,7 @@
 import { ServerScope } from 'nano'
 import { ExpressRequest } from 'serverlet/express'
 
+import { DeviceRow } from '../db/couchDevices'
 import { ApiKey } from './pushTypes'
 
 export interface Logger {
@@ -26,4 +27,12 @@ export interface ApiRequest extends DbRequest {
   // Taken from the Express request:
   readonly json: unknown
   readonly query: unknown
+}
+
+export interface DeviceRequest extends DbRequest {
+  readonly payload: unknown
+
+  readonly apiKey: ApiKey
+  readonly deviceRow: DeviceRow
+  readonly loginId?: Uint8Array
 }

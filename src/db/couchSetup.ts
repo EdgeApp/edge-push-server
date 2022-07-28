@@ -7,6 +7,8 @@ import { ServerScope } from 'nano'
 
 import { serverConfig } from '../serverConfig'
 import { couchApiKeysSetup } from './couchApiKeys'
+import { couchDevicesSetup } from './couchDevices'
+import { couchEventsSetup } from './couchPushEvents'
 import { settingsSetup, syncedReplicators } from './couchSettings'
 
 // ---------------------------------------------------------------------------
@@ -43,8 +45,10 @@ export async function setupDatabases(
   await setupDatabase(connection, settingsSetup, options)
   await Promise.all([
     setupDatabase(connection, couchApiKeysSetup, options),
-    setupDatabase(connection, thresholdsSetup, options),
+    setupDatabase(connection, couchDevicesSetup, options),
+    setupDatabase(connection, couchEventsSetup, options),
     setupDatabase(connection, devicesSetup, options),
+    setupDatabase(connection, thresholdsSetup, options),
     setupDatabase(connection, usersSetup, options)
   ])
 }
