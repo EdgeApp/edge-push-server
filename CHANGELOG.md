@@ -1,5 +1,9 @@
 # edge-notification-server
 
+## 1.3.0 (2022-07-28)
+
+- changed: Replace the Express routing with Serverlet.
+
 ## 1.2.0 (2022-07-27)
 
 - changed: Move the logs to `/var/log/pm2`.
