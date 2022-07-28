@@ -5,8 +5,8 @@ import nano from 'nano'
 import { getApiKeyByKey } from '../db/couchApiKeys'
 import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
-import { NotificationManager } from '../NotificationManager'
 import { serverConfig } from '../serverConfig'
+import { makePushSender } from '../util/pushSender'
 import { checkPriceChanges } from './checkPriceChanges'
 
 const runCounter = io.counter({
@@ -21,14 +21,18 @@ async function main(): Promise<void> {
   const connection = nano(couchUri)
   await setupDatabases(connection)
 
+  if (syncedSettings.doc.apiKeys.length === 0) {
+    throw new Error('No partner apiKeys')
+  }
+
   // Read the API keys from settings:
-  const managers = await Promise.all(
+  const senders = await Promise.all(
     syncedSettings.doc.apiKeys.map(async partner => {
-      const apiKey = await getApiKeyByKey(nano(couchUri), partner.apiKey)
+      const apiKey = await getApiKeyByKey(connection, partner.apiKey)
       if (apiKey == null) {
         throw new Error(`Cannot find API key ${partner.apiKey}`)
       }
-      return await NotificationManager.init(apiKey)
+      return await makePushSender(apiKey)
     })
   )
 
@@ -37,9 +41,8 @@ async function main(): Promise<void> {
     async () => {
       runCounter.inc()
 
-      if (managers.length === 0) throw new Error('No partner apiKeys')
-      for (const manager of managers) {
-        await checkPriceChanges(manager)
+      for (const sender of senders) {
+        await checkPriceChanges(sender)
       }
     },
     60 * 1000 * syncedSettings.doc.priceCheckInMinutes,

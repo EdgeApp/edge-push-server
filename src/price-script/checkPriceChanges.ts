@@ -5,7 +5,7 @@ import { syncedSettings } from '../db/couchSettings'
 import { CurrencyThreshold } from '../models/CurrencyThreshold'
 import { Device } from '../models/Device'
 import { User } from '../models/User'
-import { NotificationManager } from '../NotificationManager'
+import { PushResult, PushSender } from '../util/pushSender'
 import { fetchThresholdPrice } from './fetchThresholdPrices'
 
 // Firebase Messaging API limits batch messages to 500
@@ -23,12 +23,12 @@ export interface NotificationPriceChange {
   priceChange: number
 }
 
-export async function checkPriceChanges(manager: NotificationManager) {
+export async function checkPriceChanges(sender: PushSender): Promise<void> {
   // Sends a notification to devices about a price change
   async function sendNotification(
     thresholdPrice: NotificationPriceChange,
     deviceTokens: string[]
-  ) {
+  ): Promise<PushResult> {
     const { currencyCode, hourChange, priceChange, priceNow } = thresholdPrice
 
     const direction = priceChange > 0 ? 'up' : 'down'
@@ -40,7 +40,7 @@ export async function checkPriceChanges(manager: NotificationManager) {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
 
-    return await manager.send(title, body, deviceTokens, data)
+    return await sender.send(title, body, deviceTokens, data)
   }
 
   // Fetch list of threshold items and their prices
@@ -83,9 +83,9 @@ export async function checkPriceChanges(manager: NotificationManager) {
       let failureCount = 0
       while (!done) {
         const next = await tokenGenerator.next()
-        done = !!next.done
+        done = next.done ?? false
 
-        if (next.value) {
+        if (next.value != null) {
           // Send notification to user about price change
           try {
             const response = await sendNotification(priceData, next.value)
@@ -149,7 +149,7 @@ async function* deviceTokenGenerator(
     bookmark = response.bookmark
 
     for (const { tokenId } of response.docs) {
-      if (!tokenId || tokenSet.has(tokenId)) continue
+      if (tokenId == null || tokenSet.has(tokenId)) continue
 
       tokenSet.add(tokenId)
       tokens.push(tokenId)
@@ -169,7 +169,7 @@ async function* deviceTokenGenerator(
 }
 
 // Set decimal place to 2 significant digits
-function formatDisplayPrice(priceNow: number) {
+function formatDisplayPrice(priceNow: number): number {
   const numSplit = priceNow.toString().split('.')
   const sigIndex = numSplit[1].search(/[1-9]/)
   numSplit[1] = numSplit[1].substring(0, sigIndex + 2)

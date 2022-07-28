@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
 import { asBoolean, asMap, asObject, asOptional } from 'cleaners'
 import Nano from 'nano'
 

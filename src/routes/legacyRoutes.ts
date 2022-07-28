@@ -1,9 +1,42 @@
-import { asArray, asBoolean, asObject, asString, asValue } from 'cleaners'
+import {
+  asArray,
+  asBoolean,
+  asNumber,
+  asObject,
+  asString,
+  asValue
+} from 'cleaners'
 import { Serverlet } from 'serverlet'
 
-import { User } from '../../models/User'
-import { ApiRequest } from '../../types/requestTypes'
-import { jsonResponse } from '../../types/responseTypes'
+import { Device } from '../models/Device'
+import { User } from '../models/User'
+import { ApiRequest } from '../types/requestTypes'
+import { jsonResponse } from '../types/responseTypes'
+
+/**
+ * The GUI names this `registerDevice`, and calls it at boot.
+ *
+ * POST /v1/device?deviceId=...
+ * Request body: asRegisterDeviceRequest
+ * Response body: unused
+ */
+export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
+  const { json, log, query } = request
+  const { deviceId } = asRegisterDeviceQuery(query)
+  const clean = asRegisterDeviceRequest(json)
+
+  let device = await Device.fetch(deviceId)
+  if (device != null) {
+    await device.save(clean as any)
+    log('Device updated.')
+  } else {
+    device = new Device(clean as any, deviceId)
+    await device.save()
+    log(`Device registered.`)
+  }
+
+  return jsonResponse(device)
+}
 
 /**
  * The GUI names this `getNotificationState`,
@@ -35,7 +68,7 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
   const { deviceId, userId } = asAttachUserQuery(query)
 
   let user = await User.fetch(userId)
-  if (!user) user = new User(null, userId)
+  if (user == null) user = new User(null, userId)
 
   await user.attachDevice(deviceId)
 
@@ -137,7 +170,7 @@ export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
   log(`enabled: ${String(enabled)}`)
 
   let user = await User.fetch(userId)
-  if (!user) user = new User(null, userId)
+  if (user == null) user = new User(null, userId)
   user.notifications.enabled = enabled
   await user.save()
 
@@ -166,4 +199,17 @@ const asEnableCurrencyBody = asObject({
 
 const asToggleStateBody = asObject({
   enabled: asBoolean
+})
+
+const asRegisterDeviceQuery = asObject({
+  deviceId: asString
+})
+
+const asRegisterDeviceRequest = asObject({
+  appId: asString,
+  tokenId: asString, // Firebase device token
+  deviceDescription: asString,
+  osType: asString,
+  edgeVersion: asString,
+  edgeBuildNumber: asNumber
 })
