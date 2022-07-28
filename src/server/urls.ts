@@ -3,6 +3,7 @@ import { pickMethod, pickPath, Serverlet } from 'serverlet'
 import { DbRequest } from '../types/requestTypes'
 import { errorResponse, jsonResponse } from '../types/responseTypes'
 import { withLegacyApiKey } from './middleware/withLegacyApiKey'
+import { deviceFetchRoute, deviceUpdateRoute } from './routes/deviceRoutes'
 import {
   attachUserV1Route,
   enableCurrencyV1Route,
@@ -12,6 +13,7 @@ import {
   registerDeviceV1Route,
   toggleStateV1Route
 } from './routes/legacyRoutes'
+import { loginFetchRoute, loginUpdateRoute } from './routes/loginRoutes'
 import { sendNotificationV1Route } from './routes/notificationRoute'
 
 const missingRoute: Serverlet<DbRequest> = request =>
@@ -46,6 +48,19 @@ const urls: { [path: string]: Serverlet<DbRequest> } = {
   '/v1/user/notifications/[0-9A-Za-z]+/?': pickMethod({
     GET: withLegacyApiKey(fetchCurrencyV1Route),
     PUT: withLegacyApiKey(enableCurrencyV1Route)
+  }),
+
+  '/v2/device/?': pickMethod({
+    POST: deviceFetchRoute
+  }),
+  '/v2/device/update/?': pickMethod({
+    POST: deviceUpdateRoute
+  }),
+  '/v2/login/?': pickMethod({
+    POST: loginFetchRoute
+  }),
+  '/v2/login/update/?': pickMethod({
+    POST: loginUpdateRoute
   })
 }
 export const allRoutes: Serverlet<DbRequest> = pickPath(urls, missingRoute)
