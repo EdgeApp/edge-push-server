@@ -6,12 +6,16 @@ import {
   asString,
   asValue
 } from 'cleaners'
+import nano from 'nano'
 import { Serverlet } from 'serverlet'
 
-import { Device } from '../models/Device'
-import { User } from '../models/User'
+import { fetchDevice, saveDeviceToDB } from '../db/couchDevices'
+import { fetchUser, saveUserToDB } from '../db/couchUsers'
+import { serverConfig } from '../serverConfig'
 import { ApiRequest } from '../types/requestTypes'
 import { jsonResponse } from '../types/responseTypes'
+
+const connection = nano(serverConfig.couchUri)
 
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
@@ -25,13 +29,13 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
   const { deviceId } = asRegisterDeviceQuery(query)
   const clean = asRegisterDeviceRequest(json)
 
-  let device = await Device.fetch(deviceId)
+  let device = await fetchDevice(connection, deviceId)
   if (device != null) {
-    await device.save(clean as any)
+    await saveDeviceToDB(connection, device)
     log('Device updated.')
   } else {
-    device = new Device(clean as any, deviceId)
-    await device.save()
+    device = { ...clean, deviceId }
+    await saveDeviceToDB(connection, device)
     log(`Device registered.`)
   }
 
@@ -49,7 +53,7 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
 export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
   const { log, query } = request
   const { userId } = asUserIdQuery(query)
-  const result = await User.fetch(userId)
+  const result = fetchUser(connection, userId)
 
   log(`Got user settings for ${userId}`)
 
@@ -67,10 +71,15 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
   const { log, query } = request
   const { deviceId, userId } = asAttachUserQuery(query)
 
-  let user = await User.fetch(userId)
-  if (user == null) user = new User(null, userId)
+  let user = await fetchUser(connection, userId)
+  if (user == null)
+    user = {
+      userId,
+      devices: { deviceId: true },
+      notifications: { currencyCodes: {} }
+    }
 
-  await user.attachDevice(deviceId)
+  await saveUserToDB(connection, user)
 
   log(`Successfully attached device "${deviceId}" to user "${userId}"`)
 
@@ -92,8 +101,24 @@ export const registerCurrenciesV1Route: Serverlet<
   const { userId } = asUserIdQuery(query)
   const { currencyCodes } = asRegisterCurrenciesBody(json)
 
-  const user = await User.fetch(userId)
-  await user.registerNotifications(currencyCodes)
+  const user = await fetchUser(connection, userId)
+  const currencyCodesToUnregister = Object.keys(
+    user.notifications.currencyCodes
+  ).filter(code => !currencyCodes.includes(code))
+  for (const code of currencyCodesToUnregister) {
+    delete user.notifications.currencyCodes[code]
+  }
+
+  for (const code of currencyCodes) {
+    if (code in user.notifications.currencyCodes) continue
+
+    user.notifications.currencyCodes[code] = {
+      '1': true,
+      '24': true
+    }
+  }
+
+  await saveUserToDB(connection, user)
 
   log(`Registered notifications for user ${userId}: ${String(currencyCodes)}`)
 
@@ -114,7 +139,7 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
   const currencyCode = match != null ? match[1] : ''
 
-  const user = await User.fetch(userId)
+  const user = await fetchUser(connection, userId)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
     '1': false,
     '24': false
@@ -140,14 +165,14 @@ export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
   const currencyCode = match != null ? match[1] : ''
 
-  const user = await User.fetch(userId)
+  const user = await fetchUser(connection, userId)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
     '1': false,
     '24': false
   }
   user.notifications.currencyCodes[currencyCode] = currencySettings
   currencySettings[hours] = enabled
-  await user.save()
+  await saveUserToDB(connection, user)
 
   log(`Updated notification settings for user ${userId} for ${currencyCode}`)
 
@@ -169,10 +194,15 @@ export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
   const { enabled } = asToggleStateBody(json)
   log(`enabled: ${String(enabled)}`)
 
-  let user = await User.fetch(userId)
-  if (user == null) user = new User(null, userId)
+  let user = await fetchUser(connection, userId)
+  if (user == null)
+    user = {
+      userId,
+      devices: {},
+      notifications: { currencyCodes: {} }
+    }
   user.notifications.enabled = enabled
-  await user.save()
+  await saveUserToDB(connection, user)
 
   log(`User notifications toggled to: ${String(enabled)}`)
 

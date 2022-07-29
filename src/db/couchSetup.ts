@@ -19,11 +19,6 @@ export const apiKeysSetup: DatabaseSetup = { name: 'db_api_keys' }
 
 export const thresholdsSetup: DatabaseSetup = { name: 'db_currency_thresholds' }
 
-export const defaultsSetup: DatabaseSetup = {
-  name: 'defaults'
-  // syncedDocuments: ['thresholds']
-}
-
 // ---------------------------------------------------------------------------
 // Setup routine
 // ---------------------------------------------------------------------------
