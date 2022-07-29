@@ -6,6 +6,7 @@ import {
 import { ServerScope } from 'nano'
 
 import { serverConfig } from '../serverConfig'
+import { couchApiKeysSetup } from './couchApiKeys'
 import { devicesSetup } from './couchDevices'
 import { settingsSetup, syncedReplicators } from './couchSettings'
 import { usersSetup } from './couchUsers'

@@ -1,10 +1,12 @@
 import io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
+import { ServerScope } from 'nano'
 
+import { devicesSetup } from '../db/couchDevices'
 import { syncedSettings } from '../db/couchSettings'
+import { devicesByCurrencyHours } from '../db/couchUsers'
 import { CurrencyThreshold } from '../models/CurrencyThreshold'
-import { Device } from '../models/Device'
-import { User } from '../models/User'
+import { Device } from '../types/pushTypes'
 import { PushResult, PushSender } from '../util/pushSender'
 import { fetchThresholdPrice } from './fetchThresholdPrices'
 
@@ -23,7 +25,10 @@ export interface NotificationPriceChange {
   priceChange: number
 }
 
-export async function checkPriceChanges(sender: PushSender): Promise<void> {
+export async function checkPriceChanges(
+  connection: ServerScope,
+  sender: PushSender
+): Promise<void> {
   // Sends a notification to devices about a price change
   async function sendNotification(
     thresholdPrice: NotificationPriceChange,
@@ -78,7 +83,7 @@ export async function checkPriceChanges(sender: PushSender): Promise<void> {
           deviceIds.push(deviceId)
         }
       }
-      const tokenGenerator = deviceTokenGenerator(deviceIds)
+      const tokenGenerator = deviceTokenGenerator(connection, deviceIds)
       let done = false
       let successCount = 0
       let failureCount = 0
@@ -126,14 +131,16 @@ export async function checkPriceChanges(sender: PushSender): Promise<void> {
 }
 
 async function* deviceTokenGenerator(
+  connection: ServerScope,
   deviceIds: string[]
 ): AsyncGenerator<string[], string[]> {
   const tokenSet: Set<string> = new Set()
   let tokens: string[] = []
   let bookmark: string | undefined
   let done = false
+  const dbDevices = connection.use<Device>(devicesSetup.name)
   while (!done) {
-    const response = await Device.table.find({
+    const response = await dbDevices.find({
       bookmark,
       selector: {
         _id: {
