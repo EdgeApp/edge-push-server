@@ -6,7 +6,7 @@ import {
 } from 'edge-server-tools'
 import { ServerScope } from 'nano'
 
-import { Device, User } from '../types/pushTypes'
+import { Device } from '../types/pushTypes'
 import { saveToDB } from './utils/couchOps'
 
 export const asCouchDevice = asCouchDoc<Omit<Device, 'deviceId'>>(
@@ -23,27 +23,16 @@ export const asCouchDevice = asCouchDoc<Omit<Device, 'deviceId'>>(
 type CouchDevice = ReturnType<typeof asCouchDevice>
 export const devicesSetup: DatabaseSetup = { name: 'db_devices' }
 
-export const fetchDevicesByUser = async (
-  connection: ServerScope,
-  user: User
-): Promise<Device[]> => {
-  const devices = []
-  for (const deviceId in user.devices) {
-    const device = await fetchDevice(connection, deviceId)
-    devices.push(device)
-  }
-  return devices
-}
-
 export const fetchDevice = async (
   connection: ServerScope,
   deviceId: string
-): Promise<Device> => {
+): Promise<Device | null> => {
   const db = connection.db.use(devicesSetup.name)
   const raw = await db.get(deviceId).catch(error => {
     if (asMaybeNotFoundError(error) != null) return
     throw error
   })
+  if (raw == null) return null
   const deviceDoc = asCouchDevice(raw)
   return unpackDevice(deviceDoc)
 }

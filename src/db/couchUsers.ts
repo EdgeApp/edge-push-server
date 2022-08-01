@@ -48,11 +48,14 @@ export const usersSetup: DatabaseSetup = {
     '_design/filter': makeJsDesign('by-currency', ({ emit }) => ({
       map: function (doc) {
         const notifs = doc.notifications
+
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (notifs?.enabled && notifs.currencyCodes) {
           const codes = notifs.currencyCodes
           for (const currencyCode in codes) {
             for (const hours in codes[currencyCode]) {
               const enabled = codes[currencyCode][hours]
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               if (enabled) {
                 emit([currencyCode, hours], doc.devices)
               }
@@ -63,6 +66,7 @@ export const usersSetup: DatabaseSetup = {
     })),
     '_design/map': makeJsDesign('currency-codes', ({ emit }) => ({
       map: function (doc) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (doc.notifications?.currencyCodes) {
           for (const code in doc.notifications.currencyCodes) {
             emit(null, code)
@@ -96,6 +100,7 @@ export const cleanUpMissingDevices = async (
   if (updated) await saveToDB(db, packUser(user))
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const devicesByCurrencyHours = async (
   connection: ServerScope,
   hours: string,
@@ -119,12 +124,13 @@ export const saveUserToDB = async (
 export const fetchUser = async (
   connection: ServerScope,
   userId: string
-): Promise<User> => {
+): Promise<User | null> => {
   const db = connection.db.use(usersSetup.name)
   const raw = await db.get(userId).catch(error => {
     if (asMaybeNotFoundError(error) != null) return
     throw error
   })
+  if (raw == null) return null
   const userDoc = asCouchUser(raw)
   return unpackUser(userDoc)
 }

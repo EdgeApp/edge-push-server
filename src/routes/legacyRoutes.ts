@@ -13,7 +13,7 @@ import { fetchDevice, saveDeviceToDB } from '../db/couchDevices'
 import { fetchUser, saveUserToDB } from '../db/couchUsers'
 import { serverConfig } from '../serverConfig'
 import { ApiRequest } from '../types/requestTypes'
-import { jsonResponse } from '../types/responseTypes'
+import { errorResponse, jsonResponse } from '../types/responseTypes'
 
 const connection = nano(serverConfig.couchUri)
 
@@ -102,10 +102,13 @@ export const registerCurrenciesV1Route: Serverlet<
   const { currencyCodes } = asRegisterCurrenciesBody(json)
 
   const user = await fetchUser(connection, userId)
+  if (user == null) return errorResponse(`User ${userId} not found`)
+
   const currencyCodesToUnregister = Object.keys(
     user.notifications.currencyCodes
   ).filter(code => !currencyCodes.includes(code))
   for (const code of currencyCodesToUnregister) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete user.notifications.currencyCodes[code]
   }
 
@@ -140,6 +143,7 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const currencyCode = match != null ? match[1] : ''
 
   const user = await fetchUser(connection, userId)
+  if (user == null) return errorResponse(`User ${userId} not found`)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
     '1': false,
     '24': false
@@ -166,6 +170,7 @@ export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const currencyCode = match != null ? match[1] : ''
 
   const user = await fetchUser(connection, userId)
+  if (user == null) return errorResponse(`User ${userId} not found`)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
     '1': false,
     '24': false
