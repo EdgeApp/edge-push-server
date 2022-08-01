@@ -15,7 +15,7 @@ export const withApiKey =
 
     // Parse the key out of the headers:
     const header = headers['x-api-key']
-    if (header == null) {
+    if (header == null || header === '') {
       return errorResponse('Missing API key', { status: 401 })
     }
 
