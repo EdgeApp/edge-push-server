@@ -1,4 +1,11 @@
-import { asBoolean, asMap, asObject, asOptional, Cleaner } from 'cleaners'
+import {
+  asBoolean,
+  asMap,
+  asObject,
+  asOptional,
+  Cleaner,
+  uncleaner
+} from 'cleaners'
 import {
   asCouchDoc,
   asMaybeNotFoundError,
@@ -7,6 +14,7 @@ import {
 } from 'edge-server-tools'
 import { ServerScope } from 'nano'
 
+import { UserRow } from '../types/dbTypes'
 import {
   Device,
   User,
@@ -15,7 +23,6 @@ import {
   UserDevices,
   UserNotifications
 } from '../types/pushTypes'
-import { saveToDB } from './utils/couchOps'
 
 export const asUserDevices: Cleaner<UserDevices> = asObject(asBoolean)
 export type IDevicesByCurrencyHoursViewResponse = ReturnType<
@@ -40,6 +47,7 @@ export const asCouchUser = asCouchDoc<Omit<User, 'userId'>>(
   })
 )
 
+const wasCouchUser = uncleaner(asCouchUser)
 type CouchUser = ReturnType<typeof asCouchUser>
 
 export const usersSetup: DatabaseSetup = {
@@ -89,7 +97,6 @@ export const cleanUpMissingDevices = async (
   user: User,
   devices: Device[]
 ): Promise<void> => {
-  const db = connection.db.use(usersSetup.name)
   let updated = false
   for (const device of devices) {
     if (user.devices[device.deviceId] == null) {
@@ -97,7 +104,26 @@ export const cleanUpMissingDevices = async (
       updated = true
     }
   }
-  if (updated) await saveToDB(db, packUser(user))
+  if (updated) {
+    const { save } = makeUserRow(connection, packUser(user))
+    await save()
+  }
+}
+
+export const makeUserRow = (
+  connection: ServerScope,
+  doc: CouchUser
+): UserRow => {
+  const user = unpackUser(doc)
+  return {
+    user,
+    async save() {
+      doc.doc = packUser(user).doc
+      const db = connection.db.use(usersSetup.name)
+      const result = await db.insert(wasCouchUser(doc))
+      doc.rev = result?.rev
+    }
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -117,8 +143,8 @@ export const saveUserToDB = async (
   connection: ServerScope,
   user: User
 ): Promise<void> => {
-  const db = connection.db.use(usersSetup.name)
-  await saveToDB(db, packUser(user))
+  const { save } = makeUserRow(connection, packUser(user))
+  await save()
 }
 
 export const fetchUser = async (

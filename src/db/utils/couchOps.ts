@@ -15,7 +15,6 @@ export const saveToDB = async <T>(
     switch (err.statusCode) {
       case 404:
         throw new Error('Database does not exist')
-
       default:
         throw err
     }

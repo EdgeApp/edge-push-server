@@ -1,4 +1,4 @@
-import { asNumber, asObject, asOptional, asString } from 'cleaners'
+import { asNumber, asObject, asOptional, asString, uncleaner } from 'cleaners'
 import {
   asCouchDoc,
   asMaybeNotFoundError,
@@ -6,8 +6,8 @@ import {
 } from 'edge-server-tools'
 import { ServerScope } from 'nano'
 
+import { DeviceRow } from '../types/dbTypes'
 import { Device } from '../types/pushTypes'
-import { saveToDB } from './utils/couchOps'
 
 export const asCouchDevice = asCouchDoc<Omit<Device, 'deviceId'>>(
   asObject({
@@ -19,7 +19,7 @@ export const asCouchDevice = asCouchDoc<Omit<Device, 'deviceId'>>(
     edgeBuildNumber: asNumber
   })
 )
-
+const wasCouchDevice = uncleaner(asCouchDevice)
 type CouchDevice = ReturnType<typeof asCouchDevice>
 export const devicesSetup: DatabaseSetup = { name: 'db_devices' }
 
@@ -41,8 +41,24 @@ export const saveDeviceToDB = async (
   connection: ServerScope,
   device: Device
 ): Promise<void> => {
-  const db = connection.db.use(devicesSetup.name)
-  await saveToDB(db, packDevice(device))
+  const { save } = makeDeviceRow(connection, packDevice(device))
+  await save()
+}
+
+export const makeDeviceRow = (
+  connection: ServerScope,
+  doc: CouchDevice
+): DeviceRow => {
+  const device = unpackDevice(doc)
+  return {
+    device,
+    async save() {
+      doc.doc = packDevice(device).doc
+      const db = connection.db.use(devicesSetup.name)
+      const result = await db.insert(wasCouchDevice(doc))
+      doc.rev = result?.rev
+    }
+  }
 }
 
 export const unpackDevice = (doc: CouchDevice): Device => {
