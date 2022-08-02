@@ -8,6 +8,7 @@ import {
 } from 'cleaners'
 import {
   asCouchDoc,
+  asMaybeConflictError,
   asMaybeNotFoundError,
   DatabaseSetup,
   makeJsDesign
@@ -105,23 +106,46 @@ export const cleanUpMissingDevices = async (
     }
   }
   if (updated) {
-    const { save } = makeUserRow(connection, packUser(user))
+    const db = connection.db.use(usersSetup.name)
+    const raw = await db.get(user.userId).catch(error => {
+      if (asMaybeNotFoundError(error) != null) return
+      throw error
+    })
+    if (raw == null) return
+    const { save } = makeUserRow(connection, raw)
     await save()
   }
 }
 
-export const makeUserRow = (
-  connection: ServerScope,
-  doc: CouchUser
-): UserRow => {
-  const user = unpackUser(doc)
+export const makeUserRow = (connection: ServerScope, raw: unknown): UserRow => {
+  const db = connection.db.use(usersSetup.name)
+  let base = asCouchUser(raw)
+  const user: User = { ...base.doc, userId: base.id }
   return {
     user,
     async save() {
-      doc.doc = packUser(user).doc
-      const db = connection.db.use(usersSetup.name)
-      const result = await db.insert(wasCouchUser(doc))
-      doc.rev = result?.rev
+      let remote = base
+      while (true) {
+        // Write to the database:
+        const doc: CouchUser = {
+          doc: { ...user },
+          id: remote.id,
+          rev: remote.rev
+        }
+        const response = await db.insert(wasCouchUser(doc)).catch(error => {
+          if (asMaybeConflictError(error) == null) throw error
+        })
+
+        // If that worked, the merged document is now the latest:
+        if (response?.ok === true) {
+          base = doc
+          return
+        }
+
+        // Something went wrong, so grab the latest remote document:
+        const raw = await db.get(user.userId)
+        remote = asCouchUser(raw)
+      }
     }
   }
 }
@@ -143,7 +167,13 @@ export const saveUserToDB = async (
   connection: ServerScope,
   user: User
 ): Promise<void> => {
-  const { save } = makeUserRow(connection, packUser(user))
+  const db = connection.db.use(usersSetup.name)
+  const raw = await db.get(user.userId).catch(error => {
+    if (asMaybeNotFoundError(error) != null) return
+    throw error
+  })
+  if (raw == null) return
+  const { save } = makeUserRow(connection, raw)
   await save()
 }
 
