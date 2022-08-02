@@ -7,23 +7,17 @@ import { ServerScope } from 'nano'
 
 import { serverConfig } from '../serverConfig'
 import { couchApiKeysSetup } from './couchApiKeys'
+import { devicesSetup } from './couchDevices'
 import { settingsSetup, syncedReplicators } from './couchSettings'
+import { usersSetup } from './couchUsers'
 
 // ---------------------------------------------------------------------------
 // Databases
 // ---------------------------------------------------------------------------
 
-const thresholdsSetup: DatabaseSetup = { name: 'db_currency_thresholds' }
+export const apiKeysSetup: DatabaseSetup = { name: 'db_api_keys' }
 
-const devicesSetup: DatabaseSetup = { name: 'db_devices' }
-
-const usersSetup: DatabaseSetup = {
-  name: 'db_user_settings'
-  // documents: {
-  //   '_design/filter': makeJsDesign('by-currency', ?),
-  //   '_design/map': makeJsDesign('currency-codes', ?)
-  // }
-}
+export const thresholdsSetup: DatabaseSetup = { name: 'db_currency_thresholds' }
 
 // ---------------------------------------------------------------------------
 // Setup routine

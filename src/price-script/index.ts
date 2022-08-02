@@ -42,7 +42,7 @@ async function main(): Promise<void> {
       runCounter.inc()
 
       for (const sender of senders) {
-        await checkPriceChanges(sender)
+        await checkPriceChanges(connection, sender)
       }
     },
     60 * 1000 * syncedSettings.doc.priceCheckInMinutes,
