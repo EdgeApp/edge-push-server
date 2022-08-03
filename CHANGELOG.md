@@ -1,5 +1,9 @@
 # edge-notification-server
 
+## 1.3.1 (2022-08-02)
+
+- fixed: Handle missing database items more correctly, either with proper errors or with fallbacks.
+
 ## 1.3.0 (2022-07-28)
 
 - changed: Replace the Express routing with Serverlet.
