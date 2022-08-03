@@ -72,16 +72,6 @@ export class User extends Base implements ReturnType<typeof asUser> {
     )
   }
 
-  public async attachDevice(deviceId: string) {
-    const device = await Device.fetch(deviceId)
-    if (!device)
-      throw new Error('Device must be registered before attaching to user.')
-
-    this.devices[deviceId] = true
-
-    await this.save()
-  }
-
   public async fetchDevices(): Promise<Device[]> {
     const devices: Device[] = []
 
