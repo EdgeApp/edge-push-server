@@ -3,10 +3,22 @@ import nano, { ServerScope } from 'nano'
 import { serverConfig } from '../serverConfig'
 import { PushEventRow } from '../types/dbTypes'
 import { PushTrigger } from '../types/pushTypes'
+import { useBlockbook } from './blockbookUtils'
+import { useEvm } from './evmUtils'
 
 const { couchUri } = serverConfig
 
 const connection = nano(couchUri)
+
+export interface ProviderMethods {
+  getBalance: (address: string, tokenId?: string) => Promise<string>
+  getTxConfirmations: (txid: string) => Promise<number>
+}
+
+export const providerMap: { [pluginId: string]: ProviderMethods } = {
+  bitcoin: useBlockbook('BTC'),
+  polygon: useEvm('https://polygon-rpc.com/')
+}
 
 export const triggerChecker = async (
   stream: (connection: ServerScope) => AsyncIterableIterator<PushEventRow>,
