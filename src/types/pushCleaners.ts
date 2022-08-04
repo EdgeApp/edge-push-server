@@ -1,11 +1,11 @@
 import {
+  asArray,
   asCodec,
   asEither,
   asNumber,
   asObject,
   asOptional,
   asString,
-  asTuple,
   asValue,
   Cleaner
 } from 'cleaners'
@@ -42,7 +42,7 @@ export const asPriceChangeTrigger: Cleaner<PriceChangeTrigger> = asObject({
   type: asValue('price-change'),
   pluginId: asString,
   currencyPair: asString, // From our rates server
-  directions: asOptional(asTuple(asString, asString)),
+  directions: asOptional(asArray(asString)), // [hourUp, hourDown, dayUp, dayDown]
   dailyChange: asOptional(asNumber), // Percentage
   hourlyChange: asOptional(asNumber) // Percentage
 })
