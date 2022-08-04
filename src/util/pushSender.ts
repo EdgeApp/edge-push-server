@@ -1,7 +1,8 @@
 import io from '@pm2/io'
 import admin from 'firebase-admin'
+import { ServerScope } from 'nano'
 
-import { ApiKey } from '../types/pushTypes'
+import { getApiKeyByKey } from '../db/couchApiKeys'
 
 const successCounter = io.counter({
   id: 'notifications:success:total',
@@ -19,43 +20,77 @@ export interface PushResult {
 
 export interface PushSender {
   send: (
-    title: string,
-    body: string,
-    tokens: string[],
-    data?: { [key: string]: string }
+    apiKey: string,
+    deviceTokens: string[],
+    message: {
+      title?: string
+      body?: string
+      data?: { [key: string]: string }
+    }
   ) => Promise<PushResult>
 }
 
-export async function makePushSender(apiKey: ApiKey): Promise<PushSender> {
-  const name = `app:${apiKey.appId}`
-  let app: admin.app.App
-  try {
-    admin.app(name)
-  } catch (err) {
-    app = admin.initializeApp(
-      {
-        // TODO: We have never passed the correct data type here,
-        // so either update our database or write a translation layer:
-        credential: admin.credential.cert(apiKey.adminsdk as any)
-      },
-      name
+/**
+ * Creates a push notification sender object.
+ * This object uses a cache to map appId's to Firebase credentials,
+ * based on the Couch database.
+ */
+export function makePushSender(connection: ServerScope): PushSender {
+  // Map apiKey's to message senders, or `null` if missing:
+  const senders = new Map<string, admin.messaging.Messaging | null>()
+
+  async function getSender(
+    apiKey: string
+  ): Promise<admin.messaging.Messaging | null> {
+    const cached = senders.get(apiKey)
+    // Null is a valid cache hit:
+    if (cached !== undefined) {
+      return cached
+    }
+
+    // Look up the API key for this appId:
+    const apiKeyRow = await getApiKeyByKey(connection, apiKey)
+    if (apiKeyRow == null || apiKeyRow.adminsdk == null) {
+      senders.set(apiKey, null)
+      return null
+    }
+
+    // TODO: We have never passed the correct data type here,
+    // so either update our database or write a translation layer:
+    const serviceAccount: any = apiKeyRow.adminsdk
+
+    // Create a sender if we have an API key for them:
+    const app = admin.initializeApp(
+      { credential: admin.credential.cert(serviceAccount) },
+      serviceAccount.projectId ?? serviceAccount.project_id
     )
+    const sender = app.messaging()
+    senders.set(apiKey, sender)
+    return sender
   }
 
   return {
-    async send(title, body, tokens, data = {}) {
-      const response = await app
-        .messaging()
+    async send(apiKey, tokens, message) {
+      const { title = '', body = '', data = {} } = message
+
+      const failure = {
+        successCount: 0,
+        failureCount: tokens.length
+      }
+
+      const sender = await getSender(apiKey)
+      if (sender == null) return failure
+
+      const response = await sender
         .sendMulticast({
           data,
           notification: { title, body },
           tokens
         })
-        .catch(() => ({ successCount: 0, failureCount: tokens.length }))
+        .catch(() => failure)
 
       successCounter.inc(response.successCount)
       failureCounter.inc(response.failureCount)
-
       return response
     }
   }

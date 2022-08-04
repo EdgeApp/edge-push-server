@@ -1,11 +1,13 @@
 import io from '@pm2/io'
 import { MetricType } from '@pm2/io/build/main/services/metrics'
+import nano from 'nano'
 
 import { syncedSettings } from '../db/couchSettings'
 import { CurrencyThreshold } from '../models/CurrencyThreshold'
 import { Device } from '../models/Device'
 import { User } from '../models/User'
-import { PushResult, PushSender } from '../util/pushSender'
+import { serverConfig } from '../serverConfig'
+import { makePushSender, PushResult } from '../util/pushSender'
 import { fetchThresholdPrice } from './fetchThresholdPrices'
 
 // Firebase Messaging API limits batch messages to 500
@@ -23,7 +25,10 @@ export interface NotificationPriceChange {
   priceChange: number
 }
 
-export async function checkPriceChanges(sender: PushSender): Promise<void> {
+export async function checkPriceChanges(apiKey: string): Promise<void> {
+  const { couchUri } = serverConfig
+  const sender = await makePushSender(nano(couchUri))
+
   // Sends a notification to devices about a price change
   async function sendNotification(
     thresholdPrice: NotificationPriceChange,
@@ -40,7 +45,7 @@ export async function checkPriceChanges(sender: PushSender): Promise<void> {
     const body = `${currencyCode} is ${direction} ${symbol}${priceChange}% to $${displayPrice} in the last ${time}.`
     const data = {}
 
-    return await sender.send(title, body, deviceTokens, data)
+    return await sender.send(apiKey, deviceTokens, { title, body, data })
   }
 
   // Fetch list of threshold items and their prices
