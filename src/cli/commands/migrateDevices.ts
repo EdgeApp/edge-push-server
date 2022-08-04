@@ -7,8 +7,9 @@ import { syncedSettings } from '../../db/couchSettings'
 import { asLegacyDevice } from '../../models/Device'
 import { asLegacyUser } from '../../models/User'
 import { base58 } from '../../util/base58'
+import { makeHeartbeat } from '../../util/heartbeat'
 import { verifyData } from '../../util/verifyData'
-import { makeHeartbeat, ServerContext } from '../cliTools'
+import { ServerContext } from '../cliTools'
 
 export class MigrateDevices extends Command<ServerContext> {
   static paths = [['migrate-devices']]

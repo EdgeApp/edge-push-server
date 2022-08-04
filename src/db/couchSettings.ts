@@ -23,6 +23,7 @@ const asSettings = asObject({
   debugLogs: asMaybe(asBoolean, false),
 
   // Other services we rely on:
+  infuraProjectId: asMaybe(asString, ''),
   slackUri: asMaybe(asString, '')
 })
 
