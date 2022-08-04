@@ -26,6 +26,7 @@
   "dependencies": {
     "@pm2/io": "^4.3.5",
     "axios": "^0.21.2",
+    "biggystring": "^4.0.0",
     "body-parser": "^1.20.0",
     "cleaner-config": "^0.1.7",
     "cleaners": "^0.3.12",

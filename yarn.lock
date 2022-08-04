@@ -746,10 +746,22 @@ base64-js@^1.3.0:
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.1.tgz#58ece8cb75dd07e71ed08c736abc5fac4dbf8df1"
   integrity sha512-mLQ4i2QO1ytvGWFWmcngKO//JXAQueZvwEKtjgQFM4jIK0kU+ytMfplL8j+n5mspOfjHwoAg+9yhb7BwAHm36g==
 
+biggystring@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/biggystring/-/biggystring-4.0.0.tgz#82c4aa30c6bd07f8e2c02df20cfe4b865f84cd25"
+  integrity sha512-MqdrAsEUTNEdWaMStlX84qKGREA0XkDf8n7qymUGgiz5FgprhZCugHeOYwhZQw6sFWx9h1m6fRODzHRw46kYZA==
+  dependencies:
+    bn.js "^4.11.7"
+
 bignumber.js@^7.0.0:
   version "7.2.1"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
   integrity sha512-S4XzBk5sMB+Rcb/LNcpzXr57VRTxgAvaAEDAl1AwRx27j00hT84O6OkteE7u8UB3NuaaygCRrEpqox4uDOrbdQ==
+
+bn.js@^4.11.7, bn.js@^4.11.9:
+  version "4.12.0"
+  resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-4.12.0.tgz#775b3f278efbb9718eec7361f483fb36fbbfea88"
+  integrity sha512-c98Bf3tPniI+scsdk237ku1Dc3ujXQTSgyiPUDEOe7tRkhrqridvh8klBv0HCEso1OLOYcHuCv/cS6DNxKH+ZA==
 
 body-parser@1.20.0, body-parser@^1.20.0:
   version "1.20.0"
