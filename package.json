@@ -10,6 +10,7 @@
   "scripts": {
     "build": "sucrase -q -t typescript,imports -d ./lib ./src",
     "clean": "rimraf lib",
+    "demo": "node -r sucrase/register docs/demo.ts",
     "fix": "yarn-deduplicate && eslint . --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types prepare",

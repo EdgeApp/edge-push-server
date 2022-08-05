@@ -4,6 +4,8 @@
 
 This server sends push notifications to Edge client apps. It contains an HTTP server that clients can use to register for notifications, and a background process that checks for price changes and actually sends the messages.
 
+The docs folder has can find [an example of how to use the v2 API](./docs/demo.ts).
+
 ## Setup
 
 This server requires a working copies of Node.js, Yarn, PM2, and CouchDB. We also recommend using Caddy to terminate SSL connections.
