@@ -1,6 +1,7 @@
 import { pickMethod, pickPath, Serverlet } from 'serverlet'
 
-import { withApiKey } from '../middleware/withApiKey'
+import { withLegacyApiKey } from '../middleware/withLegacyApiKey'
+import { deviceFetchRoute, deviceUpdateRoute } from '../routes/deviceRoutes'
 import {
   attachUserV1Route,
   enableCurrencyV1Route,
@@ -10,6 +11,7 @@ import {
   registerDeviceV1Route,
   toggleStateV1Route
 } from '../routes/legacyRoutes'
+import { loginFetchRoute, loginUpdateRoute } from '../routes/loginRoutes'
 import { sendNotificationV1Route } from '../routes/notificationRoute'
 import { DbRequest } from '../types/requestTypes'
 import { errorResponse, jsonResponse } from '../types/responseTypes'
@@ -23,29 +25,42 @@ const urls: { [path: string]: Serverlet<DbRequest> } = {
   '/': healthCheckRoute,
 
   '/v1/device/?': pickMethod({
-    POST: withApiKey(registerDeviceV1Route)
+    POST: withLegacyApiKey(registerDeviceV1Route)
   }),
 
   '/v1/notification/send/?': pickMethod({
-    POST: withApiKey(sendNotificationV1Route)
+    POST: withLegacyApiKey(sendNotificationV1Route)
   }),
 
   // The GUI accesses `/v1//user?userId=...` with an extra `/`:
   '/v1/+user/?': pickMethod({
-    GET: withApiKey(fetchStateV1Route)
+    GET: withLegacyApiKey(fetchStateV1Route)
   }),
   '/v1/user/device/attach/?': pickMethod({
-    POST: withApiKey(attachUserV1Route)
+    POST: withLegacyApiKey(attachUserV1Route)
   }),
   '/v1/user/notifications/?': pickMethod({
-    POST: withApiKey(registerCurrenciesV1Route)
+    POST: withLegacyApiKey(registerCurrenciesV1Route)
   }),
   '/v1/user/notifications/toggle/?': pickMethod({
-    POST: withApiKey(toggleStateV1Route)
+    POST: withLegacyApiKey(toggleStateV1Route)
   }),
   '/v1/user/notifications/[0-9A-Za-z]+/?': pickMethod({
-    GET: withApiKey(fetchCurrencyV1Route),
-    PUT: withApiKey(enableCurrencyV1Route)
+    GET: withLegacyApiKey(fetchCurrencyV1Route),
+    PUT: withLegacyApiKey(enableCurrencyV1Route)
+  }),
+
+  '/v2/device/?': pickMethod({
+    POST: deviceFetchRoute
+  }),
+  '/v2/device/update/?': pickMethod({
+    POST: deviceUpdateRoute
+  }),
+  '/v2/login/?': pickMethod({
+    POST: loginFetchRoute
+  }),
+  '/v2/login/update/?': pickMethod({
+    POST: loginUpdateRoute
   })
 }
 export const allRoutes: Serverlet<DbRequest> = pickPath(urls, missingRoute)

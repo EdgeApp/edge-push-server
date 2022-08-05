@@ -15,11 +15,11 @@ import { makePushSender } from '../util/pushSender'
  * Response body: unused
  */
 export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, json, log } = request
+  const { apiKey, connection, json, log } = request
   const { title, body, data, userId } = asSendNotificationBody(json)
 
   if (!apiKey.admin) return errorResponse('Not an admin', { status: 401 })
-  const sender = await makePushSender(apiKey)
+  const sender = makePushSender(connection)
 
   const user = await User.fetch(userId)
   if (user == null) {
@@ -34,7 +34,8 @@ export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
     }
   }
 
-  const response = await sender.send(title, body, tokens, data)
+  const message = { title, body, data }
+  const response = await sender.send(apiKey.apiKey, tokens, message)
   const { successCount, failureCount } = response
   log(
     `Sent notifications to user ${userId} devices: ${successCount} success - ${failureCount} failure`
