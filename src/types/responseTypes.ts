@@ -19,14 +19,14 @@ export function jsonResponse(
  * Construct an HttpResponse object with an error message.
  */
 export function errorResponse(
-  message: string,
+  error: string,
   opts: { status?: number; headers?: HttpHeaders } = {}
 ): HttpResponse {
   const { status = 500, headers = {} } = opts
   return {
     status,
     headers: { 'content-type': 'application/json', ...headers },
-    body: JSON.stringify({ message })
+    body: JSON.stringify({ error })
   }
 }
 
