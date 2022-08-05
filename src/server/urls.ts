@@ -2,7 +2,7 @@ import { pickMethod, pickPath, Serverlet } from 'serverlet'
 
 import { DbRequest } from '../types/requestTypes'
 import { errorResponse, jsonResponse } from '../types/responseTypes'
-import { withApiKey } from './middleware/withApiKey'
+import { withLegacyApiKey } from './middleware/withLegacyApiKey'
 import {
   attachUserV1Route,
   enableCurrencyV1Route,
@@ -23,29 +23,29 @@ const urls: { [path: string]: Serverlet<DbRequest> } = {
   '/': healthCheckRoute,
 
   '/v1/device/?': pickMethod({
-    POST: withApiKey(registerDeviceV1Route)
+    POST: withLegacyApiKey(registerDeviceV1Route)
   }),
 
   '/v1/notification/send/?': pickMethod({
-    POST: withApiKey(sendNotificationV1Route)
+    POST: withLegacyApiKey(sendNotificationV1Route)
   }),
 
   // The GUI accesses `/v1//user?userId=...` with an extra `/`:
   '/v1/+user/?': pickMethod({
-    GET: withApiKey(fetchStateV1Route)
+    GET: withLegacyApiKey(fetchStateV1Route)
   }),
   '/v1/user/device/attach/?': pickMethod({
-    POST: withApiKey(attachUserV1Route)
+    POST: withLegacyApiKey(attachUserV1Route)
   }),
   '/v1/user/notifications/?': pickMethod({
-    POST: withApiKey(registerCurrenciesV1Route)
+    POST: withLegacyApiKey(registerCurrenciesV1Route)
   }),
   '/v1/user/notifications/toggle/?': pickMethod({
-    POST: withApiKey(toggleStateV1Route)
+    POST: withLegacyApiKey(toggleStateV1Route)
   }),
   '/v1/user/notifications/[0-9A-Za-z]+/?': pickMethod({
-    GET: withApiKey(fetchCurrencyV1Route),
-    PUT: withApiKey(enableCurrencyV1Route)
+    GET: withLegacyApiKey(fetchCurrencyV1Route),
+    PUT: withLegacyApiKey(enableCurrencyV1Route)
   })
 }
 export const allRoutes: Serverlet<DbRequest> = pickPath(urls, missingRoute)
