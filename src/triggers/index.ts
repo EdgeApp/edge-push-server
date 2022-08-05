@@ -1,7 +1,7 @@
 import nano, { ServerScope } from 'nano'
 
+import { PushEventRow } from '../db/couchPushEvents'
 import { serverConfig } from '../serverConfig'
-import { PushEventRow } from '../types/dbTypes'
 import { PushTrigger } from '../types/pushTypes'
 import { useBlockbook } from './blockbookUtils'
 import { useEvm } from './evmUtils'
