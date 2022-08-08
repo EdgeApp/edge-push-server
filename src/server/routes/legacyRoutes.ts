@@ -9,11 +9,14 @@ import {
 } from 'cleaners'
 import { Serverlet } from 'serverlet'
 
+import { getDeviceById } from '../../db/couchDevices'
 import { Device } from '../../models/Device'
 import { User } from '../../models/User'
 import { ApiRequest } from '../../types/requestTypes'
 import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { base58 } from '../../util/base58'
 import { checkPayload } from '../../util/checkPayload'
+import { verifyData } from '../../util/verifyData'
 
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
@@ -23,7 +26,7 @@ import { checkPayload } from '../../util/checkPayload'
  * Response body: unused
  */
 export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
-  const { json, log, query } = request
+  const { apiKey, connection, date, json, log, query } = request
 
   const checkedQuery = checkPayload(asRegisterDeviceQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
@@ -41,6 +44,16 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
     device = new Device(clean as any, deviceId)
     await device.save()
     log(`Device registered.`)
+  }
+
+  // Update the v2 device:
+  {
+    const deviceRow = await getDeviceById(connection, deviceId, date)
+    const { device } = deviceRow
+    device.apiKey = apiKey.apiKey
+    device.deviceToken = clean.tokenId
+    device.visited = date
+    await deviceRow.save()
   }
 
   return jsonResponse(device)
@@ -79,7 +92,7 @@ export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
-  const { log, query } = request
+  const { connection, date, log, query } = request
 
   const checkedQuery = checkPayload(asAttachUserQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
@@ -95,6 +108,17 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
   await user.save()
 
   log(`Successfully attached device "${deviceId}" to user "${userId}"`)
+
+  // Update the v2 device:
+  {
+    const deviceRow = await getDeviceById(connection, deviceId, date)
+    const { device } = deviceRow
+    const loginId = base58.parse(userId)
+    if (device.loginIds.find(row => verifyData(loginId, row)) == null) {
+      device.loginIds = [...device.loginIds, loginId]
+      await deviceRow.save()
+    }
+  }
 
   return jsonResponse(user)
 }
