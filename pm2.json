@@ -5,12 +5,6 @@
       "error_file": "/var/log/pm2/pushErrors.log",
       "out_file": "/var/log/pm2/pushServer.log",
       "script": "./lib/server/index.js"
-    },
-    {
-      "name": "priceDaemon",
-      "error_file": "/var/log/pm2/priceErrors.log",
-      "out_file": "/var/log/pm2/priceDaemon.log",
-      "script": "./lib/price-script/index.js"
     }
   ]
 }

@@ -15,8 +15,6 @@ import { settingsSetup, syncedReplicators } from './couchSettings'
 // Databases
 // ---------------------------------------------------------------------------
 
-const thresholdsSetup: DatabaseSetup = { name: 'db_currency_thresholds' }
-
 const devicesSetup: DatabaseSetup = { name: 'db_devices' }
 
 const usersSetup: DatabaseSetup = {
@@ -48,7 +46,6 @@ export async function setupDatabases(
     setupDatabase(connection, couchDevicesSetup, options),
     setupDatabase(connection, couchEventsSetup, options),
     setupDatabase(connection, devicesSetup, options),
-    setupDatabase(connection, thresholdsSetup, options),
     setupDatabase(connection, usersSetup, options)
   ])
 }
