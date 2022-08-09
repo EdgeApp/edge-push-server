@@ -16,7 +16,6 @@
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types prepare",
     "prepare": "husky install && npm-run-all clean build",
-    "start-price": "node -r sucrase/register src/price-script/index.ts",
     "start-server": "node -r sucrase/register src/server/index.ts",
     "types": "tsc",
     "verify": "npm-run-all lint types prepare"
