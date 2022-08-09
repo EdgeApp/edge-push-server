@@ -4,8 +4,8 @@ import { withCors } from 'serverlet'
 import { makeExpressRoute } from 'serverlet/express'
 
 import { setupDatabases } from '../db/couchSetup'
-import { withLogging } from '../middleware/withLogging'
 import { serverConfig } from '../serverConfig'
+import { withLogging } from './middleware/withLogging'
 import { allRoutes } from './urls'
 
 async function main(): Promise<void> {

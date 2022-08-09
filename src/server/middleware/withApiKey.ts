@@ -1,8 +1,8 @@
 import { Serverlet } from 'serverlet'
 
-import { getApiKeyByKey } from '../db/couchApiKeys'
-import { ApiRequest, DbRequest } from '../types/requestTypes'
-import { errorResponse } from '../types/responseTypes'
+import { getApiKeyByKey } from '../../db/couchApiKeys'
+import { ApiRequest, DbRequest } from '../../types/requestTypes'
+import { errorResponse } from '../../types/responseTypes'
 
 /**
  * Checks the API key passed in the request headers,

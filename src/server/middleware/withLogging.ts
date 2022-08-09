@@ -3,10 +3,10 @@ import { asMaybeNotFoundError, stringifyError } from 'edge-server-tools'
 import { HttpResponse, Serverlet } from 'serverlet'
 import { ExpressRequest } from 'serverlet/express'
 
-import { syncedSettings } from '../db/couchSettings'
-import { LoggedRequest } from '../types/requestTypes'
-import { jsonResponse, UnavailableError } from '../types/responseTypes'
-import { slackAlert } from '../util/slackAlert'
+import { syncedSettings } from '../../db/couchSettings'
+import { LoggedRequest } from '../../types/requestTypes'
+import { jsonResponse, UnavailableError } from '../../types/responseTypes'
+import { slackAlert } from '../../util/slackAlert'
 
 const requestMeter = io.meter({
   id: 'request:meter',

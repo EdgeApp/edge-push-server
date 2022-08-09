@@ -9,10 +9,10 @@ import {
 } from 'cleaners'
 import { Serverlet } from 'serverlet'
 
-import { Device } from '../models/Device'
-import { User } from '../models/User'
-import { ApiRequest } from '../types/requestTypes'
-import { errorResponse, jsonResponse } from '../types/responseTypes'
+import { Device } from '../../models/Device'
+import { User } from '../../models/User'
+import { ApiRequest } from '../../types/requestTypes'
+import { errorResponse, jsonResponse } from '../../types/responseTypes'
 
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
