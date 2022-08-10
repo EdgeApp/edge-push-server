@@ -46,6 +46,8 @@ export async function getApiKeyByKey(
   apiKey: string
 ): Promise<ApiKey | undefined> {
   const db = connection.db.use(couchApiKeysSetup.name)
+  if (apiKey === '') return
+
   const raw = await db.get(apiKey).catch(error => {
     if (asMaybeNotFoundError(error) != null) return
     throw error
