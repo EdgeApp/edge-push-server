@@ -13,6 +13,7 @@ runDaemon(async tools => {
     if (plugin == null) continue
 
     const confirmations = await plugin.getTxConfirmations(txid)
+    console.log(txid, confirmations)
     if (confirmations >= trigger.confirmations) {
       console.log('Triggering')
       await tools.triggerEvent(eventRow)
