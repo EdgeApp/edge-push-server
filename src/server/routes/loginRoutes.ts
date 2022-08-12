@@ -1,8 +1,9 @@
-import { asMaybe, uncleaner } from 'cleaners'
+import { uncleaner } from 'cleaners'
 
 import { adjustEvents, getEventsByLoginId } from '../../db/couchPushEvents'
 import { asLoginPayload, asLoginUpdatePayload } from '../../types/pushApiTypes'
 import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { checkPayload } from '../../util/checkPayload'
 import { withDevice } from '../middleware/withDevice'
 
 const wasLoginPayload = uncleaner(asLoginPayload)
@@ -34,16 +35,16 @@ export const loginUpdateRoute = withDevice(async request => {
   if (loginId == null) {
     return errorResponse('No login provided', { status: 400 })
   }
-  const clean = asMaybe(asLoginUpdatePayload)(payload)
-  if (clean == null) {
-    return errorResponse('Incorrect login update payload', { status: 400 })
-  }
+
+  const checked = checkPayload(asLoginUpdatePayload, payload)
+  if (checked.error != null) return checked.error
+  const { createEvents, removeEvents } = checked.clean
 
   const events = await adjustEvents(connection, {
     date,
     loginId,
-    createEvents: clean.createEvents,
-    removeEvents: clean.removeEvents
+    createEvents,
+    removeEvents
   })
   return jsonResponse(wasLoginPayload({ events }))
 })

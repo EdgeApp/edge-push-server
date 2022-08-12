@@ -1,11 +1,12 @@
-import { asMaybe, uncleaner } from 'cleaners'
+import { uncleaner } from 'cleaners'
 
 import { adjustEvents, getEventsByDeviceId } from '../../db/couchPushEvents'
 import {
   asDevicePayload,
   asDeviceUpdatePayload
 } from '../../types/pushApiTypes'
-import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { jsonResponse } from '../../types/responseTypes'
+import { checkPayload } from '../../util/checkPayload'
 import { withDevice } from '../middleware/withDevice'
 
 const wasDevicePayload = uncleaner(asDevicePayload)
@@ -40,17 +41,16 @@ export const deviceUpdateRoute = withDevice(async request => {
     payload
   } = request
 
-  const clean = asMaybe(asDeviceUpdatePayload)(payload)
-  if (clean == null) {
-    return errorResponse('Incorrect device update payload', { status: 400 })
-  }
+  const checked = checkPayload(asDeviceUpdatePayload, payload)
+  if (checked.error != null) return checked.error
+  const { loginIds, createEvents, removeEvents } = checked.clean
 
-  device.loginIds = clean.loginIds
+  device.loginIds = loginIds
   const events = await adjustEvents(connection, {
     date,
     deviceId: device.deviceId,
-    createEvents: clean.createEvents,
-    removeEvents: clean.removeEvents
+    createEvents,
+    removeEvents
   })
 
   return jsonResponse(wasDevicePayload({ loginIds: device.loginIds, events }))

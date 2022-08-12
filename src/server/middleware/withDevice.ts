@@ -1,4 +1,3 @@
-import { asMaybe } from 'cleaners'
 import { Serverlet } from 'serverlet'
 
 import { getApiKeyByKey } from '../../db/couchApiKeys'
@@ -6,6 +5,7 @@ import { getDeviceById } from '../../db/couchDevices'
 import { asPushRequestBody } from '../../types/pushApiTypes'
 import { DbRequest, DeviceRequest } from '../../types/requestTypes'
 import { errorResponse } from '../../types/responseTypes'
+import { checkPayload } from '../../util/checkPayload'
 
 /**
  * Parses the request payload and looks up the device.
@@ -17,10 +17,9 @@ export const withDevice =
     const { connection, date, log, req } = request
 
     // Parse the common request body:
-    const body = asMaybe(asPushRequestBody)(req.body)
-    if (body == null) {
-      return errorResponse('Bad request body', { status: 400 })
-    }
+    const checkedBody = checkPayload(asPushRequestBody, req.body)
+    if (checkedBody.error != null) return checkedBody.error
+    const body = checkedBody.clean
 
     // Look up the key in the database:
     const apiKey = await log.debugTime(

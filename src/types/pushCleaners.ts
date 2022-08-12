@@ -77,7 +77,7 @@ export const asBroadcastTx: Cleaner<BroadcastTx> = asObject({
 export const asPushMessage: Cleaner<PushMessage> = asObject({
   title: asOptional(asString),
   body: asOptional(asString),
-  data: asObject(asString)
+  data: asOptional(asObject(asString))
 })
 
 export const asPushEventState: Cleaner<PushEventState> = asValue(
