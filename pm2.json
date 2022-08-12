@@ -2,13 +2,15 @@
   "apps": [
     {
       "name": "pushServer",
-      "script": "./lib/server/index.js",
-      "out_file": "/var/log/pm2/pushServer.log"
+      "error_file": "/var/log/pm2/pushErrors.log",
+      "out_file": "/var/log/pm2/pushServer.log",
+      "script": "./lib/server/index.js"
     },
     {
       "name": "priceDaemon",
-      "script": "./lib/price-script/index.js",
-      "out_file": "/var/log/pm2/priceDaemon.log"
+      "error_file": "/var/log/pm2/priceErrors.log",
+      "out_file": "/var/log/pm2/priceDaemon.log",
+      "script": "./lib/price-script/index.js"
     }
   ]
 }

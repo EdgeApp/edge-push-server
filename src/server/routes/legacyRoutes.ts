@@ -9,10 +9,11 @@ import {
 } from 'cleaners'
 import { Serverlet } from 'serverlet'
 
-import { Device } from '../models/Device'
-import { User } from '../models/User'
-import { ApiRequest } from '../types/requestTypes'
-import { errorResponse, jsonResponse } from '../types/responseTypes'
+import { Device } from '../../models/Device'
+import { User } from '../../models/User'
+import { ApiRequest } from '../../types/requestTypes'
+import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { checkPayload } from '../../util/checkPayload'
 
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
@@ -23,8 +24,14 @@ import { errorResponse, jsonResponse } from '../types/responseTypes'
  */
 export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
   const { json, log, query } = request
-  const { deviceId } = asRegisterDeviceQuery(query)
-  const clean = asRegisterDeviceRequest(json)
+
+  const checkedQuery = checkPayload(asRegisterDeviceQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { deviceId } = checkedQuery.clean
+
+  const checkedBody = checkPayload(asRegisterDeviceRequest, json)
+  if (checkedBody.error != null) return checkedBody.error
+  const { clean } = checkedBody
 
   let device = await Device.fetch(deviceId)
   if (device != null) {
@@ -49,7 +56,11 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
  */
 export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
   const { log, query } = request
-  const { userId } = asUserIdQuery(query)
+
+  const checkedQuery = checkPayload(asUserIdQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { userId } = checkedQuery.clean
+
   const result = await User.fetch(userId)
   if (result == null) {
     return errorResponse(`Cannot find user ${userId}`, { status: 404 })
@@ -69,7 +80,10 @@ export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
  */
 export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
   const { log, query } = request
-  const { deviceId, userId } = asAttachUserQuery(query)
+
+  const checkedQuery = checkPayload(asAttachUserQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { deviceId, userId } = checkedQuery.clean
 
   const device = await Device.fetch(deviceId)
   if (device == null) {
@@ -97,8 +111,14 @@ export const registerCurrenciesV1Route: Serverlet<
   ApiRequest
 > = async request => {
   const { log, json, query } = request
-  const { userId } = asUserIdQuery(query)
-  const { currencyCodes } = asRegisterCurrenciesBody(json)
+
+  const checkedQuery = checkPayload(asUserIdQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { userId } = checkedQuery.clean
+
+  const checkedBody = checkPayload(asRegisterCurrenciesBody, json)
+  if (checkedBody.error != null) return checkedBody.error
+  const { currencyCodes } = checkedBody.clean
 
   const user = (await User.fetch(userId)) ?? new User(null, userId)
   await user.registerNotifications(currencyCodes)
@@ -118,7 +138,11 @@ export const registerCurrenciesV1Route: Serverlet<
  */
 export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const { log, path, query } = request
-  const { userId } = asUserIdQuery(query)
+
+  const checkedQuery = checkPayload(asUserIdQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { userId } = checkedQuery.clean
+
   const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
   const currencyCode = match != null ? match[1] : ''
 
@@ -143,8 +167,15 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
  */
 export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const { log, json, path, query } = request
-  const { userId } = asUserIdQuery(query)
-  const { hours, enabled } = asEnableCurrencyBody(json)
+
+  const checkedQuery = checkPayload(asUserIdQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { userId } = checkedQuery.clean
+
+  const checkedBody = checkPayload(asEnableCurrencyBody, json)
+  if (checkedBody.error != null) return checkedBody.error
+  const { hours, enabled } = checkedBody.clean
+
   const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
   const currencyCode = match != null ? match[1] : ''
 
@@ -173,9 +204,13 @@ export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
 export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
   const { log, json, query } = request
 
-  const { userId } = asUserIdQuery(query)
-  const { enabled } = asToggleStateBody(json)
-  log(`enabled: ${String(enabled)}`)
+  const checkedQuery = checkPayload(asUserIdQuery, query)
+  if (checkedQuery.error != null) return checkedQuery.error
+  const { userId } = checkedQuery.clean
+
+  const checkedBody = checkPayload(asToggleStateBody, json)
+  if (checkedBody.error != null) return checkedBody.error
+  const { enabled } = checkedBody.clean
 
   const user = (await User.fetch(userId)) ?? new User(null, userId)
   user.notifications.enabled = enabled

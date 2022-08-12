@@ -3,10 +3,10 @@ import { asMaybeNotFoundError, stringifyError } from 'edge-server-tools'
 import { HttpResponse, Serverlet } from 'serverlet'
 import { ExpressRequest } from 'serverlet/express'
 
-import { syncedSettings } from '../db/couchSettings'
-import { LoggedRequest } from '../types/requestTypes'
-import { jsonResponse, UnavailableError } from '../types/responseTypes'
-import { slackAlert } from '../util/slackAlert'
+import { syncedSettings } from '../../db/couchSettings'
+import { LoggedRequest } from '../../types/requestTypes'
+import { jsonResponse, UnavailableError } from '../../types/responseTypes'
+import { slackAlert } from '../../util/slackAlert'
 
 const requestMeter = io.meter({
   id: 'request:meter',
@@ -51,9 +51,6 @@ export const withLogging =
 
       // Some errors have special HTTP statuses:
       if (error instanceof UnavailableError) return { status: 503 }
-      if (error instanceof TypeError) {
-        return jsonResponse({ error: error.message }, { status: 400 })
-      }
       if (asMaybeNotFoundError(error) != null) {
         return jsonResponse({ error: error.message }, { status: 404 })
       }

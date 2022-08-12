@@ -1,14 +1,14 @@
 import { Serverlet } from 'serverlet'
 
-import { getApiKeyByKey } from '../db/couchApiKeys'
-import { ApiRequest, DbRequest } from '../types/requestTypes'
-import { errorResponse } from '../types/responseTypes'
+import { getApiKeyByKey } from '../../db/couchApiKeys'
+import { ApiRequest, DbRequest } from '../../types/requestTypes'
+import { errorResponse } from '../../types/responseTypes'
 
 /**
  * Checks the API key passed in the request headers,
  * then passes the request along if the key is valid.
  */
-export const withApiKey =
+export const withLegacyApiKey =
   (server: Serverlet<ApiRequest>): Serverlet<DbRequest> =>
   async request => {
     const { connection, headers, log } = request
