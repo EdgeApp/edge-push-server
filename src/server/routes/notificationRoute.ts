@@ -4,6 +4,7 @@ import { Serverlet } from 'serverlet'
 import { User } from '../../models/User'
 import { ApiRequest } from '../../types/requestTypes'
 import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { checkPayload } from '../../util/checkPayload'
 import { makePushSender } from '../../util/pushSender'
 
 /**
@@ -16,7 +17,10 @@ import { makePushSender } from '../../util/pushSender'
  */
 export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
   const { apiKey, json, log } = request
-  const { title, body, data, userId } = asSendNotificationBody(json)
+
+  const checkedBody = checkPayload(asSendNotificationBody, json)
+  if (checkedBody.error != null) return checkedBody.error
+  const { title, body, data, userId } = checkedBody.clean
 
   if (!apiKey.admin) return errorResponse('Not an admin', { status: 401 })
   const sender = await makePushSender(apiKey)

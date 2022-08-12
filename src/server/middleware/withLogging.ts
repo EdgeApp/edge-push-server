@@ -51,9 +51,6 @@ export const withLogging =
 
       // Some errors have special HTTP statuses:
       if (error instanceof UnavailableError) return { status: 503 }
-      if (error instanceof TypeError) {
-        return jsonResponse({ error: error.message }, { status: 400 })
-      }
       if (asMaybeNotFoundError(error) != null) {
         return jsonResponse({ error: error.message }, { status: 404 })
       }
