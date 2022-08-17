@@ -2,14 +2,12 @@ import { makePeriodicTask } from 'edge-server-tools'
 import nano, { ServerScope } from 'nano'
 
 import { PushEventRow } from '../db/couchPushEvents'
-import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
 import { serverConfig } from '../serverConfig'
 import { MiniPlugin } from '../types/miniPlugin'
 import { makeHeartbeat } from '../util/heartbeat'
 import { makePushSender, PushSender } from '../util/pushSender'
-import { makeBlockbookPlugin } from './miniPlugins/blockbook'
-import { makeEvmPlugin } from './miniPlugins/evm'
+import { makePlugins } from './miniPlugins'
 
 export interface DaemonTools {
   connection: ServerScope
@@ -30,13 +28,7 @@ export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
     const heartbeat = makeHeartbeat(process.stdout)
     const sender = makePushSender(connection)
 
-    const plugins = {
-      bitcoin: makeBlockbookPlugin('BTC'),
-      kovan: makeEvmPlugin(
-        `https://kovan.infura.io/v3/${syncedSettings.doc.infuraProjectId}`
-      ),
-      polygon: makeEvmPlugin('https://polygon-rpc.com/')
-    }
+    const plugins = makePlugins()
 
     console.log('Starting loop at', new Date())
     await loop({
