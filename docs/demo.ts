@@ -25,7 +25,8 @@ const asErrorBody = asJSON(
 const server = 'http://127.0.0.1:8001'
 const apiKey = 'demo-api-key'
 const deviceId = 'example-device'
-const loginId = base64.parse('EE+tBb5wM63qwCDVidzwUQThH9ekCSfpUuTQYujSmY8=')
+// Non-existing account for demo purposes:
+const loginId = base64.parse('O8vz73AA76MejE3bCh6t6F2Lr7TLfQVB2+Tm0sC35tc=')
 
 /**
  * All push server HTTP methods use "POST" with JSON.
