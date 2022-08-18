@@ -14,17 +14,19 @@ import {
 import {
   asBase64,
   asBroadcastTx,
-  asNewPushEvent,
   asPushEventState,
   asPushMessage,
   asPushTrigger
 } from './pushCleaners'
-import { NewPushEvent, PushEvent } from './pushTypes'
+import { BroadcastTx, PushEvent, PushMessage, PushTrigger } from './pushTypes'
 
 // ---------------------------------------------------------------------------
 // Request types
 // ---------------------------------------------------------------------------
 
+/**
+ * All v2 requests use this request body.
+ */
 export interface PushRequestBody {
   // The request payload:
   data?: unknown
@@ -36,6 +38,17 @@ export interface PushRequestBody {
 
   // For logins:
   loginId?: Uint8Array
+}
+
+/**
+ * Template for creating new push events.
+ */
+export interface NewPushEvent {
+  readonly eventId: string
+  readonly broadcastTxs?: BroadcastTx[]
+  readonly pushMessage?: PushMessage
+  readonly recurring: boolean
+  readonly trigger: PushTrigger
 }
 
 /**
@@ -70,6 +83,14 @@ export const asPushRequestBody: Cleaner<PushRequestBody> = asObject({
 
   // For logins:
   loginId: asOptional(asBase64)
+})
+
+export const asNewPushEvent: Cleaner<NewPushEvent> = asObject({
+  eventId: asString,
+  broadcastTxs: asOptional(asArray(asBroadcastTx)),
+  pushMessage: asOptional(asPushMessage),
+  recurring: asBoolean,
+  trigger: asPushTrigger
 })
 
 export const asDeviceUpdatePayload: Cleaner<DeviceUpdatePayload> = asObject({

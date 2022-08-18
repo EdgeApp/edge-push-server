@@ -1,6 +1,4 @@
 import {
-  asArray,
-  asBoolean,
   asCodec,
   asEither,
   asNumber,
@@ -16,7 +14,6 @@ import { base64 } from 'rfc4648'
 import {
   AddressBalanceTrigger,
   BroadcastTx,
-  NewPushEvent,
   PriceChangeTrigger,
   PriceLevelTrigger,
   PushEventState,
@@ -89,11 +86,3 @@ export const asPushEventState: Cleaner<PushEventState> = asValue(
   'complete',
   'hidden'
 )
-
-export const asNewPushEvent: Cleaner<NewPushEvent> = asObject({
-  eventId: asString,
-  broadcastTxs: asOptional(asArray(asBroadcastTx)),
-  pushMessage: asOptional(asPushMessage),
-  recurring: asBoolean,
-  trigger: asPushTrigger
-})

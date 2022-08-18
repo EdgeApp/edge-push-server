@@ -13,6 +13,7 @@ import {
 import {
   asCouchDoc,
   asMaybeConflictError,
+  CouchDoc,
   DatabaseSetup,
   makeJsDesign,
   viewToStream
@@ -20,6 +21,7 @@ import {
 import { DocumentScope, ServerScope } from 'nano'
 import { base64 } from 'rfc4648'
 
+import { NewPushEvent } from '../types/pushApiTypes'
 import {
   asBase64,
   asBroadcastTx,
@@ -27,7 +29,7 @@ import {
   asPushMessage,
   asPushTrigger
 } from '../types/pushCleaners'
-import { NewPushEvent, PushEvent } from '../types/pushTypes'
+import { PushEvent } from '../types/pushTypes'
 
 /**
  * An event returned from the database.
@@ -38,11 +40,13 @@ export interface PushEventRow {
   save: () => Promise<void>
 }
 
+type CouchPushEvent = Omit<PushEvent, 'created'>
+
 /**
  * A push event, as stored in Couch.
  * The document ID is the creation date.
  */
-export const asCouchPushEvent = asCouchDoc<Omit<PushEvent, 'created'>>(
+export const asCouchPushEvent = asCouchDoc<CouchPushEvent>(
   asObject({
     eventId: asString, // Not the document id!
     deviceId: asOptional(asString),
@@ -216,7 +220,9 @@ export async function getEventsByDeviceId(
     include_docs: true,
     key: deviceId
   })
-  return response.rows.map(row => makePushEventRow(db, row.doc))
+  return response.rows.map(row =>
+    makePushEventRow(db, asCouchPushEvent(row.doc))
+  )
 }
 
 export async function getEventsByLoginId(
@@ -228,7 +234,9 @@ export async function getEventsByLoginId(
     include_docs: true,
     key: base64.stringify(loginId)
   })
-  return response.rows.map(row => makePushEventRow(db, row.doc))
+  return response.rows.map(row =>
+    makePushEventRow(db, asCouchPushEvent(row.doc))
+  )
 }
 
 export async function* streamAddressBalanceEvents(
@@ -239,7 +247,7 @@ export async function* streamAddressBalanceEvents(
     return await db.view('address-balance', 'address-balance', params)
   })
   for await (const raw of stream) {
-    yield makePushEventRow(db, raw)
+    yield makePushEventRow(db, asCouchPushEvent(raw))
   }
 }
 
@@ -251,7 +259,7 @@ export async function* streamPriceEvents(
     return await db.view('price', 'price', params)
   })
   for await (const raw of stream) {
-    yield makePushEventRow(db, raw)
+    yield makePushEventRow(db, asCouchPushEvent(raw))
   }
 }
 
@@ -263,15 +271,14 @@ export async function* streamTxConfirmEvents(
     return await db.view('tx-confirm', 'tx-confirm', params)
   })
   for await (const raw of stream) {
-    yield makePushEventRow(db, raw)
+    yield makePushEventRow(db, asCouchPushEvent(raw))
   }
 }
 
 function makePushEventRow(
   db: DocumentScope<unknown>,
-  raw: unknown
+  clean: CouchDoc<CouchPushEvent>
 ): PushEventRow {
-  const clean = asCouchPushEvent(raw)
   const event = { ...clean.doc, created: new Date(clean.id) }
   let rev = clean.rev
   let base = { ...event }
@@ -282,7 +289,7 @@ function makePushEventRow(
     async save(): Promise<void> {
       while (true) {
         // Write to the database:
-        const doc: ReturnType<typeof asCouchPushEvent> = {
+        const doc: CouchDoc<CouchPushEvent> = {
           doc: event,
           id: clean.id,
           rev

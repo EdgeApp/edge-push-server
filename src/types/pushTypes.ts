@@ -132,14 +132,3 @@ export interface PushEvent {
   state: PushEventState
   triggered?: Date // When did we see the trigger?
 }
-
-/**
- * Template for creating new push events.
- */
-export interface NewPushEvent {
-  readonly eventId: string
-  readonly broadcastTxs?: BroadcastTx[]
-  readonly pushMessage?: PushMessage
-  readonly recurring: boolean
-  readonly trigger: PushTrigger
-}

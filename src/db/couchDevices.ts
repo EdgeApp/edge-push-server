@@ -10,6 +10,7 @@ import {
   asCouchDoc,
   asMaybeConflictError,
   asMaybeNotFoundError,
+  CouchDoc,
   DatabaseSetup,
   makeJsDesign
 } from 'edge-server-tools'
@@ -29,11 +30,13 @@ export interface DeviceRow {
   save: () => Promise<void>
 }
 
+type CouchDevice = Omit<Device, 'deviceId'>
+
 /**
  * A single phone or other devIce, as stored in Couch.
  * The document ID is the deviceId.
  */
-export const asCouchDevice = asCouchDoc<Omit<Device, 'deviceId'>>(
+export const asCouchDevice = asCouchDoc<CouchDevice>(
   asObject({
     created: asDate,
 
@@ -75,13 +78,15 @@ export async function getDeviceById(
 ): Promise<DeviceRow> {
   const db = connection.use(couchDevicesSetup.name)
 
-  const emptyDevice: Device = {
-    created: date,
-    deviceId,
-    apiKey: undefined,
-    deviceToken: undefined,
-    loginIds: [],
-    visited: date
+  const emptyDevice = {
+    id: deviceId,
+    doc: {
+      created: date,
+      apiKey: undefined,
+      deviceToken: undefined,
+      loginIds: [],
+      visited: date
+    }
   }
   if (deviceId === '') return makeDeviceRow(db, emptyDevice)
 
@@ -91,7 +96,7 @@ export async function getDeviceById(
   })
 
   if (raw == null) return makeDeviceRow(db, emptyDevice)
-  return makeDeviceRow(db, raw)
+  return makeDeviceRow(db, asCouchDevice(raw))
 }
 
 /**
@@ -106,11 +111,13 @@ export async function getDevicesByLoginId(
     include_docs: true,
     key: base64.stringify(loginId)
   })
-  return response.rows.map(row => makeDeviceRow(db, row.doc))
+  return response.rows.map(row => makeDeviceRow(db, asCouchDevice(row.doc)))
 }
 
-function makeDeviceRow(db: DocumentScope<unknown>, raw: unknown): DeviceRow {
-  const clean = asCouchDevice(raw)
+function makeDeviceRow(
+  db: DocumentScope<unknown>,
+  clean: CouchDoc<CouchDevice>
+): DeviceRow {
   const device = { ...clean.doc, deviceId: clean.id }
   let rev = clean.rev
   let base = { ...device }
@@ -125,7 +132,7 @@ function makeDeviceRow(db: DocumentScope<unknown>, raw: unknown): DeviceRow {
     async save(): Promise<void> {
       while (true) {
         // Write to the database:
-        const doc: ReturnType<typeof asCouchDevice> = {
+        const doc: CouchDoc<CouchDevice> = {
           doc: device,
           id: clean.id,
           rev
