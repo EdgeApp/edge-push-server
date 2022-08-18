@@ -7,7 +7,7 @@ import { serverConfig } from '../serverConfig'
 import { MiniPlugin } from '../types/miniPlugin'
 import { makeHeartbeat } from '../util/heartbeat'
 import { makePushSender, PushSender } from '../util/pushSender'
-import { makePlugins } from './miniPlugins'
+import { makePlugins } from './miniPlugins/miniPlugins'
 
 export interface DaemonTools {
   connection: ServerScope
@@ -57,17 +57,29 @@ async function triggerEvent(
   sender: PushSender,
   plugins: { [id: string]: MiniPlugin },
   eventRow: PushEventRow,
-  date: Date
+  date: Date,
+  stringReplacements: { [key: string]: string }
 ): Promise<void> {
   const { event } = eventRow
   const { broadcastTxs = [], pushMessage } = event
 
   if (pushMessage != null) {
-    const results = await sender.send(connection, pushMessage, {
-      date,
-      deviceId: event.deviceId,
-      loginId: event.loginId
-    })
+    let { tile, body, data } = pushMessage
+
+    for (const replament of stringReplaments) {
+      title = title.replace()
+      body = body.replace()
+    }
+
+    const results = await sender.send(
+      connection,
+      { title, body, data },
+      {
+        date,
+        deviceId: event.deviceId,
+        loginId: event.loginId
+      }
+    )
 
     event.pushMessageEmits = results.successCount
     event.pushMessageFails = results.failureCount

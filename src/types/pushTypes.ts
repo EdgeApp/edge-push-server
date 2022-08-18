@@ -100,7 +100,7 @@ export interface BroadcastTx {
  * Sends a push notification.
  */
 export interface PushMessage {
-  readonly title?: string
+  readonly title?: string // "BTC is up 10% from $20k to $22k" "BTC est %direction% von %percent% dara %amount%"
   readonly body?: string
   readonly data?: { [key: string]: string } // JSON to push to device
 }
@@ -109,7 +109,6 @@ export type PushEventState =
   | 'waiting' // Waiting for the trigger
   | 'cancelled' // Removed before the trigger happened
   | 'triggered' // The trigger happened, but not the effects
-  | 'complete' // The trigger and effects are done
   | 'hidden' // Removed after being triggered
 
 /**

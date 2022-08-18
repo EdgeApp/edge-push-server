@@ -1,7 +1,7 @@
-import { syncedSettings } from '../db/couchSettings'
-import { MiniPlugin } from '../types/miniPlugin'
-import { makeBlockbookPlugin } from './miniPlugins/blockbook'
-import { makeEvmPlugin } from './miniPlugins/evm'
+import { syncedSettings } from '../../db/couchSettings'
+import { MiniPlugin } from '../../types/miniPlugin'
+import { makeBlockbookPlugin } from './blockbook'
+import { makeEvmPlugin } from './evm'
 
 export function makePlugins(): { [currencyName: string]: MiniPlugin } {
   const plugins = {

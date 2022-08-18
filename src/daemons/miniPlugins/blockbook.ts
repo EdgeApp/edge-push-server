@@ -9,6 +9,7 @@ import {
 import fetch from 'node-fetch'
 
 import { MiniPlugin } from '../../types/miniPlugin'
+import { asyncWaterfall } from '../../util/asyncWaterfall'
 import { memoize } from '../../util/utils'
 
 const serverListInfoUrl = 'https://info1.edge.app/v1/blockBook/'
@@ -41,45 +42,38 @@ const asBlockbookTxConfirmation = (raw: any): number =>
     confirmations: asNumber
   })(raw).confirmations
 
-const getBlockbookThing = async <T>(
-  currencyCode: string,
-  path: string,
-  thing: string,
-  serverList: string[],
-  cleaner: Cleaner<T>
-): Promise<any> => {
-  const urls = await getServerListForCode(currencyCode, serverList)
-  const response = await Promise.race(
-    urls.map(async url => await fetch(`${url}/api/v2/${path}/${thing}`))
-  )
-
-  const json = await response.json()
-  return cleaner(json)
-}
-
 export const makeBlockbookPlugin = (
   currencyCode: string,
   serverList: string[]
-): MiniPlugin => ({
-  async broadcastTx() {},
+): MiniPlugin => {
+  const getBlockbookThing = async <T>(
+    path: string,
+    thing: string,
+    cleaner: Cleaner<T>
+  ): Promise<T> => {
+    // Use fuzzyTimeout or asyncWaterfall:
+    const urls = await getServerListForCode(currencyCode, serverList)
 
-  async getBalance(address: string, tokenId?: string) {
-    return await getBlockbookThing(
-      currencyCode,
-      'address',
-      address,
-      serverList,
-      asBlockbookBalance
-    )
-  },
-
-  async getTxConfirmations(txid: string) {
-    return await getBlockbookThing(
-      currencyCode,
-      'tx',
-      txid,
-      serverList,
-      asBlockbookTxConfirmation
+    return await asyncWaterfall(
+      urls.map(url => async () => {
+        const response = await fetch(`${url}/api/v2/${path}/${thing}`)
+        const json = await response.json()
+        return cleaner(json)
+      })
     )
   }
-})
+
+  return {
+    async broadcastTx() {
+      // TODO!
+    },
+
+    async getBalance(address: string, tokenId?: string) {
+      return await getBlockbookThing('address', address, asBlockbookBalance)
+    },
+
+    async getTxConfirmations(txid: string) {
+      return await getBlockbookThing('tx', txid, asBlockbookTxConfirmation)
+    }
+  }
+}
