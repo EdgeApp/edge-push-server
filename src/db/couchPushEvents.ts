@@ -1,6 +1,5 @@
 import {
   asArray,
-  asBoolean,
   asDate,
   asEither,
   asNull,
@@ -55,7 +54,6 @@ export const asCouchPushEvent = asCouchDoc<CouchPushEvent>(
     // Event:
     broadcastTxs: asOptional(asArray(asBroadcastTx)),
     pushMessage: asOptional(asPushMessage),
-    recurring: asBoolean,
     trigger: asPushTrigger,
 
     // Status:

@@ -122,7 +122,6 @@ export interface PushEvent {
 
   readonly broadcastTxs?: BroadcastTx[]
   readonly pushMessage?: PushMessage
-  readonly recurring: boolean // Go back to waiting once complete
   readonly trigger: PushTrigger
 
   // Mutable state:

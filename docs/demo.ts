@@ -86,7 +86,6 @@ async function main(): Promise<void> {
               body: 'Example body',
               data: { what: 'happened' }
             },
-            recurring: false,
             trigger: {
               type: 'price-level',
               currencyPair: 'BTC-USD',

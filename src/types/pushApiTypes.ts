@@ -1,6 +1,5 @@
 import {
   asArray,
-  asBoolean,
   asDate,
   asEither,
   asNull,
@@ -48,7 +47,6 @@ export interface NewPushEvent {
   readonly eventId: string
   readonly broadcastTxs?: BroadcastTx[]
   readonly pushMessage?: PushMessage
-  readonly recurring: boolean
   readonly trigger: PushTrigger
 }
 
@@ -90,7 +88,6 @@ export const asNewPushEvent: Cleaner<NewPushEvent> = asObject({
   eventId: asString,
   broadcastTxs: asOptional(asArray(asBroadcastTx)),
   pushMessage: asOptional(asPushMessage),
-  recurring: asBoolean,
   trigger: asPushTrigger
 })
 
@@ -119,7 +116,6 @@ export const asPushEventStatus: Cleaner<
 
   broadcastTxs: asOptional(asArray(asBroadcastTx)),
   pushMessage: asOptional(asPushMessage),
-  recurring: asBoolean,
   trigger: asPushTrigger,
 
   // Status:
