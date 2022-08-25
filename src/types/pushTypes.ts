@@ -106,8 +106,7 @@ export interface PushMessage {
 export type PushEventState =
   | 'waiting' // Waiting for the trigger
   | 'cancelled' // Removed before the trigger happened
-  | 'triggered' // The trigger happened, but not the effects
-  | 'complete' // The trigger and effects are done
+  | 'triggered' // The trigger and effects are done
   | 'hidden' // Removed after being triggered
 
 /**

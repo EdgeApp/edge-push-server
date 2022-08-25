@@ -83,6 +83,5 @@ export const asPushEventState: Cleaner<PushEventState> = asValue(
   'waiting',
   'cancelled',
   'triggered',
-  'complete',
   'hidden'
 )
