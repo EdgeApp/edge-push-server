@@ -2,7 +2,6 @@ import { asString, Cleaner } from 'cleaners'
 import { BaseContext } from 'clipanion'
 import { ServerScope } from 'nano'
 import { base16, base64 } from 'rfc4648'
-import { Writable } from 'stream'
 
 export interface ServerContext extends BaseContext {
   connection: ServerScope
@@ -25,32 +24,4 @@ export function prettify(data: unknown): string {
         : value,
     1
   )
-}
-
-/**
- * For long-running database tasks,
- * print a heartbeat to stderr every few seconds.
- */
-export function makeHeartbeat(
-  stderr: Writable,
-  opts: { logSeconds?: number } = {}
-): (item?: string) => void {
-  const { logSeconds = 10 } = opts
-
-  const start = Date.now()
-  let nextLog = start + 1000 * logSeconds
-
-  let count = 0
-  return item => {
-    ++count
-    const now = Date.now()
-    if (now < nextLog) return
-
-    nextLog += 1000 * logSeconds
-    const seconds = (now - start) / 1000
-    let out = `${seconds.toFixed(2)}s, ${count} rows`
-    if (item != null) out += `, ${item}`
-    out += '\n'
-    stderr.write(out)
-  }
 }
