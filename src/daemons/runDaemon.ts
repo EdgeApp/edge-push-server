@@ -93,7 +93,8 @@ async function triggerEvent(
       {
         date,
         deviceId: event.deviceId,
-        loginId: event.loginId
+        loginId: event.loginId,
+        isPriceChange: event.trigger.type === 'price-change'
       }
     )
 

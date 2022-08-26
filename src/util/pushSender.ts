@@ -28,6 +28,7 @@ export interface PushSender {
       date: Date
       deviceId?: string
       loginId?: Uint8Array
+      isPriceChange?: boolean
     }
   ) => Promise<PushResult>
 
@@ -103,14 +104,18 @@ export function makePushSender(connection: ServerScope): PushSender {
     },
 
     async send(connection, message, opts) {
-      const { date, deviceId, loginId } = opts
+      const { date, deviceId, loginId, isPriceChange = false } = opts
 
-      const deviceRows =
+      let deviceRows =
         deviceId != null
           ? [await getDeviceById(connection, deviceId, date)]
           : loginId != null
           ? await getDevicesByLoginId(connection, loginId)
           : []
+
+      if (isPriceChange) {
+        deviceRows = deviceRows.filter(row => !row.device.ignorePriceChanges)
+      }
 
       // Sort the devices by app:
       const apiKeys = new Map<string, string[]>()
