@@ -1,5 +1,6 @@
 import {
   asArray,
+  asBoolean,
   asDate,
   asEither,
   asNull,
@@ -54,9 +55,11 @@ export interface NewPushEvent {
  * PUSH /v2/device/update payload.
  */
 export interface DeviceUpdatePayload {
-  loginIds: Uint8Array[]
   createEvents?: NewPushEvent[]
   removeEvents?: string[]
+
+  ignorePriceChanges?: boolean
+  loginIds?: Uint8Array[]
 }
 
 /**
@@ -92,9 +95,11 @@ export const asNewPushEvent: Cleaner<NewPushEvent> = asObject({
 })
 
 export const asDeviceUpdatePayload: Cleaner<DeviceUpdatePayload> = asObject({
-  loginIds: asArray(asBase64),
   createEvents: asOptional(asArray(asNewPushEvent), []),
-  removeEvents: asOptional(asArray(asString), [])
+  removeEvents: asOptional(asArray(asString), []),
+
+  ignorePriceChanges: asOptional(asBoolean),
+  loginIds: asOptional(asArray(asBase64))
 })
 
 export const asLoginUpdatePayload: Cleaner<LoginUpdatePayload> = asObject({
@@ -131,8 +136,9 @@ export const asPushEventStatus: Cleaner<
  * POST /v2/device response payload.
  */
 export const asDevicePayload = asObject({
-  loginIds: asArray(asBase64),
-  events: asArray(asPushEventStatus)
+  events: asArray(asPushEventStatus),
+  ignorePriceChanges: asBoolean,
+  loginIds: asArray(asBase64)
 })
 
 /**

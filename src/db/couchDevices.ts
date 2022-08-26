@@ -1,5 +1,6 @@
 import {
   asArray,
+  asBoolean,
   asDate,
   asObject,
   asOptional,
@@ -43,6 +44,7 @@ export const asCouchDevice = asCouchDoc<CouchDevice>(
     // Status:
     apiKey: asOptional(asString),
     deviceToken: asOptional(asString),
+    ignorePriceChanges: asOptional(asBoolean, false),
     loginIds: asArray(asBase64),
     visited: asDate
   })
@@ -84,6 +86,7 @@ export async function getDeviceById(
       created: date,
       apiKey: undefined,
       deviceToken: undefined,
+      ignorePriceChanges: false,
       loginIds: [],
       visited: date
     }
@@ -159,6 +162,9 @@ function makeDeviceRow(
         }
         if (device.deviceToken === base.deviceToken) {
           device.deviceToken = remote.doc.deviceToken
+        }
+        if (device.ignorePriceChanges === base.ignorePriceChanges) {
+          device.ignorePriceChanges = remote.doc.ignorePriceChanges
         }
         if (device.loginIds === base.loginIds) {
           device.loginIds = remote.doc.loginIds
