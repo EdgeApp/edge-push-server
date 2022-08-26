@@ -149,7 +149,8 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
   const user = (await User.fetch(userId)) ?? new User(null, userId)
   const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
     '1': false,
-    '24': false
+    '24': false,
+    fallbackSettings: true
   }
 
   log(`Got notification settings for ${currencyCode} for user ${userId}`)
