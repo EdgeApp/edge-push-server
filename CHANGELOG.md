@@ -1,5 +1,11 @@
 # edge-notification-server
 
+## 1.4.0 (2022-08-26)
+
+- added: Return a `fallbackSettings` flag when fetching missing currency settings.
+- changed: Return better error messages when cleaners fail.
+- changed: Return error messages as `error` instead of `message`.
+
 ## 1.3.1 (2022-08-02)
 
 - fixed: Handle missing database items more correctly, either with proper errors or with fallbacks.
