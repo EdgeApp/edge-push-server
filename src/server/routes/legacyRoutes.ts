@@ -18,6 +18,13 @@ import { base58 } from '../../util/base58'
 import { checkPayload } from '../../util/checkPayload'
 import { verifyData } from '../../util/verifyData'
 
+interface CurrencySettings {
+  [key: string]: {
+    '1': boolean
+    '24': boolean
+  }
+}
+
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
  *
@@ -145,8 +152,18 @@ export const registerCurrenciesV1Route: Serverlet<
   const { currencyCodes } = checkedBody.clean
 
   const user = (await User.fetch(userId)) ?? new User(null, userId)
-  await user.registerNotifications(currencyCodes)
 
+  const newCurrencyCodes: CurrencySettings = {}
+  for (const currencyCode of currencyCodes) {
+    const oldSetting = user.notifications.currencyCodes[currencyCode]
+    newCurrencyCodes[currencyCode] = oldSetting ?? {
+      '1': true,
+      '24': true
+    }
+  }
+  user.notifications.currencyCodes = newCurrencyCodes
+
+  await user.save()
   log(`Registered notifications for user ${userId}: ${String(currencyCodes)}`)
 
   return jsonResponse(user)

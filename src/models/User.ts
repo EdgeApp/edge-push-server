@@ -93,24 +93,4 @@ export class User extends Base implements ReturnType<typeof asUser> {
 
     return devices
   }
-
-  public async registerNotifications(currencyCodes: string[]) {
-    const currencyCodesToUnregister = Object.keys(
-      this.notifications.currencyCodes
-    ).filter(code => !currencyCodes.includes(code))
-    for (const code of currencyCodesToUnregister) {
-      delete this.notifications.currencyCodes[code]
-    }
-
-    for (const code of currencyCodes) {
-      if (code in this.notifications.currencyCodes) continue
-
-      this.notifications.currencyCodes[code] = {
-        '1': true,
-        '24': true
-      }
-    }
-
-    await this.save()
-  }
 }
