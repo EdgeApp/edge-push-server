@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 import { asBoolean, asMap, asObject, asOptional } from 'cleaners'
+import { asCouchDoc } from 'edge-server-tools'
 import Nano from 'nano'
 
 import { serverConfig } from '../serverConfig'
@@ -27,6 +28,7 @@ const asUser = asObject({
   devices: asUserDevices,
   notifications: asUserNotifications
 })
+export const asLegacyUser = asCouchDoc(asUser)
 
 export interface INotificationsEnabledViewResponse {
   devices: ReturnType<typeof asUserDevices>

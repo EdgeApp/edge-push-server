@@ -1,4 +1,5 @@
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
+import { asCouchDoc } from 'edge-server-tools'
 import Nano from 'nano'
 
 import { serverConfig } from '../serverConfig'
@@ -15,6 +16,7 @@ const asDevice = asObject({
   edgeVersion: asString,
   edgeBuildNumber: asNumber
 })
+export const asLegacyDevice = asCouchDoc(asDevice)
 
 export class Device extends Base implements ReturnType<typeof asDevice> {
   public static table = dbDevices

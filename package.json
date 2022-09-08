@@ -10,12 +10,13 @@
   "scripts": {
     "build": "sucrase -q -t typescript,imports -d ./lib ./src",
     "clean": "rimraf lib",
+    "cli": "node -r sucrase/register src/cli/cli.ts",
+    "demo": "node -r sucrase/register docs/demo.ts",
     "fix": "yarn-deduplicate && eslint . --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types prepare",
     "prepare": "husky install && npm-run-all clean build",
     "start-server": "node -r sucrase/register src/server/index.ts",
-    "start-price": "node -r sucrase/register src/price-script/index.ts",
     "types": "tsc",
     "verify": "npm-run-all lint types prepare"
   },
@@ -25,15 +26,18 @@
   "dependencies": {
     "@pm2/io": "^4.3.5",
     "axios": "^0.21.2",
+    "base-x": "^3.0.8",
     "body-parser": "^1.20.0",
     "cleaner-config": "^0.1.7",
     "cleaners": "^0.3.12",
+    "clipanion": "^3.2.0-rc.11",
     "cors": "^2.8.5",
     "edge-server-tools": "^0.2.15",
     "express": "^4.18.1",
     "firebase-admin": "^8.12.1",
     "nano": "^9.0.5",
     "node-fetch": "^2.6.7",
+    "rfc4648": "^1.5.2",
     "serverlet": "^0.1.1"
   },
   "devDependencies": {
