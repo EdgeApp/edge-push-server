@@ -5,6 +5,24 @@
       "error_file": "/var/log/pm2/pushErrors.log",
       "out_file": "/var/log/pm2/pushServer.log",
       "script": "./lib/server/index.js"
+    },
+    {
+      "name": "balanceDaemon",
+      "error_file": "/var/log/pm2/balanceErrors.log",
+      "out_file": "/var/log/pm2/balanceDaemon.log",
+      "script": "./lib/daemons/balanceDaemon.js"
+    },
+    {
+      "name": "confirmationDaemon",
+      "error_file": "/var/log/pm2/confirmationErrors.log",
+      "out_file": "/var/log/pm2/confirmationDaemon.log",
+      "script": "./lib/daemons/confirmationDaemon.js"
+    },
+    {
+      "name": "priceDaemon",
+      "error_file": "/var/log/pm2/priceErrors.log",
+      "out_file": "/var/log/pm2/priceDaemon.log",
+      "script": "./lib/daemons/priceDaemon.js"
     }
   ]
 }

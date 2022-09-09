@@ -1,9 +1,9 @@
 import { asObject, asOptional, asString } from 'cleaners'
 import { Serverlet } from 'serverlet'
 
-import { User } from '../../models/User'
 import { ApiRequest } from '../../types/requestTypes'
 import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { base58 } from '../../util/base58'
 import { checkPayload } from '../../util/checkPayload'
 import { makePushSender } from '../../util/pushSender'
 
@@ -16,34 +16,24 @@ import { makePushSender } from '../../util/pushSender'
  * Response body: unused
  */
 export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, json, log } = request
+  const { apiKey, connection, date, json, log } = request
 
   const checkedBody = checkPayload(asSendNotificationBody, json)
   if (checkedBody.error != null) return checkedBody.error
   const { title, body, data, userId } = checkedBody.clean
 
   if (!apiKey.admin) return errorResponse('Not an admin', { status: 401 })
-  const sender = await makePushSender(apiKey)
+  const sender = makePushSender(connection)
 
-  const user = await User.fetch(userId)
-  if (user == null) {
-    return errorResponse('User does not exist.', { status: 404 })
-  }
-
-  const tokens: string[] = []
-  const devices = await user.fetchDevices()
-  for (const device of devices) {
-    if (device.tokenId != null) {
-      tokens.push(device.tokenId)
-    }
-  }
-
-  const response = await sender.send(title, body, tokens, data)
+  // Perform the send:
+  const loginId = base58.parse(userId)
+  const message = { title, body, data }
+  const response = await sender.send(connection, message, { date, loginId })
   const { successCount, failureCount } = response
+
   log(
     `Sent notifications to user ${userId} devices: ${successCount} success - ${failureCount} failure`
   )
-
   return jsonResponse(response)
 }
 
