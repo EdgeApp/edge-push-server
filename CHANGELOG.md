@@ -1,5 +1,11 @@
 # edge-notification-server
 
+## 2.0.0 (2022-09-09)
+
+- added: Introduce v2 API endpoints with more symmetry between devices & logins and support for more advanced subscription types.
+- added: Migrate v1 login notification subscriptions to the new v2 database.
+- removed: Stop sending push notifications for v1 price subscriptions.
+
 ## 1.4.0 (2022-08-26)
 
 - added: Return a `fallbackSettings` flag when fetching missing currency settings.
