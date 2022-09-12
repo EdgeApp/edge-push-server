@@ -7,6 +7,7 @@ import { serverConfig } from '../serverConfig'
 import { ServerContext } from './cliTools'
 import { GetDevice } from './commands/getDevice'
 import { MigrateDevices } from './commands/migrateDevices'
+import { SendMessage } from './commands/sendMessage'
 
 async function main(): Promise<void> {
   const connection = nano(serverConfig.couchUri)
@@ -29,6 +30,7 @@ async function main(): Promise<void> {
   // Our commands:
   cli.register(GetDevice)
   cli.register(MigrateDevices)
+  cli.register(SendMessage)
 
   const args = process.argv.slice(2)
   await cli.runExit(args, context)
