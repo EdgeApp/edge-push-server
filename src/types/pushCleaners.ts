@@ -11,6 +11,7 @@ import {
 } from 'cleaners'
 import { base64 } from 'rfc4648'
 
+import { base58 } from '../util/base58'
 import {
   AddressBalanceTrigger,
   BroadcastTx,
@@ -21,6 +22,11 @@ import {
   PushTrigger,
   TxConfirmTrigger
 } from './pushTypes'
+
+export const asBase58 = asCodec(
+  raw => base58.parse(asString(raw)),
+  clean => base58.stringify(clean)
+)
 
 export const asBase64 = asCodec(
   raw => base64.parse(asString(raw)),
