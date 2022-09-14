@@ -74,14 +74,14 @@ export function makePushSender(connection: ServerScope): PushSender {
 
   async function sendRaw(
     apiKey: string,
-    tokens: string[],
+    tokens: Set<string>,
     message: PushMessage
   ): Promise<PushResult> {
     const { title = '', body = '', data = {} } = message
 
     const failure = {
       successCount: 0,
-      failureCount: tokens.length
+      failureCount: tokens.size
     }
 
     const sender = await getSender(apiKey)
@@ -91,7 +91,7 @@ export function makePushSender(connection: ServerScope): PushSender {
       .sendMulticast({
         data,
         notification: { title, body },
-        tokens
+        tokens: [...tokens]
       })
       .catch(() => failure)
 
@@ -116,12 +116,12 @@ export function makePushSender(connection: ServerScope): PushSender {
       }
 
       // Sort the devices by app:
-      const apiKeys = new Map<string, string[]>()
+      const apiKeys = new Map<string, Set<string>>()
       for (const row of deviceRows) {
         const { apiKey, deviceToken } = row.device
         if (apiKey == null || deviceToken == null) continue
-        const tokens = apiKeys.get(apiKey) ?? []
-        tokens.push(deviceToken)
+        const tokens = apiKeys.get(apiKey) ?? new Set()
+        tokens.add(deviceToken)
         apiKeys.set(apiKey, tokens)
       }
 
