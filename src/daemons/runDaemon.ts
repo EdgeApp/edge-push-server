@@ -1,13 +1,16 @@
+import cluster from 'cluster'
 import { makePeriodicTask } from 'edge-server-tools'
 import nano, { ServerScope } from 'nano'
 
 import { PushEventRow } from '../db/couchPushEvents'
+import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
 import { makePlugins } from '../miniPlugins/miniPlugins'
 import { serverConfig } from '../serverConfig'
 import { MiniPlugins } from '../types/miniPlugin'
 import { makeHeartbeat } from '../util/heartbeat'
 import { makePushSender, PushSender } from '../util/pushSender'
+import { slackAlert } from '../util/slackAlert'
 
 export interface DaemonTools {
   connection: ServerScope
@@ -22,12 +25,53 @@ export interface DaemonTools {
 }
 
 export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
+  const promise = cluster.isPrimary ? manage() : iteration(loop)
+  promise.catch(error => {
+    console.error(error)
+    process.exit(1)
+  })
+}
+
+/**
+ * Runs the in background, spawning a child processes for each iteration.
+ */
+async function manage(): Promise<void> {
   console.log('Starting daemon', new Date())
-  makePeriodicTask(async () => await iteration(loop), 60 * 1000, {
-    onError(error) {
-      console.error(error)
+
+  // Load settings from CouchDB:
+  const { couchUri } = serverConfig
+  const connection = nano(couchUri)
+  await setupDatabases(connection)
+
+  const gapSeconds = 6
+
+  makePeriodicTask(
+    async () =>
+      await new Promise((resolve, reject) => {
+        const { daemonMaxHours } = syncedSettings.doc
+        const worker = cluster.fork()
+
+        const timeout = setTimeout(() => {
+          worker.kill()
+          const message = `Killed push-server daemon after ${daemonMaxHours} hours`
+          console.log(message)
+          slackAlert(message)
+        }, daemonMaxHours * 60 * 1000)
+
+        worker.on('exit', () => {
+          clearTimeout(timeout)
+          resolve()
+        })
+
+        worker.on('error', reject)
+      }),
+    gapSeconds * 1000,
+    {
+      onError(error) {
+        console.error(error)
+      }
     }
-  }).start()
+  ).start()
 }
 
 /**
@@ -61,6 +105,9 @@ async function iteration(
       )
   })
   console.log(`Finished loop in ${heartbeat.getSeconds().toFixed(2)}s`)
+
+  // Force-close any lingering stuff:
+  process.exit(0)
 }
 
 /**

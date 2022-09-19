@@ -1,4 +1,11 @@
-import { asArray, asBoolean, asMaybe, asObject, asString } from 'cleaners'
+import {
+  asArray,
+  asBoolean,
+  asMaybe,
+  asNumber,
+  asObject,
+  asString
+} from 'cleaners'
 import {
   asReplicatorSetupDocument,
   DatabaseSetup,
@@ -21,6 +28,7 @@ const asSettings = asObject({
 
   // Mode toggles:
   debugLogs: asMaybe(asBoolean, false),
+  daemonMaxHours: asMaybe(asNumber, 1),
 
   // Other services we rely on:
   infuraProjectId: asMaybe(asString, ''),
