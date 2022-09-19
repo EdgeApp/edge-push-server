@@ -22,40 +22,45 @@ export interface DaemonTools {
 }
 
 export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
-  async function main(): Promise<void> {
-    const { couchUri } = serverConfig
-    const connection = nano(couchUri)
-    await setupDatabases(connection)
-
-    const heartbeat = makeHeartbeat(process.stdout)
-    const sender = makePushSender(connection)
-
-    const plugins = makePlugins()
-
-    console.log('Starting loop at', new Date())
-    await loop({
-      connection,
-      heartbeat,
-      plugins,
-      triggerEvent: async (eventRow, date, replacements) =>
-        await triggerEvent(
-          connection,
-          sender,
-          plugins,
-          eventRow,
-          date,
-          replacements
-        )
-    })
-    console.log(`Finished loop in ${heartbeat.getSeconds().toFixed(2)}s`)
-  }
-
   console.log('Starting daemon', new Date())
-  makePeriodicTask(main, 60 * 1000, {
+  makePeriodicTask(async () => await iteration(loop), 60 * 1000, {
     onError(error) {
       console.error(error)
     }
   }).start()
+}
+
+/**
+ * Runs the demon callback.
+ */
+async function iteration(
+  loop: (tools: DaemonTools) => Promise<void>
+): Promise<void> {
+  const { couchUri } = serverConfig
+  const connection = nano(couchUri)
+  await setupDatabases(connection)
+
+  const heartbeat = makeHeartbeat(process.stdout)
+  const sender = makePushSender(connection)
+
+  const plugins = makePlugins()
+
+  console.log('Starting loop at', new Date())
+  await loop({
+    connection,
+    heartbeat,
+    plugins,
+    triggerEvent: async (eventRow, date, replacements) =>
+      await triggerEvent(
+        connection,
+        sender,
+        plugins,
+        eventRow,
+        date,
+        replacements
+      )
+  })
+  console.log(`Finished loop in ${heartbeat.getSeconds().toFixed(2)}s`)
 }
 
 /**
