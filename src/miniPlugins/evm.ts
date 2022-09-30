@@ -13,7 +13,7 @@ export const makeEvmPlugin = (url: string): MiniPlugin => ({
   async getBalance(address: string, tokenId?: string) {
     const provider = new providers.JsonRpcProvider(url)
     if (tokenId == null) {
-      const balance = await provider.getBalance('address', 'latest')
+      const balance = await provider.getBalance(address, 'latest')
       return balance.toString()
     } else {
       const contract = new Contract(tokenId, BALANCE_ABI, provider)
