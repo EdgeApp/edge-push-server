@@ -56,7 +56,7 @@ async function manage(): Promise<void> {
           const message = `Killed push-server daemon after ${daemonMaxHours} hours`
           console.log(message)
           slackAlert(message)
-        }, daemonMaxHours * 60 * 1000)
+        }, daemonMaxHours * 60 * 60 * 1000)
 
         worker.on('exit', () => {
           clearTimeout(timeout)
