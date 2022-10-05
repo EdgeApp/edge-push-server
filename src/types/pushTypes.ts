@@ -61,6 +61,7 @@ export interface AddressBalanceTrigger {
 
 export interface PriceChangeTrigger {
   readonly type: 'price-change'
+  readonly pluginId?: string // Used by the client
   readonly currencyPair: string // From our rates server
   readonly directions?: string[] // [hourUp, hourDown, dayUp, dayDown]
   readonly dailyChange?: number // Percentage

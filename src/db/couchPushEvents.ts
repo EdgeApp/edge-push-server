@@ -39,14 +39,14 @@ export interface PushEventRow {
   save: () => Promise<void>
 }
 
-type CouchPushEvent = Omit<PushEvent, 'created'>
+interface CouchPushEvent extends Omit<PushEvent, 'created'> {}
 
 /**
  * A push event, as stored in Couch.
  * The document ID is the creation date.
  */
-export const asCouchPushEvent = asCouchDoc<CouchPushEvent>(
-  asObject({
+export const asCouchPushEvent = asCouchDoc(
+  asObject<CouchPushEvent>({
     eventId: asString, // Not the document id!
     deviceId: asOptional(asString),
     loginId: asOptional(asBase64),

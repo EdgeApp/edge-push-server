@@ -27,34 +27,32 @@ export const asBase64 = asCodec(
   clean => base64.stringify(clean)
 )
 
-export const asAddressBalanceTrigger: Cleaner<AddressBalanceTrigger> = asObject(
-  {
-    type: asValue('address-balance'),
-    pluginId: asString,
-    tokenId: asOptional(asString),
-    address: asString,
-    aboveAmount: asOptional(asString), // Satoshis or Wei or such
-    belowAmount: asOptional(asString) // Satoshis or Wei or such
-  }
-)
-
-export const asPriceChangeTrigger: Cleaner<PriceChangeTrigger> = asObject({
-  type: asValue('price-change'),
+export const asAddressBalanceTrigger = asObject<AddressBalanceTrigger>({
+  type: asValue('address-balance'),
   pluginId: asString,
+  tokenId: asOptional(asString),
+  address: asString,
+  aboveAmount: asOptional(asString), // Satoshis or Wei or such
+  belowAmount: asOptional(asString) // Satoshis or Wei or such
+})
+
+export const asPriceChangeTrigger = asObject<PriceChangeTrigger>({
+  type: asValue('price-change'),
+  pluginId: asOptional(asString),
   currencyPair: asString, // From our rates server
   directions: asOptional(asArray(asString)), // [hourUp, hourDown, dayUp, dayDown]
   dailyChange: asOptional(asNumber), // Percentage
   hourlyChange: asOptional(asNumber) // Percentage
 })
 
-export const asPriceLevelTrigger: Cleaner<PriceLevelTrigger> = asObject({
+export const asPriceLevelTrigger = asObject<PriceLevelTrigger>({
   type: asValue('price-level'),
   currencyPair: asString, // From our rates server
   aboveRate: asOptional(asNumber),
   belowRate: asOptional(asNumber)
 })
 
-export const asTxConfirmTrigger: Cleaner<TxConfirmTrigger> = asObject({
+export const asTxConfirmTrigger = asObject<TxConfirmTrigger>({
   type: asValue('tx-confirm'),
   pluginId: asString,
   confirmations: asNumber,
@@ -68,12 +66,12 @@ export const asPushTrigger: Cleaner<PushTrigger> = asEither(
   asTxConfirmTrigger
 )
 
-export const asBroadcastTx: Cleaner<BroadcastTx> = asObject({
+export const asBroadcastTx = asObject<BroadcastTx>({
   pluginId: asString,
   rawTx: asBase64
 })
 
-export const asPushMessage: Cleaner<PushMessage> = asObject({
+export const asPushMessage = asObject<PushMessage>({
   title: asOptional(asString),
   body: asOptional(asString),
   data: asOptional(asObject(asString))
