@@ -59,6 +59,11 @@ export interface AddressBalanceTrigger {
   readonly belowAmount?: string // Satoshis or Wei or such
 }
 
+/**
+ * The price change trigger is recurring, which makes it special.
+ * It will not broadcast transactions,
+ * and it will leave the the event status as "waiting".
+ */
 export interface PriceChangeTrigger {
   readonly type: 'price-change'
   readonly pluginId?: string // Used by the client

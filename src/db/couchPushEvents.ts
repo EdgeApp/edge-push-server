@@ -13,6 +13,7 @@ import {
   asMaybeConflictError,
   CouchDoc,
   DatabaseSetup,
+  JsDesignDocument,
   makeJsDesign,
   viewToStream
 } from 'edge-server-tools'
@@ -91,51 +92,41 @@ const loginIdDesign = makeJsDesign('loginId', ({ emit }) => ({
 }))
 
 /**
- * Looks up active address-balance events.
+ * Looks up active events which contain the given trigger type.
  */
-const addressBalanceDesign = makeJsDesign('address-balance', ({ emit }) => ({
-  map: function (doc) {
-    if (doc.trigger == null) return
-    if (doc.trigger.type !== 'address-balance') return
-    if (doc.state !== 'waiting') return
-    emit(doc._id, null)
-  }
-}))
-
-/**
- * Looks up active price-related events.
- */
-const priceDesign = makeJsDesign('price', ({ emit }) => ({
-  map: function (doc) {
-    if (doc.trigger == null) return
-    const type = doc.trigger.type
-    if (type !== 'price-change' && type !== 'price-level') return
-    if (doc.state !== 'waiting') return
-    emit(doc._id, null)
-  }
-}))
-
-/**
- * Looks up active price-related events.
- */
-const txConfirmDesign = makeJsDesign('tx-confirm', ({ emit }) => ({
-  map: function (doc) {
-    if (doc.trigger == null) return
-    if (doc.trigger.type !== 'tx-confirm') return
-    if (doc.state !== 'waiting') return
-    emit(doc._id, null)
-  }
-}))
+function makeStreamDesign(
+  type: 'address-balance' | 'price-change' | 'price-level' | 'tx-confirm'
+): JsDesignDocument {
+  return makeJsDesign(
+    type,
+    ({ emit }) => ({
+      map: function (doc) {
+        if (doc.state !== 'waiting') return
+        if (doc.trigger == null) return
+        if (doc.trigger.type !== 'address-balance') return
+        emit(doc._id, null)
+      }
+    }),
+    {
+      fixJs(code) {
+        return code
+          .replace(/\blet\b|\bconst\b/g, 'var')
+          .replace('address-balance', type)
+      }
+    }
+  )
+}
 
 export const couchEventsSetup: DatabaseSetup = {
   name: 'push-events',
 
   documents: {
-    '_design/address-balance': addressBalanceDesign,
+    '_design/address-balance': makeStreamDesign('address-balance'),
     '_design/deviceId': deviceIdDesign,
     '_design/loginId': loginIdDesign,
-    '_design/price': priceDesign,
-    '_design/tx-confirm': txConfirmDesign
+    '_design/price-change': makeStreamDesign('price-change'),
+    '_design/price-level': makeStreamDesign('price-level'),
+    '_design/tx-confirm': makeStreamDesign('tx-confirm')
   }
 }
 
@@ -238,36 +229,13 @@ export async function getEventsByLoginId(
   )
 }
 
-export async function* streamAddressBalanceEvents(
-  connection: ServerScope
+export async function* streamEvents(
+  connection: ServerScope,
+  view: 'address-balance' | 'price-change' | 'price-level' | 'tx-confirm'
 ): AsyncIterableIterator<PushEventRow> {
   const db = connection.use(couchEventsSetup.name)
   const stream = viewToStream(async params => {
-    return await db.view('address-balance', 'address-balance', params)
-  })
-  for await (const raw of stream) {
-    yield makePushEventRow(db, asCouchPushEvent(raw))
-  }
-}
-
-export async function* streamPriceEvents(
-  connection: ServerScope
-): AsyncIterableIterator<PushEventRow> {
-  const db = connection.use(couchEventsSetup.name)
-  const stream = viewToStream(async params => {
-    return await db.view('price', 'price', params)
-  })
-  for await (const raw of stream) {
-    yield makePushEventRow(db, asCouchPushEvent(raw))
-  }
-}
-
-export async function* streamTxConfirmEvents(
-  connection: ServerScope
-): AsyncIterableIterator<PushEventRow> {
-  const db = connection.use(couchEventsSetup.name)
-  const stream = viewToStream(async params => {
-    return await db.view('tx-confirm', 'tx-confirm', params)
+    return await db.view(view, view, params)
   })
   for await (const raw of stream) {
     yield makePushEventRow(db, asCouchPushEvent(raw))

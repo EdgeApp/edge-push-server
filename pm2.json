@@ -19,10 +19,16 @@
       "script": "./lib/daemons/confirmationDaemon.js"
     },
     {
-      "name": "priceDaemon",
-      "error_file": "/var/log/pm2/priceErrors.log",
-      "out_file": "/var/log/pm2/priceDaemon.log",
-      "script": "./lib/daemons/priceDaemon.js"
+      "name": "priceChangeDaemon",
+      "error_file": "/var/log/pm2/priceChangeErrors.log",
+      "out_file": "/var/log/pm2/priceChangeDaemon.log",
+      "script": "./lib/daemons/priceChangeDaemon.js"
+    },
+    {
+      "name": "priceLevelDaemon",
+      "error_file": "/var/log/pm2/priceLevelErrors.log",
+      "out_file": "/var/log/pm2/priceLevelDaemon.log",
+      "script": "./lib/daemons/priceLevelDaemon.js"
     }
   ]
 }
