@@ -1,6 +1,5 @@
 import {
   asArray,
-  asDate,
   asEither,
   asNull,
   asNumber,
@@ -26,7 +25,8 @@ import {
   asBroadcastTx,
   asPushEventState,
   asPushMessage,
-  asPushTrigger
+  asPushTrigger,
+  asPushTriggerState
 } from '../types/pushCleaners'
 import { PushEvent } from '../types/pushTypes'
 
@@ -61,7 +61,7 @@ export const asCouchPushEvent = asCouchDoc(
     pushMessageEmits: asOptional(asNumber),
     pushMessageFails: asOptional(asNumber),
     state: asPushEventState,
-    triggered: asOptional(asDate)
+    triggered: asPushTriggerState
   })
 )
 const wasCouchPushEvent = uncleaner(asCouchPushEvent)
@@ -200,7 +200,8 @@ export async function adjustEvents(
       created: date,
       deviceId,
       loginId,
-      state: 'waiting'
+      state: 'waiting',
+      triggered: undefined
     }
     await addEvent(connection, event, date)
     out.push(event)

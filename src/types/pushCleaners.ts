@@ -1,6 +1,7 @@
 import {
   asArray,
   asCodec,
+  asDate,
   asEither,
   asNumber,
   asObject,
@@ -20,6 +21,7 @@ import {
   PushEventState,
   PushMessage,
   PushTrigger,
+  PushTriggerState,
   TxConfirmTrigger
 } from './pushTypes'
 
@@ -71,6 +73,8 @@ export const asPushTrigger: Cleaner<PushTrigger> = asEither(
   asPriceLevelTrigger,
   asTxConfirmTrigger
 )
+
+export const asPushTriggerState: Cleaner<PushTriggerState> = asOptional(asDate)
 
 export const asBroadcastTx = asObject<BroadcastTx>({
   pluginId: asString,

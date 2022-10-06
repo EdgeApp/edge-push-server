@@ -1,7 +1,6 @@
 import {
   asArray,
   asBoolean,
-  asDate,
   asEither,
   asNull,
   asNumber,
@@ -16,7 +15,8 @@ import {
   asBroadcastTx,
   asPushEventState,
   asPushMessage,
-  asPushTrigger
+  asPushTrigger,
+  asPushTriggerState
 } from './pushCleaners'
 import { BroadcastTx, PushEvent, PushMessage, PushTrigger } from './pushTypes'
 
@@ -127,7 +127,7 @@ export const asPushEventStatus = asObject<
   pushMessageEmits: asOptional(asNumber), // Number of devices we sent to
   pushMessageFails: asOptional(asNumber), // Number of devices that failed
   state: asPushEventState,
-  triggered: asOptional(asDate)
+  triggered: asPushTriggerState
 })
 
 /**

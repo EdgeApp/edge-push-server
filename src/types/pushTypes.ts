@@ -47,7 +47,7 @@ export interface Device {
 }
 
 //
-// Events that devices or logins may subscribe to.
+// Triggers that may cause an event to fire.
 //
 
 export interface AddressBalanceTrigger {
@@ -87,6 +87,15 @@ export type PushTrigger =
   | PriceChangeTrigger
   | PriceLevelTrigger
   | TxConfirmTrigger
+
+/**
+ * Records when a trigger took place.
+ */
+export type PushTriggerState = undefined | Date
+
+//
+// Events that happen when a trigger fires.
+//
 
 /**
  * Broadcasts a transaction to a blockchain.
@@ -130,5 +139,5 @@ export interface PushEvent {
   pushMessageEmits?: number // Number of devices we sent to
   pushMessageFails?: number // Number of devices that failed
   state: PushEventState
-  triggered?: Date // When did we see the trigger?
+  triggered: PushTriggerState // When did we see the trigger?
 }
