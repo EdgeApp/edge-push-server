@@ -29,7 +29,7 @@ import {
   asPushTrigger,
   asPushTriggerState
 } from '../types/pushCleaners'
-import { PushEvent } from '../types/pushTypes'
+import { PushEvent, PushTrigger } from '../types/pushTypes'
 
 /**
  * An event returned from the database.
@@ -102,9 +102,19 @@ function makeStreamDesign(
     ({ emit }) => ({
       map: function (doc) {
         if (doc.state !== 'waiting') return
-        if (doc.trigger == null) return
-        if (doc.trigger.type !== 'address-balance') return
-        emit(doc._id, null)
+
+        function search(trigger: PushTrigger): boolean {
+          if (trigger == null) return false
+          if (trigger.type === 'address-balance') return true
+          if (trigger.type === 'all' || trigger.type === 'any') {
+            for (let i = 0; i < trigger.triggers.length; ++i) {
+              if (search(trigger.triggers[i])) return true
+            }
+          }
+          return false
+        }
+
+        if (search(doc.trigger)) emit(doc._id, null)
       }
     }),
     {

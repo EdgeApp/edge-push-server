@@ -51,7 +51,7 @@ async function checkPriceChange(
   // We either use the time gap, or we use the last trigger time,
   // whichever is later:
   let fromTime = new Date(now.valueOf() - msBack)
-  if (triggered != null && triggered.valueOf() > fromTime.valueOf()) {
+  if (triggered instanceof Date && triggered.valueOf() > fromTime.valueOf()) {
     fromTime = triggered
   }
 

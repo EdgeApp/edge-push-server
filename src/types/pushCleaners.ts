@@ -15,6 +15,8 @@ import { base64 } from 'rfc4648'
 import { base58 } from '../util/base58'
 import {
   AddressBalanceTrigger,
+  AllTrigger,
+  AnyTrigger,
   BroadcastTx,
   PriceChangeTrigger,
   PriceLevelTrigger,
@@ -44,6 +46,16 @@ export const asAddressBalanceTrigger = asObject<AddressBalanceTrigger>({
   belowAmount: asOptional(asString) // Satoshis or Wei or such
 })
 
+export const asAllTrigger = asObject<AllTrigger>({
+  type: asValue('all'),
+  triggers: asArray(raw => asPushTrigger(raw))
+})
+
+export const asAnyTrigger = asObject<AnyTrigger>({
+  type: asValue('any'),
+  triggers: asArray(raw => asPushTrigger(raw))
+})
+
 export const asPriceChangeTrigger = asObject<PriceChangeTrigger>({
   type: asValue('price-change'),
   pluginId: asOptional(asString),
@@ -69,12 +81,19 @@ export const asTxConfirmTrigger = asObject<TxConfirmTrigger>({
 
 export const asPushTrigger: Cleaner<PushTrigger> = asEither(
   asAddressBalanceTrigger,
+  asAllTrigger,
+  asAnyTrigger,
   asPriceChangeTrigger,
   asPriceLevelTrigger,
   asTxConfirmTrigger
 )
 
-export const asPushTriggerState: Cleaner<PushTriggerState> = asOptional(asDate)
+export const asPushTriggerState: Cleaner<PushTriggerState> = asOptional(
+  asEither(
+    asArray(raw => asPushTriggerState(raw)),
+    asDate
+  )
+)
 
 export const asBroadcastTx = asObject<BroadcastTx>({
   pluginId: asString,

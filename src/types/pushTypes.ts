@@ -59,6 +59,16 @@ export interface AddressBalanceTrigger {
   readonly belowAmount?: string // Satoshis or Wei or such
 }
 
+export interface AllTrigger {
+  readonly type: 'all'
+  readonly triggers: PushTrigger[]
+}
+
+export interface AnyTrigger {
+  readonly type: 'any'
+  readonly triggers: PushTrigger[]
+}
+
 /**
  * The price change trigger is recurring, which makes it special.
  * It will not broadcast transactions,
@@ -89,6 +99,8 @@ export interface TxConfirmTrigger {
 
 export type PushTrigger =
   | AddressBalanceTrigger
+  | AllTrigger
+  | AnyTrigger
   | PriceChangeTrigger
   | PriceLevelTrigger
   | TxConfirmTrigger
@@ -96,7 +108,12 @@ export type PushTrigger =
 /**
  * Records when a trigger took place.
  */
-export type PushTriggerState = undefined | Date
+export type PushTriggerState =
+  | undefined
+  // For "any" and "all" triggers:
+  | PushTriggerState[]
+  // For normal triggers:
+  | Date
 
 //
 // Events that happen when a trigger fires.

@@ -79,6 +79,38 @@ async function checkTrigger(
   now: Date
 ): Promise<PushTriggerUpdate> {
   switch (trigger.type) {
+    case 'all': {
+      const { triggers } = trigger
+      let done = true
+      let states = Array.isArray(state) ? state : []
+
+      for (let i = 0; i < triggers.length; ++i) {
+        const update = await checkTrigger(tools, triggers[i], states[i], now)
+        if (!update.done) done = false
+        if (update.state !== states[i]) {
+          states = [...states]
+          states[i] = update.state
+        }
+      }
+      return { done, state: states }
+    }
+
+    case 'any': {
+      const { triggers } = trigger
+      let done = false
+      let states = Array.isArray(state) ? state : []
+
+      for (let i = 0; i < triggers.length; ++i) {
+        const update = await checkTrigger(tools, triggers[i], states[i], now)
+        if (update.done) done = true
+        if (update.state !== states[i]) {
+          states = [...states]
+          states[i] = update.state
+        }
+      }
+      return { done, state: states }
+    }
+
     // These trigger once, and then remain triggered:
     case 'address-balance':
       if (state instanceof Date) return { done: true, state }
