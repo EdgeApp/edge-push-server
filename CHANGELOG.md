@@ -1,5 +1,12 @@
 # edge-notification-server
 
+## 2.1.0 (2022-10-06)
+
+- added: Add a `send-message` CLI command for sending test messages,
+- changed: Run daemon loops in Node.js child processes for stability.
+- fixed: Do not push duplicate messages if the same phone is registered twice.
+- fixed: Correctly read balances for EVM native currencies.
+
 ## 2.0.0 (2022-09-09)
 
 - added: Introduce v2 API endpoints with more symmetry between devices & logins and support for more advanced subscription types.
