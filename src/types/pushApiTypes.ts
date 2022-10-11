@@ -1,15 +1,13 @@
 import {
   asArray,
   asBoolean,
-  asDate,
   asEither,
   asNull,
   asNumber,
   asObject,
   asOptional,
   asString,
-  asUnknown,
-  Cleaner
+  asUnknown
 } from 'cleaners'
 
 import {
@@ -17,7 +15,8 @@ import {
   asBroadcastTx,
   asPushEventState,
   asPushMessage,
-  asPushTrigger
+  asPushTrigger,
+  asPushTriggerState
 } from './pushCleaners'
 import { BroadcastTx, PushEvent, PushMessage, PushTrigger } from './pushTypes'
 
@@ -74,7 +73,7 @@ export interface LoginUpdatePayload {
 // Request cleaners
 // ---------------------------------------------------------------------------
 
-export const asPushRequestBody: Cleaner<PushRequestBody> = asObject({
+export const asPushRequestBody = asObject<PushRequestBody>({
   // The request payload:
   data: asUnknown,
 
@@ -87,14 +86,14 @@ export const asPushRequestBody: Cleaner<PushRequestBody> = asObject({
   loginId: asOptional(asBase64)
 })
 
-export const asNewPushEvent: Cleaner<NewPushEvent> = asObject({
+export const asNewPushEvent = asObject<NewPushEvent>({
   eventId: asString,
   broadcastTxs: asOptional(asArray(asBroadcastTx)),
   pushMessage: asOptional(asPushMessage),
   trigger: asPushTrigger
 })
 
-export const asDeviceUpdatePayload: Cleaner<DeviceUpdatePayload> = asObject({
+export const asDeviceUpdatePayload = asObject<DeviceUpdatePayload>({
   createEvents: asOptional(asArray(asNewPushEvent), []),
   removeEvents: asOptional(asArray(asString), []),
 
@@ -102,7 +101,7 @@ export const asDeviceUpdatePayload: Cleaner<DeviceUpdatePayload> = asObject({
   loginIds: asOptional(asArray(asBase64))
 })
 
-export const asLoginUpdatePayload: Cleaner<LoginUpdatePayload> = asObject({
+export const asLoginUpdatePayload = asObject<LoginUpdatePayload>({
   createEvents: asOptional(asArray(asNewPushEvent), []),
   removeEvents: asOptional(asArray(asString), [])
 })
@@ -114,9 +113,9 @@ export const asLoginUpdatePayload: Cleaner<LoginUpdatePayload> = asObject({
 /**
  * A push event returned from a query.
  */
-export const asPushEventStatus: Cleaner<
+export const asPushEventStatus = asObject<
   Omit<PushEvent, 'created' | 'deviceId' | 'loginId'>
-> = asObject({
+>({
   eventId: asString,
 
   broadcastTxs: asOptional(asArray(asBroadcastTx)),
@@ -127,9 +126,8 @@ export const asPushEventStatus: Cleaner<
   broadcastTxErrors: asOptional(asArray(asEither(asString, asNull))),
   pushMessageEmits: asOptional(asNumber), // Number of devices we sent to
   pushMessageFails: asOptional(asNumber), // Number of devices that failed
-  pushMessageError: asOptional(asString),
   state: asPushEventState,
-  triggered: asOptional(asDate)
+  triggered: asPushTriggerState
 })
 
 /**

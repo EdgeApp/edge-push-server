@@ -18,7 +18,8 @@
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types prepare",
     "prepare": "husky install && npm-run-all clean build",
-    "price-daemon": "node -r sucrase/register src/daemons/priceDaemon.ts",
+    "price-change-daemon": "node -r sucrase/register src/daemons/priceChangeDaemon.ts",
+    "price-level-daemon": "node -r sucrase/register src/daemons/priceLevelDaemon.ts",
     "start": "node -r sucrase/register src/server/index.ts",
     "types": "tsc",
     "verify": "npm-run-all lint types prepare"

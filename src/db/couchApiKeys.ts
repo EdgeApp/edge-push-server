@@ -1,14 +1,15 @@
-import { asBoolean, asObject, asOptional, asString, Cleaner } from 'cleaners'
+import { asBoolean, asObject, asOptional, asString } from 'cleaners'
 import {
   asCouchDoc,
   asMaybeNotFoundError,
+  CouchDoc,
   DatabaseSetup
 } from 'edge-server-tools'
 import { ServerScope } from 'nano'
 
 import { ApiKey, FirebaseAdminKey } from '../types/pushTypes'
 
-export const asFirebaseAdminKey: Cleaner<FirebaseAdminKey> = asObject({
+export const asFirebaseAdminKey = asObject<FirebaseAdminKey>({
   type: asOptional(asString),
   project_id: asOptional(asString),
 
@@ -22,17 +23,18 @@ export const asFirebaseAdminKey: Cleaner<FirebaseAdminKey> = asObject({
   token_uri: asOptional(asString)
 }).withRest
 
+interface CouchApiKey extends Omit<ApiKey, 'apiKey'> {}
+
 /**
  * An API key, as stored in Couch.
  */
-export const asCouchApiKey = asCouchDoc<Omit<ApiKey, 'apiKey'>>(
-  asObject({
+export const asCouchApiKey = asCouchDoc(
+  asObject<CouchApiKey>({
     appId: asString,
     admin: asBoolean,
     adminsdk: asOptional(asFirebaseAdminKey)
   })
 )
-type CouchApiKey = ReturnType<typeof asCouchApiKey>
 
 /**
  * The document key is the api key.
@@ -57,6 +59,6 @@ export async function getApiKeyByKey(
   return unpackApiKey(asCouchApiKey(raw))
 }
 
-function unpackApiKey(doc: CouchApiKey): ApiKey {
+function unpackApiKey(doc: CouchDoc<CouchApiKey>): ApiKey {
   return { ...doc.doc, apiKey: doc.id }
 }

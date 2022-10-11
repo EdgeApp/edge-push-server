@@ -47,7 +47,7 @@ export interface Device {
 }
 
 //
-// Events that devices or logins may subscribe to.
+// Triggers that may cause an event to fire.
 //
 
 export interface AddressBalanceTrigger {
@@ -59,8 +59,24 @@ export interface AddressBalanceTrigger {
   readonly belowAmount?: string // Satoshis or Wei or such
 }
 
+export interface AllTrigger {
+  readonly type: 'all'
+  readonly triggers: PushTrigger[]
+}
+
+export interface AnyTrigger {
+  readonly type: 'any'
+  readonly triggers: PushTrigger[]
+}
+
+/**
+ * The price change trigger is recurring, which makes it special.
+ * It will not broadcast transactions,
+ * and it will leave the the event status as "waiting".
+ */
 export interface PriceChangeTrigger {
   readonly type: 'price-change'
+  readonly pluginId?: string // Used by the client
   readonly currencyPair: string // From our rates server
   readonly directions?: string[] // [hourUp, hourDown, dayUp, dayDown]
   readonly dailyChange?: number // Percentage
@@ -83,9 +99,25 @@ export interface TxConfirmTrigger {
 
 export type PushTrigger =
   | AddressBalanceTrigger
+  | AllTrigger
+  | AnyTrigger
   | PriceChangeTrigger
   | PriceLevelTrigger
   | TxConfirmTrigger
+
+/**
+ * Records when a trigger took place.
+ */
+export type PushTriggerState =
+  | undefined
+  // For "any" and "all" triggers:
+  | PushTriggerState[]
+  // For normal triggers:
+  | Date
+
+//
+// Events that happen when a trigger fires.
+//
 
 /**
  * Broadcasts a transaction to a blockchain.
@@ -129,5 +161,5 @@ export interface PushEvent {
   pushMessageEmits?: number // Number of devices we sent to
   pushMessageFails?: number // Number of devices that failed
   state: PushEventState
-  triggered?: Date // When did we see the trigger?
+  triggered: PushTriggerState // When did we see the trigger?
 }

@@ -37,8 +37,8 @@ type CouchDevice = Omit<Device, 'deviceId'>
  * A single phone or other devIce, as stored in Couch.
  * The document ID is the deviceId.
  */
-export const asCouchDevice = asCouchDoc<CouchDevice>(
-  asObject({
+export const asCouchDevice = asCouchDoc(
+  asObject<CouchDevice>({
     created: asDate,
 
     // Status:
