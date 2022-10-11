@@ -1,5 +1,11 @@
 # edge-notification-server
 
+## 2.2.0 (2022-10-11)
+
+- added: Implement `any` and `all` trigger types for merging multiple triggers.
+- removed: Do not broadcast transactions in response to price changes.
+- removed: Stop performing string replacements for the messages associated with address-balance, price-level, and tx-confirm triggers.
+
 ## 2.1.0 (2022-10-06)
 
 - added: Add a `send-message` CLI command for sending test messages,
