@@ -61,6 +61,7 @@ async function checkPriceChange(
 
   // Trigger if the change is bigger than our threshold:
   const change = 100 * ((toPrice - fromPrice) / fromPrice)
+  if (isNaN(change)) return // Divide by zero
   if (triggerPercent == null || Math.abs(change) < triggerPercent) return
 
   console.log(`Sending price change for ${currencyPair} at ${change}%`)
