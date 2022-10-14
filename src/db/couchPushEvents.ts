@@ -241,11 +241,17 @@ export async function getEventsByLoginId(
 
 export async function* streamEvents(
   connection: ServerScope,
-  view: 'address-balance' | 'price-change' | 'price-level' | 'tx-confirm'
+  view: 'address-balance' | 'price-change' | 'price-level' | 'tx-confirm',
+  opts: { afterDate?: Date } = {}
 ): AsyncIterableIterator<PushEventRow> {
+  const { afterDate } = opts
+
   const db = connection.use(couchEventsSetup.name)
   const stream = viewToStream(async params => {
-    return await db.view(view, view, params)
+    return await db.view(view, view, {
+      start_key: afterDate == null ? '' : afterDate.toISOString(),
+      ...params
+    })
   })
   for await (const raw of stream) {
     yield makePushEventRow(db, asCouchPushEvent(raw))
