@@ -107,3 +107,24 @@ async function iterate(
   // Force-close any lingering stuff:
   process.exit(0)
 }
+
+/**
+ * Select a period of time to use for a loop iteration.
+ *
+ * For instance, if a transaction was sent in the past 10 minutes,
+ * we should check it every loop. If it has been in the mempool for a
+ * few weeks, it probably won't confirm any time soon,
+ * so we can check it every few days.
+ *
+ * If t is our timeout:
+ * - Check events younger than t on every loop
+ * - Check events younger than 2t on every other loop
+ * - Check events younger than 4t every 4 loops
+ * - Check events younger than 8t every 8 loops
+ * - etc...
+ */
+export function exponentialBackoff(iteration: number): number {
+  let lsb = 0
+  while ((iteration & (1 << lsb)) === 0 && lsb < 30) ++lsb
+  return 1 << lsb
+}
