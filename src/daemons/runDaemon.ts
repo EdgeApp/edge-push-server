@@ -1,7 +1,9 @@
+import { asMaybe } from 'cleaners'
 import cluster from 'cluster'
 import { makePeriodicTask } from 'edge-server-tools'
 import nano, { ServerScope } from 'nano'
 
+import { asNumberString } from '../cli/cliTools'
 import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
 import { makePlugins } from '../miniPlugins/miniPlugins'
@@ -13,6 +15,8 @@ import { makeRatesCache, RatesCache } from '../util/ratesCache'
 import { slackAlert } from '../util/slackAlert'
 
 export interface DaemonTools {
+  iteration: number
+
   connection: ServerScope
   heartbeat: (item?: string) => void
   plugins: MiniPlugins
@@ -40,12 +44,13 @@ async function manage(): Promise<void> {
   await setupDatabases(connection)
 
   const gapSeconds = 6
+  let iteration = 0
 
   makePeriodicTask(
     async () =>
       await new Promise((resolve, reject) => {
         const { daemonMaxHours } = syncedSettings.doc
-        const worker = cluster.fork()
+        const worker = cluster.fork({ ITERATION: iteration++ })
 
         const timeout = setTimeout(() => {
           worker.kill()
@@ -80,6 +85,9 @@ async function iterate(
   const connection = nano(couchUri)
   await setupDatabases(connection)
 
+  // Grab our iteration number from the environment:
+  const iteration = asMaybe(asNumberString, 0)(process.env.ITERATION)
+
   const heartbeat = makeHeartbeat(process.stdout)
   const plugins = makePlugins()
   const rates = makeRatesCache()
@@ -89,6 +97,7 @@ async function iterate(
   await loop({
     connection,
     heartbeat,
+    iteration,
     plugins,
     rates,
     sender
