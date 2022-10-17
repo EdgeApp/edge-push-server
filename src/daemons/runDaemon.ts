@@ -1,7 +1,9 @@
+import { asMaybe } from 'cleaners'
 import cluster from 'cluster'
 import { makePeriodicTask } from 'edge-server-tools'
 import nano, { ServerScope } from 'nano'
 
+import { asNumberString } from '../cli/cliTools'
 import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
 import { makePlugins } from '../miniPlugins/miniPlugins'
@@ -13,6 +15,8 @@ import { makeRatesCache, RatesCache } from '../util/ratesCache'
 import { slackAlert } from '../util/slackAlert'
 
 export interface DaemonTools {
+  iteration: number
+
   connection: ServerScope
   heartbeat: (item?: string) => void
   plugins: MiniPlugins
@@ -21,7 +25,7 @@ export interface DaemonTools {
 }
 
 export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
-  const promise = cluster.isPrimary ? manage() : iteration(loop)
+  const promise = cluster.isPrimary ? manage() : iterate(loop)
   promise.catch(error => {
     console.error(error)
     process.exit(1)
@@ -40,12 +44,13 @@ async function manage(): Promise<void> {
   await setupDatabases(connection)
 
   const gapSeconds = 6
+  let iteration = 0
 
   makePeriodicTask(
     async () =>
       await new Promise((resolve, reject) => {
         const { daemonMaxHours } = syncedSettings.doc
-        const worker = cluster.fork()
+        const worker = cluster.fork({ ITERATION: iteration++ })
 
         const timeout = setTimeout(() => {
           worker.kill()
@@ -73,12 +78,15 @@ async function manage(): Promise<void> {
 /**
  * Runs the demon callback.
  */
-async function iteration(
+async function iterate(
   loop: (tools: DaemonTools) => Promise<void>
 ): Promise<void> {
   const { couchUri } = serverConfig
   const connection = nano(couchUri)
   await setupDatabases(connection)
+
+  // Grab our iteration number from the environment:
+  const iteration = asMaybe(asNumberString, 0)(process.env.ITERATION)
 
   const heartbeat = makeHeartbeat(process.stdout)
   const plugins = makePlugins()
@@ -89,6 +97,7 @@ async function iteration(
   await loop({
     connection,
     heartbeat,
+    iteration,
     plugins,
     rates,
     sender
@@ -97,4 +106,25 @@ async function iteration(
 
   // Force-close any lingering stuff:
   process.exit(0)
+}
+
+/**
+ * Select a period of time to use for a loop iteration.
+ *
+ * For instance, if a transaction was sent in the past 10 minutes,
+ * we should check it every loop. If it has been in the mempool for a
+ * few weeks, it probably won't confirm any time soon,
+ * so we can check it every few days.
+ *
+ * If t is our timeout:
+ * - Check events younger than t on every loop
+ * - Check events younger than 2t on every other loop
+ * - Check events younger than 4t every 4 loops
+ * - Check events younger than 8t every 8 loops
+ * - etc...
+ */
+export function exponentialBackoff(iteration: number): number {
+  let lsb = 0
+  while ((iteration & (1 << lsb)) === 0 && lsb < 30) ++lsb
+  return 1 << lsb
 }
