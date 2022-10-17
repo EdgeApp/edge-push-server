@@ -21,7 +21,7 @@ export interface DaemonTools {
 }
 
 export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
-  const promise = cluster.isPrimary ? manage() : iteration(loop)
+  const promise = cluster.isPrimary ? manage() : iterate(loop)
   promise.catch(error => {
     console.error(error)
     process.exit(1)
@@ -73,7 +73,7 @@ async function manage(): Promise<void> {
 /**
  * Runs the demon callback.
  */
-async function iteration(
+async function iterate(
   loop: (tools: DaemonTools) => Promise<void>
 ): Promise<void> {
   const { couchUri } = serverConfig
