@@ -128,3 +128,13 @@ export function exponentialBackoff(iteration: number): number {
   while ((iteration & (1 << lsb)) === 0 && lsb < 30) ++lsb
   return 1 << lsb
 }
+
+/**
+ * Creates a Date object, clamping values to the valid range.
+ * According to ECMA262, this is +-100,000,000 days from the epoch.
+ */
+export function safeDate(timestamp: number): Date {
+  return new Date(
+    Math.min(8640000000000000, Math.max(-8640000000000000, timestamp))
+  )
+}

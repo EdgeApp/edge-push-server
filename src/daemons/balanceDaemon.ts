@@ -1,6 +1,6 @@
 import { streamEvents } from '../db/couchPushEvents'
 import { checkEventTrigger } from '../util/triggers'
-import { exponentialBackoff, runDaemon } from './runDaemon'
+import { exponentialBackoff, runDaemon, safeDate } from './runDaemon'
 
 // If something sits in the database for more than this amount of time,
 // start checking it every other loop:
@@ -13,7 +13,7 @@ runDaemon(async tools => {
   const msBack = throttleMs * exponentialBackoff(iteration)
 
   for await (const eventRow of streamEvents(connection, 'address-balance', {
-    afterDate: new Date(Date.now() - msBack)
+    afterDate: safeDate(Date.now() - msBack)
   })) {
     await checkEventTrigger(tools, eventRow).catch(error => {
       const id = eventRow.event.created.toISOString()
