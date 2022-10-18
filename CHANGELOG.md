@@ -1,5 +1,9 @@
 # edge-notification-server
 
+## 2.2.1 (2022-10-18)
+
+- changed: Optimize daemon loop processes, so we check more recent events more frequently.
+
 ## 2.2.0 (2022-10-11)
 
 - added: Implement `any` and `all` trigger types for merging multiple triggers.
