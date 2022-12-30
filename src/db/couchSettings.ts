@@ -1,7 +1,9 @@
 import {
   asArray,
   asBoolean,
+  asEither,
   asMaybe,
+  asNull,
   asNumber,
   asObject,
   asString
@@ -32,7 +34,7 @@ const asSettings = asObject({
 
   // Other services we rely on:
   infuraProjectId: asMaybe(asString, ''),
-  slackUri: asMaybe(asString, '')
+  slackUri: asMaybe(asEither(asString, asNull), null)
 })
 
 export const syncedReplicators = syncedDocument(
