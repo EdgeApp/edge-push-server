@@ -41,6 +41,7 @@ export interface Device {
   // Settings:
   apiKey: string | undefined // Which app to send to?
   deviceToken: string | undefined
+  ignoreMarketing: boolean
   ignorePriceChanges: boolean
   loginIds: Uint8Array[]
   visited: Date
