@@ -43,6 +43,12 @@ export interface Device {
   deviceToken: string | undefined
   ignoreMarketing: boolean
   ignorePriceChanges: boolean
+  ip?: string
+  location?: {
+    country: string
+    city: string
+    region: string
+  }
   loginIds: Uint8Array[]
   visited: Date
 }
