@@ -2,6 +2,7 @@ import { asString, Cleaner } from 'cleaners'
 import { BaseContext } from 'clipanion'
 import { ServerScope } from 'nano'
 import { base16, base64 } from 'rfc4648'
+import { Writable } from 'stream'
 
 export interface ServerContext extends BaseContext {
   connection: ServerScope
@@ -24,4 +25,30 @@ export function prettify(data: unknown): string {
         : value,
     1
   )
+}
+
+// ANSI Terminal Escape Sequences:
+const ESC = `\x1B[`
+const SAVE_POSITION = `${ESC}s`
+const RESTORE_POSITION = `${ESC}u`
+const CLEAR_LINE = `${ESC}2K`
+const CLEAR_AND_RESTORE = `${CLEAR_LINE}${RESTORE_POSITION}`
+
+export interface StatusLogger {
+  status: (status: string) => void
+  write: (data: any) => void
+}
+
+export function makeStatusLogger(stream: Writable): StatusLogger {
+  stream.write(SAVE_POSITION)
+  return {
+    status(status: string): void {
+      stream.write(CLEAR_AND_RESTORE)
+      stream.write(status.replace(/\n?$/m, '\n'))
+    },
+    write(data: any) {
+      stream.write(data)
+      stream.write(SAVE_POSITION)
+    }
+  }
 }

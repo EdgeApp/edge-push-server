@@ -21,6 +21,11 @@ export interface PushResult {
 }
 
 export interface PushSender {
+  sendRaw: (
+    apiKey: string,
+    tokens: Set<string>,
+    message: PushMessage
+  ) => Promise<PushResult>
   send: (
     connection: ServerScope,
     message: PushMessage,
@@ -72,35 +77,37 @@ export function makePushSender(connection: ServerScope): PushSender {
     return sender
   }
 
-  async function sendRaw(
-    apiKey: string,
-    tokens: Set<string>,
-    message: PushMessage
-  ): Promise<PushResult> {
-    const { title = '', body = '', data = {} } = message
+  const instance: PushSender = {
+    async sendRaw(
+      apiKey: string,
+      tokens: Set<string>,
+      message: PushMessage
+    ): Promise<PushResult> {
+      const { title = '', body = '', data = {} } = message
 
-    const failure = {
-      successCount: 0,
-      failureCount: tokens.size
-    }
+      const failure = {
+        successCount: 0,
+        failureCount: tokens.size
+      }
 
-    const sender = await getSender(apiKey)
-    if (sender == null) return failure
+      const sender = await getSender(apiKey)
+      if (sender == null) return failure
 
-    const response = await sender
-      .sendMulticast({
-        data,
-        notification: { title, body },
-        tokens: [...tokens]
-      })
-      .catch(() => failure)
+      const response = await sender
+        .sendMulticast({
+          data,
+          notification: { title, body },
+          tokens: [...tokens]
+        })
+        .catch(err => {
+          console.error(err)
+          return failure
+        })
 
-    successCounter.inc(response.successCount)
-    failureCounter.inc(response.failureCount)
-    return response
-  }
-
-  return {
+      successCounter.inc(response.successCount)
+      failureCounter.inc(response.failureCount)
+      return response
+    },
     async send(connection, message, opts) {
       const { date, deviceId, loginId, isPriceChange = false } = opts
 
@@ -131,11 +138,13 @@ export function makePushSender(connection: ServerScope): PushSender {
         successCount: 0
       }
       for (const [apiKey, tokens] of apiKeys) {
-        const result = await sendRaw(apiKey, tokens, message)
+        const result = await instance.sendRaw(apiKey, tokens, message)
         out.failureCount += result.failureCount
         out.successCount += result.successCount
       }
       return out
     }
   }
+
+  return instance
 }
