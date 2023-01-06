@@ -260,7 +260,7 @@ const asRegisterCurrenciesBody = asObject({
 })
 
 const asEnableCurrencyBody = asObject({
-  hours: asValue('1', '24'),
+  hours: asValue('1' as const, '24' as const),
   enabled: asBoolean
 })
 

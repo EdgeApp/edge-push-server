@@ -25,6 +25,7 @@ export const deviceFetchRoute = withDevice(async request => {
   return jsonResponse(
     wasDevicePayload({
       events: eventRows.map(row => row.event),
+      ignoreMarketing: device.ignoreMarketing,
       ignorePriceChanges: device.ignorePriceChanges,
       loginIds: device.loginIds
     })
@@ -44,9 +45,17 @@ export const deviceUpdateRoute = withDevice(async request => {
 
   const checked = checkPayload(asDeviceUpdatePayload, payload)
   if (checked.error != null) return checked.error
-  const { loginIds, createEvents, ignorePriceChanges, removeEvents } =
-    checked.clean
+  const {
+    loginIds,
+    createEvents,
+    ignoreMarketing,
+    ignorePriceChanges,
+    removeEvents
+  } = checked.clean
 
+  if (ignoreMarketing != null) {
+    device.ignoreMarketing = ignoreMarketing
+  }
   if (ignorePriceChanges != null) {
     device.ignorePriceChanges = ignorePriceChanges
   }
@@ -63,6 +72,7 @@ export const deviceUpdateRoute = withDevice(async request => {
   return jsonResponse(
     wasDevicePayload({
       events,
+      ignoreMarketing: device.ignoreMarketing,
       ignorePriceChanges: device.ignorePriceChanges,
       loginIds: device.loginIds
     })

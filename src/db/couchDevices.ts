@@ -44,6 +44,7 @@ export const asCouchDevice = asCouchDoc(
     // Status:
     apiKey: asOptional(asString),
     deviceToken: asOptional(asString),
+    ignoreMarketing: asOptional(asBoolean, false),
     ignorePriceChanges: asOptional(asBoolean, false),
     loginIds: asArray(asBase64),
     visited: asDate
@@ -86,6 +87,7 @@ export async function getDeviceById(
       created: date,
       apiKey: undefined,
       deviceToken: undefined,
+      ignoreMarketing: false,
       ignorePriceChanges: false,
       loginIds: [],
       visited: date
@@ -162,6 +164,9 @@ function makeDeviceRow(
         }
         if (device.deviceToken === base.deviceToken) {
           device.deviceToken = remote.doc.deviceToken
+        }
+        if (device.ignoreMarketing === base.ignoreMarketing) {
+          device.ignoreMarketing = remote.doc.ignoreMarketing
         }
         if (device.ignorePriceChanges === base.ignorePriceChanges) {
           device.ignorePriceChanges = remote.doc.ignorePriceChanges
