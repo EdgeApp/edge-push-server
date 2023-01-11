@@ -2,6 +2,8 @@ import {
   asArray,
   asBoolean,
   asDate,
+  asMaybe,
+  asNumber,
   asObject,
   asOptional,
   asString,
@@ -13,7 +15,8 @@ import {
   asMaybeNotFoundError,
   CouchDoc,
   DatabaseSetup,
-  makeJsDesign
+  makeJsDesign,
+  viewToStream
 } from 'edge-server-tools'
 import { DocumentScope, ServerScope } from 'nano'
 import { base64 } from 'rfc4648'
@@ -120,6 +123,63 @@ export const couchDevicesSetup: DatabaseSetup = {
     '_design/locationByCity': locationByCityDesign,
     '_design/locationByRegion': locationByRegionDesign
   }
+}
+
+export const countDevicesByLocation = async (
+  connection: ServerScope,
+  location: { country?: string; region?: string; city?: string }
+): Promise<
+  Array<{
+    key: string[]
+    count: number
+  }>
+> => {
+  const db = connection.use(couchDevicesSetup.name)
+
+  const { country, region, city } = location
+
+  let startKey: string[]
+  let viewName: string
+  const isRegionlessQuery = city != null && region == null
+
+  if (isRegionlessQuery) {
+    // Query by country and maybe city:
+    startKey = [
+      ...(country == null ? [] : [country]),
+      ...(city == null ? [] : [city])
+    ]
+    viewName = 'locationByCity'
+  } else {
+    // Query by country, region, and maybe city:
+    startKey = [
+      ...(country == null ? [] : [country]),
+      ...(region == null ? [] : [region]),
+      ...(city == null ? [] : [city])
+    ]
+    viewName = 'locationByRegion'
+  }
+
+  const endKey = [...startKey, 'zzzzzz']
+
+  const queryParams = {
+    start_key: startKey,
+    end_key: endKey
+  }
+
+  const results = await db.view(viewName, viewName, {
+    ...queryParams,
+    reduce: true,
+    group: true,
+    // Use grouping for country/city queries to expose the regions.
+    // This is useful to verify your query matches a single target region.
+    group_level: startKey.length + (isRegionlessQuery ? 1 : 0)
+  })
+
+  return results.rows.map(row => {
+    const key: string[] = asArray(asString)(row.key)
+    const count: number = asNumber(row.value)
+    return { key, count }
+  })
 }
 
 /**
@@ -231,5 +291,54 @@ function makeDeviceRow(
         }
       }
     }
+  }
+}
+
+export async function* streamDevicesByLocation(
+  connection: ServerScope,
+  location: { country?: string; region?: string; city?: string }
+): AsyncIterableIterator<CouchDoc<CouchDevice>> {
+  const db = connection.use(couchDevicesSetup.name)
+
+  const { country, region, city } = location
+
+  let startKey: string[]
+  let viewName: string
+  const isRegionlessQuery = city != null && region == null
+
+  if (isRegionlessQuery) {
+    // Query by country and maybe city:
+    startKey = [
+      ...(country == null ? [] : [country]),
+      ...(city == null ? [] : [city])
+    ]
+    viewName = 'locationByCity'
+  } else {
+    // Query by country, region, and maybe city:
+    startKey = [
+      ...(country == null ? [] : [country]),
+      ...(region == null ? [] : [region]),
+      ...(city == null ? [] : [city])
+    ]
+    viewName = 'locationByRegion'
+  }
+
+  const endKey = [...startKey, 'zzzzzz']
+
+  const queryParams = {
+    start_key: startKey,
+    end_key: endKey
+  }
+
+  for await (const doc of viewToStream(async params => {
+    return await db.view(viewName, viewName, {
+      reduce: false,
+      ...queryParams,
+      ...params
+    })
+  })) {
+    const couchDevice = asMaybe(asCouchDevice)(doc)
+    if (couchDevice == null) continue
+    yield couchDevice
   }
 }
