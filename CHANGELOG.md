@@ -1,5 +1,11 @@
 # edge-notification-server
 
+## 2.2.2 (2023-1-11)
+
+- added: Marketing push-server notification CLI tool (`yarn cli push-marketing`)
+- added: Record device IP and location
+- added: Marketing opt-out setting for devices
+
 ## 2.2.1 (2022-10-18)
 
 - changed: Optimize daemon loop processes, so we check more recent events more frequently.
