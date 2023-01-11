@@ -7,6 +7,7 @@ import {
 } from '../../types/pushApiTypes'
 import { jsonResponse } from '../../types/responseTypes'
 import { checkPayload } from '../../util/checkPayload'
+import { locateIp } from '../../util/services/ip-api'
 import { withDevice } from '../middleware/withDevice'
 
 const wasDevicePayload = uncleaner(asDevicePayload)
@@ -17,10 +18,21 @@ const wasDevicePayload = uncleaner(asDevicePayload)
 export const deviceFetchRoute = withDevice(async request => {
   const {
     connection,
-    deviceRow: { device }
+    deviceRow: { device },
+    ip,
+    log
   } = request
 
   const eventRows = await getEventsByDeviceId(connection, device.deviceId)
+
+  if (ip !== device.ip) {
+    const location = await locateIp(ip).catch(error => {
+      log(`Location unavailable: ${String(error)}`)
+      return undefined
+    })
+    device.ip = ip
+    device.location = location
+  }
 
   return jsonResponse(
     wasDevicePayload({
@@ -40,6 +52,8 @@ export const deviceUpdateRoute = withDevice(async request => {
     connection,
     date,
     deviceRow: { device },
+    ip,
+    log,
     payload
   } = request
 
@@ -62,6 +76,16 @@ export const deviceUpdateRoute = withDevice(async request => {
   if (loginIds != null) {
     device.loginIds = loginIds
   }
+
+  if (ip !== device.ip) {
+    const location = await locateIp(ip).catch(error => {
+      log(`Location unavailable: ${String(error)}`)
+      return undefined
+    })
+    device.ip = ip
+    device.location = location
+  }
+
   const events = await adjustEvents(connection, {
     date,
     deviceId: device.deviceId,

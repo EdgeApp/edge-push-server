@@ -46,6 +46,14 @@ export const asCouchDevice = asCouchDoc(
     deviceToken: asOptional(asString),
     ignoreMarketing: asOptional(asBoolean, false),
     ignorePriceChanges: asOptional(asBoolean, false),
+    ip: asOptional(asString),
+    location: asOptional(
+      asObject({
+        country: asString,
+        city: asString,
+        region: asOptional(asString, '')
+      })
+    ),
     loginIds: asArray(asBase64),
     visited: asDate
   })
@@ -63,10 +71,54 @@ const loginIdDesign = makeJsDesign('loginId', ({ emit }) => ({
   }
 }))
 
+/**
+ * Looks up devices by the IP location sorted by city.
+ */
+const locationByCityDesign = makeJsDesign('locationByCity', ({ emit }) => ({
+  map: function (doc) {
+    if (doc.location == null) return
+    emit(
+      [
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.country || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.region || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.city || ''
+      ],
+      null
+    )
+  },
+  reduce: '_count'
+}))
+
+/**
+ * Looks up devices by the IP location sorted by region/state.
+ */
+const locationByRegionDesign = makeJsDesign('locationByRegion', ({ emit }) => ({
+  map: function (doc) {
+    if (doc.location == null) return
+    emit(
+      [
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.country || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.region || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.city || ''
+      ],
+      null
+    )
+  },
+  reduce: '_count'
+}))
+
 export const couchDevicesSetup: DatabaseSetup = {
   name: 'push-devices',
   documents: {
-    '_design/loginId': loginIdDesign
+    '_design/loginId': loginIdDesign,
+    '_design/locationByCity': locationByCityDesign,
+    '_design/locationByRegion': locationByRegionDesign
   }
 }
 
