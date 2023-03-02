@@ -176,9 +176,9 @@ export const countDevicesByLocation = async (
   })
 
   return results.rows.map(row => {
-    const key: string[] = asArray(asString)(row.key)
+    const key = asOptional(asArray(asString), [])(row.key)
     const count: number = asNumber(row.value)
-    return { key, count }
+    return { key: key, count }
   })
 }
 
