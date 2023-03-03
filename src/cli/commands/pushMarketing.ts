@@ -125,9 +125,22 @@ export class PushMarketing extends Command<ServerContext> {
       })) {
         const { apiKey, deviceToken, ignoreMarketing } = couchDevice.doc
 
-        if (ignoreMarketing || apiKey == null || deviceToken == null) {
+        // Skip document conditions:
+        if (
+          ignoreMarketing ||
+          apiKey == null ||
+          deviceToken == null ||
+          deviceToken.trim() === ''
+        ) {
           status.skipCount++
           updateStatusLine()
+          continue
+        }
+        if (!/^[a-zA-z0-9_\-:]+$/.test(deviceToken)) {
+          // Log invalid tokens
+          logger.write(
+            `Invalid token '${deviceToken}' for doc '${couchDevice.id}'`
+          )
           continue
         }
 
