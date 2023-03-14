@@ -9,6 +9,7 @@ import {
   PushTriggerState,
   TxConfirmTrigger
 } from '../types/pushTypes'
+import { logger } from './logger'
 
 interface PushTriggerUpdate {
   done: boolean
@@ -33,7 +34,7 @@ export async function checkEventTrigger(
 
   const update = await checkTrigger(tools, trigger, triggered, date)
   if (update.done) {
-    console.log(`Sending ${trigger.type}`)
+    logger.info(`Sending ${trigger.type}`)
 
     if (pushMessage != null) {
       const results = await sender.send(connection, pushMessage, {

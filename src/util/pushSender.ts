@@ -5,6 +5,7 @@ import { ServerScope } from 'nano'
 import { getApiKeyByKey } from '../db/couchApiKeys'
 import { getDeviceById, getDevicesByLoginId } from '../db/couchDevices'
 import { PushMessage } from '../types/pushTypes'
+import { logger } from './logger'
 
 const successCounter = io.counter({
   id: 'notifications:success:total',
@@ -100,7 +101,13 @@ export function makePushSender(connection: ServerScope): PushSender {
           tokens: [...tokens]
         })
         .catch(err => {
-          console.error(err)
+          logger.warn({
+            msg: 'Failed to send push messages',
+            err,
+            apiKey,
+            tokens,
+            message
+          })
           return failure
         })
 
