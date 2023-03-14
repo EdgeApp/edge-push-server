@@ -1,6 +1,7 @@
 import fetch from 'node-fetch'
 
 import { syncedSettings } from '../db/couchSettings'
+import { logger } from './logger'
 
 export function slackAlert(text: string): void {
   const { slackUri } = syncedSettings.doc
@@ -11,5 +12,5 @@ export function slackAlert(text: string): void {
     body: JSON.stringify({ text }),
     headers: { 'content-type': 'application/json' },
     method: 'POST'
-  }).catch(error => console.log('Could not log to Slack', error))
+  }).catch(err => logger.warn({ msg: 'Could not log to Slack', err }))
 }

@@ -10,6 +10,7 @@ import { makePlugins } from '../miniPlugins/miniPlugins'
 import { serverConfig } from '../serverConfig'
 import { MiniPlugins } from '../types/miniPlugin'
 import { makeHeartbeat } from '../util/heartbeat'
+import { logger } from '../util/logger'
 import { makePushSender, PushSender } from '../util/pushSender'
 import { makeRatesCache, RatesCache } from '../util/ratesCache'
 import { slackAlert } from '../util/slackAlert'
@@ -27,7 +28,7 @@ export interface DaemonTools {
 export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
   const promise = cluster.isPrimary ? manage() : iterate(loop)
   promise.catch(error => {
-    console.error(error)
+    logger.error(error)
     process.exit(1)
   })
 }
@@ -36,7 +37,7 @@ export function runDaemon(loop: (tools: DaemonTools) => Promise<void>): void {
  * Runs the in background, spawning a child processes for each iteration.
  */
 async function manage(): Promise<void> {
-  console.log('Starting daemon', new Date())
+  logger.info('Starting daemon')
 
   // Load settings from CouchDB:
   const { couchUri } = serverConfig
@@ -55,7 +56,7 @@ async function manage(): Promise<void> {
         const timeout = setTimeout(() => {
           worker.kill()
           const message = `Killed push-server daemon after ${daemonMaxHours} hours`
-          console.log(message)
+          logger.warn(message)
           slackAlert(message)
         }, daemonMaxHours * 60 * 60 * 1000)
 
@@ -69,7 +70,7 @@ async function manage(): Promise<void> {
     gapSeconds * 1000,
     {
       onError(error) {
-        console.error(error)
+        logger.error(error)
       }
     }
   ).start()
@@ -93,7 +94,7 @@ async function iterate(
   const rates = makeRatesCache()
   const sender = makePushSender(connection)
 
-  console.log('Starting loop at', new Date())
+  logger.info({ msg: 'Starting loop', startTime: new Date() })
   await loop({
     connection,
     heartbeat,
@@ -101,8 +102,11 @@ async function iterate(
     plugins,
     rates,
     sender
-  }).catch(error => console.log(`Loop crashed: ${String(error)}`))
-  console.log(`Finished loop in ${heartbeat.getSeconds().toFixed(2)}s`)
+  }).catch(err => logger.warn({ msg: 'Loop crashed', err }))
+  logger.info({
+    msg: 'Finished loop',
+    durationSeconds: heartbeat.getSeconds().toFixed(2)
+  })
 
   // Force-close any lingering stuff:
   process.exit(0)

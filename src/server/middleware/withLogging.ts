@@ -6,6 +6,7 @@ import { ExpressRequest } from 'serverlet/express'
 import { syncedSettings } from '../../db/couchSettings'
 import { LoggedRequest } from '../../types/requestTypes'
 import { jsonResponse, UnavailableError } from '../../types/responseTypes'
+import { logger } from '../../util/logger'
 import { slackAlert } from '../../util/slackAlert'
 
 const requestMeter = io.meter({
@@ -26,9 +27,9 @@ export const withLogging =
     requestMeter.mark()
 
     const date = new Date()
-    const logs: string[] = []
+    const events: string[] = []
     function log(message: string): void {
-      logs.push(`${Date.now() - date.valueOf()}ms: ${message}`)
+      events.push(`${Date.now() - date.valueOf()}ms: ${message}`)
     }
     log.debug = function debug(message: string): void {
       if (syncedSettings.doc.debugLogs) log(message)
@@ -59,11 +60,24 @@ export const withLogging =
 
     const { status = 200 } = response
     const duration = Date.now() - date.valueOf()
-    logs.unshift(
+
+    // Log to application logger:
+    logger[status === 500 ? 'warn' : 'info']({
+      msg: `${method} ${originalUrl} ${status} ${duration}ms`,
+      duration,
+      events,
+      ip,
+      method,
+      originalUrl,
+      status
+    })
+
+    // Log formatted string-log to Slack:
+    events.unshift(
       `${date.toISOString()} ${ip} ${method} ${originalUrl} ${status} ${duration}ms`
     )
-    const message = logs.join('\n  + ')
-    console.log(message)
+    const message = events.join('\n  + ')
     if (status === 500) slackAlert(message)
+
     return response
   }

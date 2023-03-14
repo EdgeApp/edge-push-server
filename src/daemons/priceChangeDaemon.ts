@@ -1,4 +1,5 @@
 import { PushEventRow, streamEvents } from '../db/couchPushEvents'
+import { logger } from '../util/logger'
 import { DaemonTools, runDaemon } from './runDaemon'
 
 const HOUR = 60 * 60 * 1000
@@ -22,9 +23,9 @@ runDaemon(async tools => {
       // Check the triggers:
       await checkPriceChange(tools, eventRow, now, price, 'day')
       await checkPriceChange(tools, eventRow, now, price, 'hour')
-    } catch (error) {
+    } catch (err) {
       const id = eventRow.event.created.toISOString()
-      console.log(`Failed event ${id}: ${String(error)}`)
+      logger.warn({ msg: 'Failed event', id, err })
     }
 
     heartbeat()
@@ -64,7 +65,7 @@ async function checkPriceChange(
   if (isNaN(change)) return // Divide by zero
   if (triggerPercent == null || Math.abs(change) < triggerPercent) return
 
-  console.log(`Sending price change for ${currencyPair} at ${change}%`)
+  logger.info({ msg: 'Sending price change', currencyPair, change })
 
   // Figure out out direction string:
   const hourUp = directions[0] ?? 'up'

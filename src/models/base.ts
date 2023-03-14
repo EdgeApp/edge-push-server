@@ -1,6 +1,8 @@
 import { asObject, Cleaner } from 'cleaners'
 import Nano from 'nano'
 
+import { logger } from '../util/logger'
+
 const asModelData = asObject<Nano.MaybeDocument>({})
 
 type InstanceClass<T extends new (...args: any) => any> = (new (
@@ -72,7 +74,7 @@ export class Base implements ReturnType<typeof asModelData> {
       return item
     } catch (err: any) {
       if (err.statusCode === 404) {
-        console.log(`Item with ID "${id}" does not exist`)
+        logger.warn(`Item with ID "${id}" does not exist`)
       } else {
         throw err
       }
@@ -146,7 +148,7 @@ export class Base implements ReturnType<typeof asModelData> {
           throw new Error('Database does not exist')
 
         case 409: {
-          console.log(
+          logger.warn(
             'Document already exists. Fetching current `_rev` and resaving.'
           )
           const { _rev } = await ItemClass.fetch(this._id)
