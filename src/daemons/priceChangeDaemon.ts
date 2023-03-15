@@ -65,7 +65,7 @@ async function checkPriceChange(
   if (isNaN(change)) return // Divide by zero
   if (triggerPercent == null || Math.abs(change) < triggerPercent) return
 
-  logger.info({ msg: 'Sending price change', currencyPair, change })
+  logger.info({ msg: 'Sending price change', currencyPair, change, event })
 
   // Figure out out direction string:
   const hourUp = directions[0] ?? 'up'
