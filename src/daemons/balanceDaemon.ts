@@ -1,4 +1,5 @@
 import { streamEvents } from '../db/couchPushEvents'
+import { logger } from '../util/logger'
 import { checkEventTrigger } from '../util/triggers'
 import { exponentialBackoff, runDaemon, safeDate } from './runDaemon'
 
@@ -15,9 +16,9 @@ runDaemon(async tools => {
   for await (const eventRow of streamEvents(connection, 'address-balance', {
     afterDate: safeDate(Date.now() - msBack)
   })) {
-    await checkEventTrigger(tools, eventRow).catch(error => {
+    await checkEventTrigger(tools, eventRow).catch(err => {
       const id = eventRow.event.created.toISOString()
-      console.log(`Failed event ${id}: ${String(error)}`)
+      logger.warn({ msg: `Failed event ${id}`, err })
     })
 
     heartbeat()

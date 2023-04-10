@@ -5,6 +5,7 @@ import { makeExpressRoute } from 'serverlet/express'
 
 import { setupDatabases } from '../db/couchSetup'
 import { serverConfig } from '../serverConfig'
+import { logger } from '../util/logger'
 import { withLogging } from './middleware/withLogging'
 import { allRoutes } from './urls'
 
@@ -28,10 +29,10 @@ async function main(): Promise<void> {
 
   // Start the HTTP server:
   app.listen(listenPort, listenHost)
-  console.log(`HTTP server listening on port ${listenPort}`)
+  logger.info(`HTTP server listening on port ${listenPort}`)
 }
 
 main().catch(error => {
-  console.error(error)
+  logger.error(error)
   process.exit(1)
 })

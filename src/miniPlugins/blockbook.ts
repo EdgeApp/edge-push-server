@@ -10,6 +10,7 @@ import fetch from 'node-fetch'
 
 import { MiniPlugin } from '../types/miniPlugin'
 import { asyncWaterfall } from '../util/asyncWaterfall'
+import { logger } from '../util/logger'
 import { memoize } from '../util/memoize'
 
 const serverListInfoUrl = 'https://info1.edge.app/v1/blockBook/'
@@ -86,8 +87,8 @@ const getServerListForCode = async (
   try {
     const serverList = await updateServerList()
     return serverList[code] ?? hardCodedServerList
-  } catch (e) {
-    console.log('updateServerList:', e)
+  } catch (err) {
+    logger.warn({ msg: 'updateServerList failed', err })
     return hardCodedServerList
   }
 }
