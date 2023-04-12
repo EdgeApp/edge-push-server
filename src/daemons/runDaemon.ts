@@ -89,7 +89,13 @@ async function iterate(
   // Grab our iteration number from the environment:
   const iteration = asMaybe(asNumberString, 0)(process.env.ITERATION)
 
-  const heartbeat = makeHeartbeat(process.stdout)
+  const heartbeat = makeHeartbeat({
+    write: chunk => {
+      const [time, item] = chunk.split(',')
+      logger.info({ time, item }, 'heartbeat %s', chunk)
+      return true
+    }
+  })
   const plugins = makePlugins()
   const rates = makeRatesCache()
   const sender = makePushSender(connection)
