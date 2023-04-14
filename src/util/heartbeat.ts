@@ -1,5 +1,3 @@
-import { Writable } from 'stream'
-
 /**
  * Logs the status of a long-running process.
  */
@@ -8,12 +6,16 @@ export interface Heartbeat {
   getSeconds: () => number
 }
 
+interface WritableLike {
+  write: (chunk: string) => void
+}
+
 /**
  * For long-running database tasks,
  * print a heartbeat to stderr every few seconds.
  */
 export function makeHeartbeat(
-  stderr: Writable,
+  stderr: WritableLike,
   opts: { logSeconds?: number } = {}
 ): Heartbeat {
   const { logSeconds = 10 } = opts
