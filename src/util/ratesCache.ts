@@ -49,10 +49,16 @@ async function getFromServer(
   currencyPair: string,
   date: Date
 ): Promise<number | null> {
-  const response = await fetch(
-    `${RATES_SERVER}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
-  )
-  const json = await response.json()
+  const url = `${RATES_SERVER}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
+  const response = await fetch(url)
+  const text = await response.text()
+  let json: any
+  try {
+    json = JSON.parse(text)
+  } catch (error) {
+    throw new Error(`invalid JSON for ${url} reason: ${String(error)}; ${text}`)
+  }
+
   const { exchangeRate } = asRateReply(json)
 
   if (exchangeRate == null) return null
