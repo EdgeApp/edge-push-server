@@ -34,7 +34,7 @@ export function makeHeartbeat(
     if (seconds < nextSeconds) return
     nextSeconds += logSeconds
 
-    let out = `${seconds.toFixed(2)}s, ${count} rows`
+    let out = `${seconds.toFixed(2)}s, ${count} beats`
     if (item != null) out += `, ${item}`
     out += '\n'
     stderr.write(out)
