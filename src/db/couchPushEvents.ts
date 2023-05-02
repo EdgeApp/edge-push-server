@@ -36,6 +36,7 @@ import { PushEvent, PushTrigger } from '../types/pushTypes'
  * To make changes, edit the `event` object, then call `save`.
  */
 export interface PushEventRow {
+  id: string
   event: PushEvent
   save: () => Promise<void>
 }
@@ -267,6 +268,7 @@ function makePushEventRow(
   let base = { ...event }
 
   return {
+    id: clean.id,
     event,
 
     async save(): Promise<void> {
