@@ -28,7 +28,7 @@ runDaemon(async tools => {
       logger.warn({ msg: 'Failed event', id, err })
     }
 
-    heartbeat()
+    heartbeat(`row '${eventRow.id}'`)
   }
 })
 
