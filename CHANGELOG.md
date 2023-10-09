@@ -1,5 +1,9 @@
 # edge-notification-server
 
+## Unreleased
+
+- removed: bitcoinsv plugin
+
 ## 2.2.2 (2023-1-11)
 
 - added: Marketing push-server notification CLI tool (`yarn cli push-marketing`)

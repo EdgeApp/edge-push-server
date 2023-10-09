@@ -34,10 +34,10 @@ export function makePlugins(): MiniPlugins {
       'https://bgold.atomicwallet.io'
     ]),
     // bitcoingoldtestnet:
-    bitcoinsv: makeBlockbookPlugin('BSV', [
-      'https://bsv-bbwrap1.edge.app',
-      'https://blockbook.siftbitcoin.com:9146'
-    ]),
+    // bitcoinsv: makeBlockbookPlugin('BSV', [
+    //   'https://bsv-bbwrap1.edge.app',
+    //   'https://blockbook.siftbitcoin.com:9146'
+    // ]),
     bitcointestnet: makeBlockbookPlugin('TESTBTC', [
       'https://tbtc1.trezor.io',
       'https://tbtc2.trezor.io'
