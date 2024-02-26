@@ -67,12 +67,18 @@ export function makePushSender(connection: ServerScope): PushSender {
     // TODO: We have never passed the correct data type here,
     // so either update our database or write a translation layer:
     const serviceAccount: any = apiKeyRow.adminsdk
+    const projectId = serviceAccount.projectId ?? serviceAccount.project_id
 
-    // Create a sender if we have an API key for them:
-    const app = admin.initializeApp(
-      { credential: admin.credential.cert(serviceAccount) },
-      serviceAccount.projectId ?? serviceAccount.project_id
-    )
+    // Create a sender if we have an API key for them.
+    // It is possible that multiple API keys will use the same
+    // Firebase project, so check for existing instances
+    // before creating new ones:
+    const app =
+      admin.apps.find(app => app?.name === projectId) ??
+      admin.initializeApp(
+        { credential: admin.credential.cert(serviceAccount) },
+        projectId
+      )
     const sender = app.messaging()
     senders.set(apiKey, sender)
     return sender

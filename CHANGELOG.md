@@ -1,5 +1,9 @@
 # edge-notification-server
 
+## Unreleased
+
+- fixed: Don't fail sends when multiple Edge API keys share the same Firebase credentials.
+
 ## 2.3.0 (2023-05-01)
 
 - added: Pino logging
