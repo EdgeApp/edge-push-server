@@ -91,9 +91,10 @@ async function iterate(
 
   const heartbeat = makeHeartbeat({
     write: chunk => {
-      const [timeElapsed, item] = chunk.split(',')
+      const [timeElapsed, ...rest] = chunk.split(',')
+      const info = rest.join(',').trim()
       logger.info(
-        { timeElapsed: timeElapsed.trim(), item: item.trim() },
+        { timeElapsed: timeElapsed.trim(), info },
         'heartbeat %s',
         chunk
       )
