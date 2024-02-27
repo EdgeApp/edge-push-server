@@ -1,6 +1,12 @@
 # edge-notification-server
 
-## 2.2.2 (2023-1-11)
+## 2.3.0 (2023-05-01)
+
+- added: Pino logging
+- fixed: Avoid devices with invalid tokens in the `push-marketing` tool.
+- fixed: Correctly report the device count in the `push-marketing` tool.
+
+## 2.2.2 (2023-01-11)
 
 - added: Marketing push-server notification CLI tool (`yarn cli push-marketing`)
 - added: Record device IP and location
