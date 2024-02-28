@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.3.1 (2024-02-28)
+
 - fixed: Don't fail sends when multiple Edge API keys share the same Firebase credentials.
 
 ## 2.3.0 (2023-05-01)
