@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.3.2 (2024-09-14)
+
+- fixed: Broken notifications due to deprecated Firebase API.
+
 ## 2.3.1 (2024-02-28)
 
 - fixed: Don't fail sends when multiple Edge API keys share the same Firebase credentials.
