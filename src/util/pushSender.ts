@@ -92,33 +92,44 @@ export function makePushSender(connection: ServerScope): PushSender {
     ): Promise<PushResult> {
       const { title = '', body = '', data = {} } = message
 
-      const failure = {
+      const failure: PushResult = {
         successCount: 0,
         failureCount: tokens.size
+      }
+      const response: PushResult = {
+        successCount: 0,
+        failureCount: 0
       }
 
       const sender = await getSender(apiKey)
       if (sender == null) return failure
 
-      const response = await sender
-        .sendMulticast({
-          data,
-          notification: { title, body },
-          tokens: [...tokens]
-        })
-        .catch(err => {
-          logger.warn({
-            msg: 'Failed to send push messages',
-            err,
-            apiKey,
-            tokens,
-            message
+      let lastError: unknown = null
+      for (const token of tokens) {
+        try {
+          await sender.send({
+            token,
+            notification: { title, body },
+            data
           })
-          return failure
+          successCounter.inc(1)
+          response.successCount += 1
+        } catch (err) {
+          failureCounter.inc(1)
+          response.failureCount += 1
+          lastError = err
+        }
+      }
+      if (response.successCount === 0) {
+        logger.warn({
+          msg: 'Failed to send push messages',
+          err: lastError,
+          apiKey,
+          tokens,
+          message
         })
+      }
 
-      successCounter.inc(response.successCount)
-      failureCounter.inc(response.failureCount)
       return response
     },
     async send(connection, message, opts) {
