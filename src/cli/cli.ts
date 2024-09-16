@@ -5,6 +5,7 @@ import packageJson from '../../package.json'
 import { setupDatabases } from '../db/couchSetup'
 import { serverConfig } from '../serverConfig'
 import { ServerContext } from './cliTools'
+import { CleanCouch } from './commands/cleanCouch'
 import { GetDevice } from './commands/getDevice'
 import { MigrateDevices } from './commands/migrateDevices'
 import { PushMarketing } from './commands/pushMarketing'
@@ -29,6 +30,7 @@ async function main(): Promise<void> {
   cli.register(Builtins.VersionCommand)
 
   // Our commands:
+  cli.register(CleanCouch)
   cli.register(GetDevice)
   cli.register(MigrateDevices)
   cli.register(SendMessage)

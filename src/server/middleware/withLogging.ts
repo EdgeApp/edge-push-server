@@ -48,7 +48,7 @@ export const withLogging =
       return await server({ ...request, date, ip, log })
     }
     const response = await runServer().catch(error => {
-      log(stringifyError(error))
+      log(String(error?.stack))
 
       // Some errors have special HTTP statuses:
       if (error instanceof UnavailableError) return { status: 503 }
