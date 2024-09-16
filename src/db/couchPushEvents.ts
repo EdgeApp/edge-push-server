@@ -30,6 +30,7 @@ import {
   asPushTriggerState
 } from '../types/pushCleaners'
 import { PushEvent, PushTrigger } from '../types/pushTypes'
+import { Logger } from '../types/requestTypes'
 
 /**
  * An event returned from the database.
@@ -214,16 +215,26 @@ export async function adjustEvents(
 
 export async function getEventsByDeviceId(
   connection: ServerScope,
-  deviceId: string
+  deviceId: string,
+  log?: Logger
 ): Promise<PushEventRow[]> {
   const db = connection.use(couchEventsSetup.name)
   const response = await db.view('deviceId', 'deviceId', {
     include_docs: true,
     key: deviceId
   })
-  return response.rows.map(row =>
-    makePushEventRow(db, asCouchPushEvent(row.doc))
-  )
+  try {
+    return response.rows.map(row => {
+      return makePushEventRow(db, asCouchPushEvent(row.doc))
+    })
+  } catch (error) {
+    log?.(
+      `Failed to clean events for device "${deviceId}": ${JSON.stringify(
+        response.rows
+      )}`
+    )
+    return []
+  }
 }
 
 export async function getEventsByLoginId(

@@ -23,7 +23,7 @@ export const deviceFetchRoute = withDevice(async request => {
     log
   } = request
 
-  const eventRows = await getEventsByDeviceId(connection, device.deviceId)
+  const eventRows = await getEventsByDeviceId(connection, device.deviceId, log)
 
   if (ip !== device.ip) {
     const location = await locateIp(ip).catch(error => {
