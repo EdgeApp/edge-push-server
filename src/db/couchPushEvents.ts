@@ -169,16 +169,17 @@ export async function adjustEvents(
     loginId?: Uint8Array
     createEvents?: NewPushEvent[]
     removeEvents?: string[]
-  }
+  },
+  log: Logger
 ): Promise<PushEvent[]> {
   const { date, deviceId, loginId, createEvents = [], removeEvents = [] } = opts
 
   // Load existing events:
   const eventRows =
     deviceId != null
-      ? await getEventsByDeviceId(connection, deviceId)
+      ? await getEventsByDeviceId(connection, deviceId, log)
       : loginId != null
-      ? await getEventsByLoginId(connection, loginId)
+      ? await getEventsByLoginId(connection, loginId, log)
       : []
 
   // Remove events from the array:
@@ -233,22 +234,32 @@ export async function getEventsByDeviceId(
         response.rows
       )}`
     )
-    return []
+    throw error
   }
 }
 
 export async function getEventsByLoginId(
   connection: ServerScope,
-  loginId: Uint8Array
+  loginId: Uint8Array,
+  log?: Logger
 ): Promise<PushEventRow[]> {
   const db = connection.use(couchEventsSetup.name)
   const response = await db.view('loginId', 'loginId', {
     include_docs: true,
     key: base64.stringify(loginId)
   })
-  return response.rows.map(row =>
-    makePushEventRow(db, asCouchPushEvent(row.doc))
-  )
+  try {
+    return response.rows.map(row => {
+      return makePushEventRow(db, asCouchPushEvent(row.doc))
+    })
+  } catch (error) {
+    log?.(
+      `Failed to clean events for login "${base64.stringify(
+        loginId
+      )}": ${JSON.stringify(response.rows)}`
+    )
+    throw error
+  }
 }
 
 export async function* streamEvents(

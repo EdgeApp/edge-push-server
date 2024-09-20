@@ -86,12 +86,16 @@ export const deviceUpdateRoute = withDevice(async request => {
     device.location = location
   }
 
-  const events = await adjustEvents(connection, {
-    date,
-    deviceId: device.deviceId,
-    createEvents,
-    removeEvents
-  })
+  const events = await adjustEvents(
+    connection,
+    {
+      date,
+      deviceId: device.deviceId,
+      createEvents,
+      removeEvents
+    },
+    log
+  )
 
   return jsonResponse(
     wasDevicePayload({

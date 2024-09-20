@@ -30,7 +30,7 @@ export const loginFetchRoute = withDevice(async request => {
  * POST /v2/login/update
  */
 export const loginUpdateRoute = withDevice(async request => {
-  const { connection, date, payload, loginId } = request
+  const { connection, date, payload, log, loginId } = request
 
   if (loginId == null) {
     return errorResponse('No login provided', { status: 400 })
@@ -40,11 +40,15 @@ export const loginUpdateRoute = withDevice(async request => {
   if (checked.error != null) return checked.error
   const { createEvents, removeEvents } = checked.clean
 
-  const events = await adjustEvents(connection, {
-    date,
-    loginId,
-    createEvents,
-    removeEvents
-  })
+  const events = await adjustEvents(
+    connection,
+    {
+      date,
+      loginId,
+      createEvents,
+      removeEvents
+    },
+    log
+  )
   return jsonResponse(wasLoginPayload({ events }))
 })
