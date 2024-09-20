@@ -1137,12 +1137,7 @@ base-x@^3.0.8:
   dependencies:
     safe-buffer "^5.0.1"
 
-base64-js@^1.3.0:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.1.tgz#58ece8cb75dd07e71ed08c736abc5fac4dbf8df1"
-  integrity sha512-mLQ4i2QO1ytvGWFWmcngKO//JXAQueZvwEKtjgQFM4jIK0kU+ytMfplL8j+n5mspOfjHwoAg+9yhb7BwAHm36g==
-
-base64-js@^1.3.1:
+base64-js@^1.3.0, base64-js@^1.3.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
@@ -1334,10 +1329,10 @@ cleaner-config@^0.1.7:
     minimist "^1.2.5"
     sucrase "^3.17.1"
 
-cleaners@^0.3.11, cleaners@^0.3.12, cleaners@^0.3.8:
-  version "0.3.12"
-  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.12.tgz#0e99ef2460a59ed87550a60bdfc441b1696ff9cb"
-  integrity sha512-bK7IvvYyhfy30S3VKmWi/YVWp0MUH1pEYfdtbjCpQiIzy8gmP9GCXv6AVZENDHbpcRHqMnZONs3ieyJMh3zvVw==
+cleaners@^0.3.11, cleaners@^0.3.17, cleaners@^0.3.8:
+  version "0.3.17"
+  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.17.tgz#dae498f3d49b7e9364050402d2f4ad09abcd31ba"
+  integrity sha512-X5acjsLwJK+JEK5hv0Rve7G78+E6iYh1TzJZ40z7Yjrba0WhW6spTq28WgG9w+AK+YQIOHtQTrzaiuntMBBIwQ==
 
 cli-cursor@^3.1.0:
   version "3.1.0"
