@@ -221,9 +221,9 @@ export async function getEventsByDeviceId(
     include_docs: true,
     key: deviceId
   })
-  return response.rows.map(row =>
-    makePushEventRow(db, asCouchPushEvent(row.doc))
-  )
+  return response.rows
+    .filter(row => row.doc != null)
+    .map(row => makePushEventRow(db, asCouchPushEvent(row.doc)))
 }
 
 export async function getEventsByLoginId(
@@ -235,9 +235,9 @@ export async function getEventsByLoginId(
     include_docs: true,
     key: base64.stringify(loginId)
   })
-  return response.rows.map(row =>
-    makePushEventRow(db, asCouchPushEvent(row.doc))
-  )
+  return response.rows
+    .filter(row => row.doc != null)
+    .map(row => makePushEventRow(db, asCouchPushEvent(row.doc)))
 }
 
 export async function* streamEvents(

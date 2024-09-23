@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Do not return 500 errors when CouchDB views are out-of-date.
+
 ## 2.3.2 (2024-09-14)
 
 - fixed: Broken notifications due to deprecated Firebase API.
