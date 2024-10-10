@@ -97,6 +97,7 @@ async function checkPriceChange(
       body: fixMessage(body),
       data,
       title: fixMessage(title),
+      isMarketing: false,
       isPriceChange: true
     })
   }

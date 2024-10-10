@@ -33,6 +33,7 @@ export async function checkEventTrigger(
       await sender.sendToEvent(event, {
         ...pushMessage,
         // The `checkTrigger` function never activates price changes:
+        isMarketing: false,
         isPriceChange: false
       })
     }

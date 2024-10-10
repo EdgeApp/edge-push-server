@@ -96,7 +96,12 @@ export class PushMarketing extends Command<ServerContext> {
     }
 
     const sender = makePushSender(connections)
-    const message: SendableMessage = { title, body, isPriceChange: false }
+    const message: SendableMessage = {
+      title,
+      body,
+      isMarketing: true,
+      isPriceChange: false
+    }
     const heatbeat = makeHeartbeat(stderr)
 
     stdout.write('Loading devices...\n')

@@ -29,6 +29,12 @@
       "error_file": "/var/log/pm2/priceLevelErrors.log",
       "out_file": "/var/log/pm2/priceLevelDaemon.log",
       "script": "./lib/daemons/priceLevelDaemon.js"
+    },
+    {
+      "name": "publishDaemon",
+      "error_file": "/var/log/pm2/publishErrors.log",
+      "out_file": "/var/log/pm2/publishDaemon.log",
+      "script": "./lib/daemons/publishDaemon.js"
     }
   ]
 }

@@ -27,12 +27,17 @@ export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
   const sender = makePushSender(connections)
 
   // Perform the send:
-  const response = await sender.sendToLogin(loginId, {
-    title,
-    body,
-    data,
-    isPriceChange: false
-  })
+  const response = await sender.sendToLogin(
+    loginId,
+    {
+      title,
+      body,
+      data,
+      isPriceChange: false,
+      isMarketing: false // Security messages from login server
+    },
+    5 // High priority
+  )
 
   log(`Sent notifications to loginId ${base64.stringify(loginId)}`)
   return jsonResponse(response)

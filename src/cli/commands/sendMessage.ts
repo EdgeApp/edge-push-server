@@ -37,6 +37,7 @@ export class SendMessage extends Command<ServerContext> {
     const message: SendableMessage = {
       title,
       body: this.body,
+      isMarketing: false, // This tool is used for testing
       isPriceChange: false
     }
 

@@ -20,6 +20,7 @@
     "prepare": "husky install && npm-run-all clean build",
     "price-change-daemon": "node -r sucrase/register src/daemons/priceChangeDaemon.ts",
     "price-level-daemon": "node -r sucrase/register src/daemons/priceLevelDaemon.ts",
+    "publish-daemon": "node -r sucrase/register src/daemons/publishDaemon.ts",
     "start": "node -r sucrase/register src/server/index.ts",
     "test": "mocha -r sucrase/register 'test/**/*.test.ts'",
     "types": "tsc",
