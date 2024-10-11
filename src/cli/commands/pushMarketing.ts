@@ -118,12 +118,13 @@ export class PushMarketing extends Command<ServerContext> {
       }
 
       const payloadMap = new Map<string, Array<Set<string>>>()
-      for await (const couchDevice of streamDevicesByLocation(connection, {
+      for await (const deviceRow of streamDevicesByLocation(connection, {
         country,
         region,
         city
       })) {
-        const { apiKey, deviceToken, ignoreMarketing } = couchDevice.doc
+        const { apiKey, deviceId, deviceToken, ignoreMarketing } =
+          deviceRow.device
 
         // Skip document conditions:
         if (
@@ -138,9 +139,7 @@ export class PushMarketing extends Command<ServerContext> {
         }
         if (!/^[a-zA-z0-9_\-:]+$/.test(deviceToken)) {
           // Log invalid tokens
-          logger.write(
-            `Invalid token '${deviceToken}' for doc '${couchDevice.id}'`
-          )
+          logger.write(`Invalid token '${deviceToken}' for doc '${deviceId}'`)
           continue
         }
 

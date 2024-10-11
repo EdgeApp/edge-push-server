@@ -40,7 +40,7 @@ type CouchDevice = Omit<Device, 'deviceId'>
  * A single phone or other devIce, as stored in Couch.
  * The document ID is the deviceId.
  */
-export const asCouchDevice = asCouchDoc(
+const asCouchDevice = asCouchDoc(
   asObject<CouchDevice>({
     created: asDate,
 
@@ -297,7 +297,7 @@ function makeDeviceRow(
 export async function* streamDevicesByLocation(
   connection: ServerScope,
   location: { country?: string; region?: string; city?: string }
-): AsyncIterableIterator<CouchDoc<CouchDevice>> {
+): AsyncIterableIterator<DeviceRow> {
   const db = connection.use(couchDevicesSetup.name)
 
   const { country, region, city } = location
@@ -339,6 +339,6 @@ export async function* streamDevicesByLocation(
   })) {
     const couchDevice = asMaybe(asCouchDevice)(doc)
     if (couchDevice == null) continue
-    yield couchDevice
+    yield makeDeviceRow(db, couchDevice)
   }
 }
