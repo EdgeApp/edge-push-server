@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.3.3 (2024-10-08)
+
 - fixed: Do not return 500 errors when CouchDB views are out-of-date.
 
 ## 2.3.2 (2024-09-14)
