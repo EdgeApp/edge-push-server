@@ -1,8 +1,9 @@
 import { asOptional, asString } from 'cleaners'
 import { Command, Option } from 'clipanion'
 
+import { getDeviceById } from '../../db/couchDevices'
 import { asBase64 } from '../../types/pushCleaners'
-import { makePushSender } from '../../util/pushSender'
+import { makePushSender, SendableMessage } from '../../util/pushSender'
 import { ServerContext } from '../cliTools'
 
 export class SendMessage extends Command<ServerContext> {
@@ -32,18 +33,22 @@ export class SendMessage extends Command<ServerContext> {
     const loginId = asOptional(asBase64)(this.loginId)
     const title = asOptional(asString, 'Test Message')(this.title)
 
-    if (loginId == null && deviceId == null) {
+    const sender = makePushSender(connection)
+    const message: SendableMessage = {
+      title,
+      body: this.body,
+      isPriceChange: false
+    }
+
+    if (loginId != null) {
+      await sender.sendToLogin(loginId, message)
+    } else if (deviceId != null) {
+      const deviceRow = await getDeviceById(connection, deviceId, new Date())
+      await sender.sendToDevice(deviceRow.device, message)
+    } else {
       stderr.write('No deviceId or loginId\n')
       return 1
     }
-
-    const now = new Date()
-    const sender = makePushSender(connection)
-    await sender.send(
-      connection,
-      { title, body: this.body },
-      { date: now, deviceId, loginId }
-    )
 
     // The Firebase SDK leaves junk around:
     process.exit(0)

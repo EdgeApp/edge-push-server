@@ -3,24 +3,19 @@ import { ServerScope } from 'nano'
 
 import { getApiKeyByKey } from '../db/couchApiKeys'
 import { getDeviceById, getDevicesByLoginId } from '../db/couchDevices'
-import { PushMessage } from '../types/pushTypes'
+import { Device, PushEvent, PushMessage } from '../types/pushTypes'
+
+export interface SendableMessage extends PushMessage {
+  /** Some devices ignore these messages: */
+  readonly isPriceChange: boolean
+}
 
 export interface PushSender {
-  sendRaw: (
-    apiKey: string,
-    tokens: Set<string>,
-    message: PushMessage
-  ) => Promise<void>
-  send: (
-    connection: ServerScope,
-    message: PushMessage,
-    opts: {
-      date: Date
-      deviceId?: string
-      loginId?: Uint8Array
-      isPriceChange?: boolean
-    }
-  ) => Promise<void>
+  sendToEvent: (event: PushEvent, message: SendableMessage) => Promise<void>
+
+  sendToLogin: (loginId: Uint8Array, message: SendableMessage) => Promise<void>
+
+  sendToDevice: (device: Device, message: SendableMessage) => Promise<void>
 }
 
 // Map apiKey's to message senders, or `null` if missing:
@@ -68,58 +63,58 @@ export function makePushSender(connection: ServerScope): PushSender {
     return sender
   }
 
-  const instance: PushSender = {
-    async sendRaw(
-      apiKey: string,
-      tokens: Set<string>,
-      message: PushMessage
-    ): Promise<void> {
-      const { title = '', body = '', data = {} } = message
+  async function sendToEvent(
+    event: PushEvent,
+    message: SendableMessage
+  ): Promise<void> {
+    const { deviceId, loginId } = event
 
-      const sender = await getSender(apiKey)
-      if (sender == null) return
-
-      for (const token of tokens) {
-        try {
-          await sender.send({
-            token,
-            notification: { title, body },
-            data
-          })
-        } catch (err) {}
-      }
-    },
-
-    async send(connection, message, opts) {
-      const { date, deviceId, loginId, isPriceChange = false } = opts
-
-      let deviceRows =
-        deviceId != null
-          ? [await getDeviceById(connection, deviceId, date)]
-          : loginId != null
-          ? await getDevicesByLoginId(connection, loginId)
-          : []
-
-      if (isPriceChange) {
-        deviceRows = deviceRows.filter(row => !row.device.ignorePriceChanges)
-      }
-
-      // Sort the devices by app:
-      const apiKeys = new Map<string, Set<string>>()
-      for (const row of deviceRows) {
-        const { apiKey, deviceToken } = row.device
-        if (apiKey == null || deviceToken == null) continue
-        const tokens = apiKeys.get(apiKey) ?? new Set()
-        tokens.add(deviceToken)
-        apiKeys.set(apiKey, tokens)
-      }
-
-      // Do the individual sends:
-      for (const [apiKey, tokens] of apiKeys) {
-        await instance.sendRaw(apiKey, tokens, message)
-      }
+    if (loginId != null) {
+      await sendToLogin(loginId, message)
+    } else if (deviceId != null) {
+      const device = await getDeviceById(connection, deviceId, new Date())
+      await sendToDevice(device.device, message)
     }
   }
 
-  return instance
+  async function sendToLogin(
+    loginId: Uint8Array,
+    message: SendableMessage
+  ): Promise<void> {
+    const deviceRows = await getDevicesByLoginId(connection, loginId)
+    for (const deviceRow of deviceRows) {
+      await sendToDevice(deviceRow.device, message)
+    }
+  }
+
+  async function sendToDevice(
+    device: Device,
+    message: SendableMessage
+  ): Promise<void> {
+    const { apiKey, deviceToken } = device
+
+    if (message.isPriceChange && device.ignorePriceChanges) return
+    if (apiKey == null || deviceToken == null) return
+
+    const sender = await getSender(apiKey)
+    if (sender == null) return
+
+    try {
+      await sender.send({
+        token: deviceToken,
+        notification: {
+          title: message.title ?? '',
+          body: message.body ?? ''
+        },
+        data: message.data ?? {}
+      })
+    } catch (err) {}
+  }
+
+  const out: PushSender = {
+    sendToEvent,
+    sendToLogin,
+    sendToDevice
+  }
+  return out
 }

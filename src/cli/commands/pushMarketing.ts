@@ -6,7 +6,7 @@ import {
 } from '../../db/couchDevices'
 import { Device } from '../../types/pushTypes'
 import { makeHeartbeat } from '../../util/heartbeat'
-import { makePushSender } from '../../util/pushSender'
+import { makePushSender, SendableMessage } from '../../util/pushSender'
 import { ServerContext } from '../cliTools'
 
 export class PushMarketing extends Command<ServerContext> {
@@ -96,7 +96,7 @@ export class PushMarketing extends Command<ServerContext> {
     }
 
     const sender = makePushSender(connection)
-    const message = { title, body }
+    const message: SendableMessage = { title, body, isPriceChange: false }
     const heatbeat = makeHeartbeat(stderr)
 
     stdout.write('Loading devices...\n')
@@ -133,13 +133,10 @@ export class PushMarketing extends Command<ServerContext> {
 
     stdout.write(`Sending to ${devices.size} devices...\n`)
     for (const device of devices.values()) {
-      const { apiKey, deviceId, deviceToken } = device
-      if (apiKey == null || deviceToken == null) continue
-      await sender
-        .sendRaw(apiKey, new Set([deviceToken]), message)
-        .catch(error => {
-          stdout.write(`Device ${deviceId} failed: ${String(error)}\n`)
-        })
+      const { deviceId } = device
+      await sender.sendToDevice(device, message).catch(error => {
+        stdout.write(`Device ${deviceId} failed: ${String(error)}\n`)
+      })
       heatbeat(`Reached ${deviceId}`)
     }
 

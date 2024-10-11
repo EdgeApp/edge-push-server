@@ -39,9 +39,9 @@ async function checkPriceChange(
   toPrice: number,
   mode: 'day' | 'hour'
 ): Promise<void> {
-  const { connection, sender } = tools
+  const { sender } = tools
   const { event } = eventRow
-  const { deviceId, loginId, pushMessage, trigger, triggered } = event
+  const { pushMessage, trigger, triggered } = event
   if (trigger.type !== 'price-change') return
   const { currencyPair, directions = [], dailyChange, hourlyChange } = trigger
 
@@ -93,16 +93,12 @@ async function checkPriceChange(
   // Send the message:
   if (pushMessage != null) {
     const { body, data, title } = pushMessage
-    await sender.send(
-      connection,
-      { body: fixMessage(body), data, title: fixMessage(title) },
-      {
-        date: now,
-        deviceId,
-        loginId,
-        isPriceChange: true
-      }
-    )
+    await sender.sendToEvent(eventRow.event, {
+      body: fixMessage(body),
+      data,
+      title: fixMessage(title),
+      isPriceChange: true
+    })
   }
 
   event.triggered = now

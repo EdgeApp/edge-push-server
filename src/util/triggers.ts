@@ -20,16 +20,9 @@ export async function checkEventTrigger(
   tools: DaemonTools,
   eventRow: PushEventRow
 ): Promise<void> {
-  const { connection, plugins, sender } = tools
+  const { plugins, sender } = tools
   const { event } = eventRow
-  const {
-    broadcastTxs = [],
-    deviceId,
-    loginId,
-    pushMessage,
-    trigger,
-    triggered
-  } = event
+  const { broadcastTxs = [], pushMessage, trigger, triggered } = event
   const date = new Date()
 
   const update = await checkTrigger(tools, trigger, triggered, date)
@@ -37,10 +30,9 @@ export async function checkEventTrigger(
     logger.info(`Sending ${trigger.type}`)
 
     if (pushMessage != null) {
-      await sender.send(connection, pushMessage, {
-        date,
-        deviceId,
-        loginId,
+      await sender.sendToEvent(event, {
+        ...pushMessage,
+        // The `checkTrigger` function never activates price changes:
         isPriceChange: false
       })
     }

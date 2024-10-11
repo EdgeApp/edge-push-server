@@ -17,7 +17,7 @@ import { makePushSender } from '../../util/pushSender'
  * Response body: unused
  */
 export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, connection, date, json, log } = request
+  const { apiKey, connection, json, log } = request
 
   const checkedBody = checkPayload(asSendNotificationBody, json)
   if (checkedBody.error != null) return checkedBody.error
@@ -27,8 +27,12 @@ export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
   const sender = makePushSender(connection)
 
   // Perform the send:
-  const message = { title, body, data }
-  const response = await sender.send(connection, message, { date, loginId })
+  const response = await sender.sendToLogin(loginId, {
+    title,
+    body,
+    data,
+    isPriceChange: false
+  })
 
   log(`Sent notifications to loginId ${base64.stringify(loginId)}`)
   return jsonResponse(response)
