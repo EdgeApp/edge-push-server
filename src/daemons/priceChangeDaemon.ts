@@ -93,7 +93,7 @@ async function checkPriceChange(
   // Send the message:
   if (pushMessage != null) {
     const { body, data, title } = pushMessage
-    const results = await sender.send(
+    await sender.send(
       connection,
       { body: fixMessage(body), data, title: fixMessage(title) },
       {
@@ -103,8 +103,6 @@ async function checkPriceChange(
         isPriceChange: true
       }
     )
-    event.pushMessageEmits = results.successCount
-    event.pushMessageFails = results.failureCount
   }
 
   event.triggered = now

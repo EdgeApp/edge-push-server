@@ -27,7 +27,7 @@ export class SendMessage extends Command<ServerContext> {
   })
 
   async execute(): Promise<number> {
-    const { connection, stderr, stdout } = this.context
+    const { connection, stderr } = this.context
     const deviceId = asOptional(asString)(this.deviceId)
     const loginId = asOptional(asBase64)(this.loginId)
     const title = asOptional(asString, 'Test Message')(this.title)
@@ -39,14 +39,10 @@ export class SendMessage extends Command<ServerContext> {
 
     const now = new Date()
     const sender = makePushSender(connection)
-    const status = await sender.send(
+    await sender.send(
       connection,
       { title, body: this.body },
       { date: now, deviceId, loginId }
-    )
-
-    stdout.write(
-      `Sent to ${status.successCount} devices and failed to reach ${status.failureCount} devices.\n`
     )
 
     // The Firebase SDK leaves junk around:

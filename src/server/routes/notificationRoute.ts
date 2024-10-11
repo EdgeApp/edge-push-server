@@ -29,13 +29,8 @@ export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
   // Perform the send:
   const message = { title, body, data }
   const response = await sender.send(connection, message, { date, loginId })
-  const { successCount, failureCount } = response
 
-  log(
-    `Sent notifications to loginId ${base64.stringify(
-      loginId
-    )} devices: ${successCount} success - ${failureCount} failure`
-  )
+  log(`Sent notifications to loginId ${base64.stringify(loginId)}`)
   return jsonResponse(response)
 }
 

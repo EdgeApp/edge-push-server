@@ -5,7 +5,6 @@ import { ServerScope } from 'nano'
 import { getApiKeyByKey } from '../db/couchApiKeys'
 import { getDeviceById, getDevicesByLoginId } from '../db/couchDevices'
 import { PushMessage } from '../types/pushTypes'
-import { logger } from './logger'
 
 const successCounter = io.counter({
   id: 'notifications:success:total',
@@ -16,17 +15,12 @@ const failureCounter = io.counter({
   name: 'Total Failed Notifications'
 })
 
-export interface PushResult {
-  successCount: number
-  failureCount: number
-}
-
 export interface PushSender {
   sendRaw: (
     apiKey: string,
     tokens: Set<string>,
     message: PushMessage
-  ) => Promise<PushResult>
+  ) => Promise<void>
   send: (
     connection: ServerScope,
     message: PushMessage,
@@ -36,7 +30,7 @@ export interface PushSender {
       loginId?: Uint8Array
       isPriceChange?: boolean
     }
-  ) => Promise<PushResult>
+  ) => Promise<void>
 }
 
 // Map apiKey's to message senders, or `null` if missing:
@@ -89,22 +83,12 @@ export function makePushSender(connection: ServerScope): PushSender {
       apiKey: string,
       tokens: Set<string>,
       message: PushMessage
-    ): Promise<PushResult> {
+    ): Promise<void> {
       const { title = '', body = '', data = {} } = message
 
-      const failure: PushResult = {
-        successCount: 0,
-        failureCount: tokens.size
-      }
-      const response: PushResult = {
-        successCount: 0,
-        failureCount: 0
-      }
-
       const sender = await getSender(apiKey)
-      if (sender == null) return failure
+      if (sender == null) return
 
-      let lastError: unknown = null
       for (const token of tokens) {
         try {
           await sender.send({
@@ -113,25 +97,12 @@ export function makePushSender(connection: ServerScope): PushSender {
             data
           })
           successCounter.inc(1)
-          response.successCount += 1
         } catch (err) {
           failureCounter.inc(1)
-          response.failureCount += 1
-          lastError = err
         }
       }
-      if (response.successCount === 0) {
-        logger.warn({
-          msg: 'Failed to send push messages',
-          err: lastError,
-          apiKey,
-          tokens,
-          message
-        })
-      }
-
-      return response
     },
+
     async send(connection, message, opts) {
       const { date, deviceId, loginId, isPriceChange = false } = opts
 
@@ -157,16 +128,9 @@ export function makePushSender(connection: ServerScope): PushSender {
       }
 
       // Do the individual sends:
-      const out = {
-        failureCount: 0,
-        successCount: 0
-      }
       for (const [apiKey, tokens] of apiKeys) {
-        const result = await instance.sendRaw(apiKey, tokens, message)
-        out.failureCount += result.failureCount
-        out.successCount += result.successCount
+        await instance.sendRaw(apiKey, tokens, message)
       }
-      return out
     }
   }
 

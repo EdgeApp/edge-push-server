@@ -105,17 +105,7 @@ export class PushMarketing extends Command<ServerContext> {
 
       stdout.write(`Sending push messages...\n`)
 
-      const status = {
-        failureCount: 0,
-        skipCount: 0,
-        successCount: 0
-      }
       const logger = makeStatusLogger(stdout)
-      const updateStatusLine = (): void => {
-        logger.status(
-          `Succeeded ${status.successCount} | Failed ${status.failureCount} | Skipped ${status.skipCount}`
-        )
-      }
 
       const payloadMap = new Map<string, Array<Set<string>>>()
       for await (const deviceRow of streamDevicesByLocation(connection, {
@@ -133,8 +123,6 @@ export class PushMarketing extends Command<ServerContext> {
           deviceToken == null ||
           deviceToken.trim() === ''
         ) {
-          status.skipCount++
-          updateStatusLine()
           continue
         }
         if (!/^[a-zA-z0-9_\-:]+$/.test(deviceToken)) {
@@ -157,14 +145,7 @@ export class PushMarketing extends Command<ServerContext> {
 
       for (const [apiKey, payloads] of payloadMap) {
         for (const tokens of payloads) {
-          try {
-            const result = await sender.sendRaw(apiKey, tokens, message)
-            status.successCount += result.successCount
-            status.failureCount += result.failureCount
-          } catch (error) {
-            status.failureCount++
-          }
-          updateStatusLine()
+          await sender.sendRaw(apiKey, tokens, message).catch(() => {})
         }
       }
     }

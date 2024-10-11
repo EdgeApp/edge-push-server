@@ -37,14 +37,12 @@ export async function checkEventTrigger(
     logger.info(`Sending ${trigger.type}`)
 
     if (pushMessage != null) {
-      const results = await sender.send(connection, pushMessage, {
+      await sender.send(connection, pushMessage, {
         date,
         deviceId,
         loginId,
         isPriceChange: false
       })
-      event.pushMessageEmits = results.successCount
-      event.pushMessageFails = results.failureCount
     }
 
     event.broadcastTxErrors = await Promise.all(
