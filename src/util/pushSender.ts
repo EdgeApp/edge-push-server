@@ -1,19 +1,9 @@
-import io from '@pm2/io'
 import admin from 'firebase-admin'
 import { ServerScope } from 'nano'
 
 import { getApiKeyByKey } from '../db/couchApiKeys'
 import { getDeviceById, getDevicesByLoginId } from '../db/couchDevices'
 import { PushMessage } from '../types/pushTypes'
-
-const successCounter = io.counter({
-  id: 'notifications:success:total',
-  name: 'Total Successful Notifications'
-})
-const failureCounter = io.counter({
-  id: 'notifications:failure:total',
-  name: 'Total Failed Notifications'
-})
 
 export interface PushSender {
   sendRaw: (
@@ -96,10 +86,7 @@ export function makePushSender(connection: ServerScope): PushSender {
             notification: { title, body },
             data
           })
-          successCounter.inc(1)
-        } catch (err) {
-          failureCounter.inc(1)
-        }
+        } catch (err) {}
       }
     },
 

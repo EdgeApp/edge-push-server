@@ -29,7 +29,6 @@
     "*.{js,ts}": "eslint"
   },
   "dependencies": {
-    "@pm2/io": "^4.3.5",
     "axios": "^0.21.2",
     "base-x": "^3.0.8",
     "biggystring": "^4.0.0",
