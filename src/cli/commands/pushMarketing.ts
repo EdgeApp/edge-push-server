@@ -4,11 +4,10 @@ import {
   countDevicesByLocation,
   streamDevicesByLocation
 } from '../../db/couchDevices'
+import { Device } from '../../types/pushTypes'
+import { makeHeartbeat } from '../../util/heartbeat'
 import { makePushSender } from '../../util/pushSender'
-import { makeStatusLogger, ServerContext } from '../cliTools'
-
-// Firebase only allows a certain number of tokens per invocation of the API
-const MAX_FIREBASE_BATCH_TOKEN_COUNT = 500
+import { ServerContext } from '../cliTools'
 
 export class PushMarketing extends Command<ServerContext> {
   static paths = [['push-marketing']]
@@ -91,63 +90,57 @@ export class PushMarketing extends Command<ServerContext> {
       )
     }
 
-    if (body != null && title == null) {
-      stderr.write('Nothing sent. No title for message.\n')
+    if (body == null || title == null) {
+      stderr.write('Nothing sent. No title or body for message.\n')
       return 1
     }
-    if (title != null && body == null) {
-      stderr.write('Nothing sent. No body for message.\n')
-      return 1
+
+    const sender = makePushSender(connection)
+    const message = { title, body }
+    const heatbeat = makeHeartbeat(stderr)
+
+    stdout.write('Loading devices...\n')
+
+    // Build a list of all devices we want to send to:
+    const devices = new Map<string, Device>()
+    for await (const deviceRow of streamDevicesByLocation(connection, {
+      country,
+      region,
+      city
+    })) {
+      const { device } = deviceRow
+      const { apiKey, deviceId, deviceToken, ignoreMarketing } = device
+
+      // Skip document conditions:
+      if (
+        ignoreMarketing ||
+        apiKey == null ||
+        deviceToken == null ||
+        deviceToken.trim() === ''
+      ) {
+        continue
+      }
+
+      if (!/^[a-zA-z0-9_\-:]+$/.test(deviceToken)) {
+        // Log invalid tokens
+        stdout.write(`Invalid token '${deviceToken}' for doc '${deviceId}'`)
+        continue
+      }
+
+      devices.set(deviceId, device)
+      heatbeat(`Reached ${deviceId}`)
     }
-    if (body != null && title != null) {
-      const sender = makePushSender(connection)
-      const message = { title, body }
 
-      stdout.write(`Sending push messages...\n`)
-
-      const logger = makeStatusLogger(stdout)
-
-      const payloadMap = new Map<string, Array<Set<string>>>()
-      for await (const deviceRow of streamDevicesByLocation(connection, {
-        country,
-        region,
-        city
-      })) {
-        const { apiKey, deviceId, deviceToken, ignoreMarketing } =
-          deviceRow.device
-
-        // Skip document conditions:
-        if (
-          ignoreMarketing ||
-          apiKey == null ||
-          deviceToken == null ||
-          deviceToken.trim() === ''
-        ) {
-          continue
-        }
-        if (!/^[a-zA-z0-9_\-:]+$/.test(deviceToken)) {
-          // Log invalid tokens
-          logger.write(`Invalid token '${deviceToken}' for doc '${deviceId}'`)
-          continue
-        }
-
-        const payloads = payloadMap.get(apiKey) ?? []
-        const tokens = payloads[payloads.length - 1]
-
-        if (tokens != null && tokens.size < MAX_FIREBASE_BATCH_TOKEN_COUNT) {
-          tokens.add(deviceToken)
-        } else {
-          payloads.push(new Set([deviceToken]))
-        }
-
-        payloadMap.set(apiKey, payloads)
-      }
-
-      for (const [apiKey, payloads] of payloadMap) {
-        for (const tokens of payloads) {
-          await sender.sendRaw(apiKey, tokens, message).catch(() => {})
-        }
-      }
+    stdout.write(`Sending to ${devices.size} devices...\n`)
+    for (const device of devices.values()) {
+      const { apiKey, deviceId, deviceToken } = device
+      if (apiKey == null || deviceToken == null) continue
+      await sender
+        .sendRaw(apiKey, new Set([deviceToken]), message)
+        .catch(error => {
+          stdout.write(`Device ${deviceId} failed: ${String(error)}\n`)
+        })
+      heatbeat(`Reached ${deviceId}`)
     }
 
     return 0
