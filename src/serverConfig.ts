@@ -1,3 +1,4 @@
+import { AMQPClient } from '@cloudamqp/amqp-client'
 import { makeConfig } from 'cleaner-config'
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
 import nano from 'nano'
@@ -14,6 +15,7 @@ const asServerConfig = asObject({
   listenPort: asOptional(asNumber, 8008),
 
   // Databases:
+  amqpUri: asOptional(asString, 'amqp://username:password@localhost:5672'),
   couchUri: asOptional(asString, 'http://username:password@localhost:5984'),
   currentCluster: asOptional(asString)
 })
@@ -26,8 +28,13 @@ export const serverConfig = makeConfig(
 /**
  * Connects to the databases, using the server config JSON.
  */
-export function makeConnections(): DbConnections {
+export async function makeConnections(): Promise<DbConnections> {
+  const amqp = new AMQPClient(serverConfig.amqpUri)
+  const connection = await amqp.connect()
+  const channel = await connection.channel()
+
   return {
-    couch: nano(serverConfig.couchUri)
+    couch: nano(serverConfig.couchUri),
+    queue: await channel.queue('messages')
   }
 }

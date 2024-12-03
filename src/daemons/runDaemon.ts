@@ -40,7 +40,7 @@ async function manage(): Promise<void> {
   logger.info('Starting daemon')
 
   // Load settings from CouchDB:
-  const connections = makeConnections()
+  const connections = await makeConnections()
   await setupDatabases(connections)
 
   const gapSeconds = 6
@@ -81,7 +81,7 @@ async function manage(): Promise<void> {
 async function iterate(
   loop: (tools: DaemonTools) => Promise<void>
 ): Promise<void> {
-  const connections = makeConnections()
+  const connections = await makeConnections()
   await setupDatabases(connections)
 
   // Grab our iteration number from the environment:

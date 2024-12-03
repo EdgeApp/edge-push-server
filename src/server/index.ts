@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   const { listenHost, listenPort } = serverConfig
 
   // Set up databases:
-  const connections = makeConnections()
+  const connections = await makeConnections()
   await setupDatabases(connections)
 
   // Bind the database to the request:

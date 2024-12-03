@@ -9,7 +9,7 @@ import { PushMarketing } from './commands/pushMarketing'
 import { SendMessage } from './commands/sendMessage'
 
 async function main(): Promise<void> {
-  const connections = makeConnections()
+  const connections = await makeConnections()
   await setupDatabases(connections, true)
 
   const context: ServerContext = {
