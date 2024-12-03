@@ -1,21 +1,20 @@
 import { Builtins, Cli } from 'clipanion'
-import nano from 'nano'
 
 import packageJson from '../../package.json'
 import { setupDatabases } from '../db/couchSetup'
-import { serverConfig } from '../serverConfig'
+import { makeConnections } from '../serverConfig'
 import { ServerContext } from './cliTools'
 import { GetDevice } from './commands/getDevice'
 import { PushMarketing } from './commands/pushMarketing'
 import { SendMessage } from './commands/sendMessage'
 
 async function main(): Promise<void> {
-  const connection = nano(serverConfig.couchUri)
-  await setupDatabases(connection, true)
+  const connections = makeConnections()
+  await setupDatabases(connections, true)
 
   const context: ServerContext = {
     ...Cli.defaultContext,
-    connection
+    connections
   }
 
   const cli = new Cli({

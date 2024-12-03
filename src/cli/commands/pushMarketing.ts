@@ -56,7 +56,7 @@ export class PushMarketing extends Command<ServerContext> {
   })
 
   async execute(): Promise<number> {
-    const { connection, stderr, stdout } = this.context
+    const { connections, stderr, stdout } = this.context
     const country = this.country
     const city = this.city
     const region = this.region
@@ -68,7 +68,7 @@ export class PushMarketing extends Command<ServerContext> {
       return 1
     }
 
-    const countResults = await countDevicesByLocation(connection, {
+    const countResults = await countDevicesByLocation(connections, {
       country,
       region,
       city
@@ -95,7 +95,7 @@ export class PushMarketing extends Command<ServerContext> {
       return 1
     }
 
-    const sender = makePushSender(connection)
+    const sender = makePushSender(connections)
     const message: SendableMessage = { title, body, isPriceChange: false }
     const heatbeat = makeHeartbeat(stderr)
 
@@ -103,7 +103,7 @@ export class PushMarketing extends Command<ServerContext> {
 
     // Build a list of all devices we want to send to:
     const devices = new Map<string, Device>()
-    for await (const deviceRow of streamDevicesByLocation(connection, {
+    for await (const deviceRow of streamDevicesByLocation(connections, {
       country,
       region,
       city

@@ -17,13 +17,13 @@ const wasDevicePayload = uncleaner(asDevicePayload)
  */
 export const deviceFetchRoute = withDevice(async request => {
   const {
-    connection,
+    connections,
     deviceRow: { device },
     ip,
     log
   } = request
 
-  const eventRows = await getEventsByDeviceId(connection, device.deviceId)
+  const eventRows = await getEventsByDeviceId(connections, device.deviceId)
 
   if (ip !== device.ip) {
     const location = await locateIp(ip).catch(error => {
@@ -49,7 +49,7 @@ export const deviceFetchRoute = withDevice(async request => {
  */
 export const deviceUpdateRoute = withDevice(async request => {
   const {
-    connection,
+    connections,
     date,
     deviceRow: { device },
     ip,
@@ -86,7 +86,7 @@ export const deviceUpdateRoute = withDevice(async request => {
     device.location = location
   }
 
-  const events = await adjustEvents(connection, {
+  const events = await adjustEvents(connections, {
     date,
     deviceId: device.deviceId,
     createEvents,

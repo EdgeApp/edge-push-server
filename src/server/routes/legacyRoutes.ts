@@ -48,7 +48,7 @@ interface LegacyUser {
  * Response body: unused
  */
 export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, connection, date, json, query } = request
+  const { apiKey, connections, date, json, query } = request
 
   const checkedQuery = checkPayload(asRegisterDeviceQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
@@ -60,7 +60,7 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
 
   // Update the v2 device:
   {
-    const deviceRow = await getDeviceById(connection, deviceId, date)
+    const deviceRow = await getDeviceById(connections, deviceId, date)
     const { device } = deviceRow
     device.apiKey = apiKey.apiKey
     device.deviceToken = clean.tokenId
@@ -102,7 +102,7 @@ export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
-  const { connection, date, query } = request
+  const { connections, date, query } = request
 
   const checkedQuery = checkPayload(asAttachUserQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
@@ -110,7 +110,7 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
 
   // Update the v2 device:
   {
-    const deviceRow = await getDeviceById(connection, deviceId, date)
+    const deviceRow = await getDeviceById(connections, deviceId, date)
     const { device } = deviceRow
     const loginId = base58.parse(userId)
     if (device.loginIds.find(row => verifyData(loginId, row)) == null) {

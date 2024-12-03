@@ -1,5 +1,8 @@
 import { makeConfig } from 'cleaner-config'
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
+import nano from 'nano'
+
+import { DbConnections } from './db/dbConnections'
 
 /**
  * Configures the server process as a whole,
@@ -19,3 +22,12 @@ export const serverConfig = makeConfig(
   asServerConfig,
   './pushServerConfig.json'
 )
+
+/**
+ * Connects to the databases, using the server config JSON.
+ */
+export function makeConnections(): DbConnections {
+  return {
+    couch: nano(serverConfig.couchUri)
+  }
+}

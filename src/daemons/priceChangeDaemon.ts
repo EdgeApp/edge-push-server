@@ -6,9 +6,9 @@ const HOUR = 60 * 60 * 1000
 const DAY = 24 * HOUR
 
 runDaemon(async tools => {
-  const { connection, heartbeat } = tools
+  const { connections, heartbeat } = tools
 
-  for await (const eventRow of streamEvents(connection, 'price-change')) {
+  for await (const eventRow of streamEvents(connections, 'price-change')) {
     const { trigger } = eventRow.event
     if (trigger.type !== 'price-change') continue
     const now = new Date()

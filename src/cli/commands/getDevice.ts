@@ -11,12 +11,12 @@ export class GetDevice extends Command<ServerContext> {
   deviceId = Option.String({ name: 'deviceId', required: true })
 
   async execute(): Promise<number> {
-    const { connection, stderr, stdout } = this.context
+    const { connections, stderr, stdout } = this.context
     const deviceId = asString(this.deviceId)
 
     const now = new Date()
 
-    const deviceRow = await getDeviceById(connection, deviceId, now)
+    const deviceRow = await getDeviceById(connections, deviceId, now)
     if (!deviceRow.exists) {
       stderr.write(`No device ${deviceId}\n`)
       return 1

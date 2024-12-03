@@ -28,12 +28,12 @@ export class SendMessage extends Command<ServerContext> {
   })
 
   async execute(): Promise<number> {
-    const { connection, stderr } = this.context
+    const { connections, stderr } = this.context
     const deviceId = asOptional(asString)(this.deviceId)
     const loginId = asOptional(asBase64)(this.loginId)
     const title = asOptional(asString, 'Test Message')(this.title)
 
-    const sender = makePushSender(connection)
+    const sender = makePushSender(connections)
     const message: SendableMessage = {
       title,
       body: this.body,
@@ -43,7 +43,7 @@ export class SendMessage extends Command<ServerContext> {
     if (loginId != null) {
       await sender.sendToLogin(loginId, message)
     } else if (deviceId != null) {
-      const deviceRow = await getDeviceById(connection, deviceId, new Date())
+      const deviceRow = await getDeviceById(connections, deviceId, new Date())
       await sender.sendToDevice(deviceRow.device, message)
     } else {
       stderr.write('No deviceId or loginId\n')

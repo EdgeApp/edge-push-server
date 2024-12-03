@@ -1,24 +1,23 @@
 import express from 'express'
-import nano from 'nano'
 import { withCors } from 'serverlet'
 import { makeExpressRoute } from 'serverlet/express'
 
 import { setupDatabases } from '../db/couchSetup'
-import { serverConfig } from '../serverConfig'
+import { makeConnections, serverConfig } from '../serverConfig'
 import { logger } from '../util/logger'
 import { withLogging } from './middleware/withLogging'
 import { allRoutes } from './urls'
 
 async function main(): Promise<void> {
-  const { couchUri, listenHost, listenPort } = serverConfig
+  const { listenHost, listenPort } = serverConfig
 
   // Set up databases:
-  const connection = nano(couchUri)
-  await setupDatabases(connection)
+  const connections = makeConnections()
+  await setupDatabases(connections)
 
   // Bind the database to the request:
   const server = withCors(
-    withLogging(request => allRoutes({ ...request, connection }))
+    withLogging(request => allRoutes({ ...request, connections }))
   )
 
   // Set up Express:

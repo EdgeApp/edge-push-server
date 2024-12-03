@@ -8,12 +8,12 @@ import { exponentialBackoff, runDaemon, safeDate } from './runDaemon'
 const throttleMs = 24 * 60 * 60 * 1000
 
 runDaemon(async tools => {
-  const { connection, heartbeat, iteration } = tools
+  const { connections, heartbeat, iteration } = tools
 
   // How far in the past should we query?
   const msBack = throttleMs * exponentialBackoff(iteration)
 
-  for await (const eventRow of streamEvents(connection, 'address-balance', {
+  for await (const eventRow of streamEvents(connections, 'address-balance', {
     afterDate: safeDate(Date.now() - msBack)
   })) {
     await checkEventTrigger(tools, eventRow).catch(err => {

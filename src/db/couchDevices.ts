@@ -18,11 +18,12 @@ import {
   makeJsDesign,
   viewToStream
 } from 'edge-server-tools'
-import { DocumentScope, ServerScope } from 'nano'
+import { DocumentScope } from 'nano'
 import { base64 } from 'rfc4648'
 
 import { asBase64 } from '../types/pushCleaners'
 import { Device } from '../types/pushTypes'
+import { DbConnections } from './dbConnections'
 
 /**
  * A device returned from the database.
@@ -126,7 +127,7 @@ export const couchDevicesSetup: DatabaseSetup = {
 }
 
 export const countDevicesByLocation = async (
-  connection: ServerScope,
+  connections: DbConnections,
   location: { country?: string; region?: string; city?: string }
 ): Promise<
   Array<{
@@ -134,7 +135,7 @@ export const countDevicesByLocation = async (
     count: number
   }>
 > => {
-  const db = connection.use(couchDevicesSetup.name)
+  const db = connections.couch.use(couchDevicesSetup.name)
 
   const { country, region, city } = location
 
@@ -187,11 +188,11 @@ export const countDevicesByLocation = async (
  * If the device does not exist in the database, creates a fresh row.
  */
 export async function getDeviceById(
-  connection: ServerScope,
+  connections: DbConnections,
   deviceId: string,
   date: Date
 ): Promise<DeviceRow> {
-  const db = connection.use(couchDevicesSetup.name)
+  const db = connections.couch.use(couchDevicesSetup.name)
 
   const emptyDevice = {
     id: deviceId,
@@ -220,10 +221,10 @@ export async function getDeviceById(
  * Finds all the devices that have logged into this account.
  */
 export async function getDevicesByLoginId(
-  connection: ServerScope,
+  connections: DbConnections,
   loginId: Uint8Array
 ): Promise<DeviceRow[]> {
-  const db = connection.use(couchDevicesSetup.name)
+  const db = connections.couch.use(couchDevicesSetup.name)
   const response = await db.view('loginId', 'loginId', {
     include_docs: true,
     key: base64.stringify(loginId)
@@ -295,10 +296,10 @@ function makeDeviceRow(
 }
 
 export async function* streamDevicesByLocation(
-  connection: ServerScope,
+  connections: DbConnections,
   location: { country?: string; region?: string; city?: string }
 ): AsyncIterableIterator<DeviceRow> {
-  const db = connection.use(couchDevicesSetup.name)
+  const db = connections.couch.use(couchDevicesSetup.name)
 
   const { country, region, city } = location
 

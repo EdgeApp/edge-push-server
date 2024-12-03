@@ -14,7 +14,7 @@ import { checkPayload } from '../../util/checkPayload'
 export const withDevice =
   (server: Serverlet<DeviceRequest>): Serverlet<DbRequest> =>
   async request => {
-    const { connection, date, log, req } = request
+    const { connections, date, log, req } = request
 
     // Parse the common request body:
     const checkedBody = checkPayload(asPushRequestBody, req.body)
@@ -24,7 +24,7 @@ export const withDevice =
     // Look up the key in the database:
     const apiKey = await log.debugTime(
       'getApiKeyByKey',
-      getApiKeyByKey(connection, body.apiKey)
+      getApiKeyByKey(connections, body.apiKey)
     )
     if (apiKey == null) {
       return errorResponse('Incorrect API key', { status: 401 })
@@ -33,7 +33,7 @@ export const withDevice =
     // Look up the device in the database, or get a dummy row:
     const deviceRow = await log.debugTime(
       'getDeviceById',
-      getDeviceById(connection, body.deviceId, date)
+      getDeviceById(connections, body.deviceId, date)
     )
     if (body.apiKey != null) {
       deviceRow.device.apiKey = body.apiKey

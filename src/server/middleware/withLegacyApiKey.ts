@@ -11,7 +11,7 @@ import { errorResponse } from '../../types/responseTypes'
 export const withLegacyApiKey =
   (server: Serverlet<ApiRequest>): Serverlet<DbRequest> =>
   async request => {
-    const { connection, headers, log } = request
+    const { connections, headers, log } = request
 
     // Parse the key out of the headers:
     const header = headers['x-api-key']
@@ -22,7 +22,7 @@ export const withLegacyApiKey =
     // Look up the key in the database:
     const apiKey = await log.debugTime(
       'getApiKeyByKey',
-      getApiKeyByKey(connection, header)
+      getApiKeyByKey(connections, header)
     )
     if (apiKey == null) {
       return errorResponse('Incorrect API key', { status: 401 })

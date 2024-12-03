@@ -1,7 +1,7 @@
-import { ServerScope } from 'nano'
 import { ExpressRequest } from 'serverlet/express'
 
 import { DeviceRow } from '../db/couchDevices'
+import { DbConnections } from '../db/dbConnections'
 import { ApiKey } from './pushTypes'
 
 export interface Logger {
@@ -18,7 +18,7 @@ export interface LoggedRequest extends ExpressRequest {
 }
 
 export interface DbRequest extends LoggedRequest {
-  readonly connection: ServerScope
+  readonly connections: DbConnections
 }
 
 export interface ApiRequest extends DbRequest {

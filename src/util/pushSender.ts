@@ -1,8 +1,8 @@
 import admin from 'firebase-admin'
-import { ServerScope } from 'nano'
 
 import { getApiKeyByKey } from '../db/couchApiKeys'
 import { getDeviceById, getDevicesByLoginId } from '../db/couchDevices'
+import { DbConnections } from '../db/dbConnections'
 import { Device, PushEvent, PushMessage } from '../types/pushTypes'
 
 export interface SendableMessage extends PushMessage {
@@ -26,7 +26,7 @@ const senders = new Map<string, admin.messaging.Messaging | null>()
  * This object uses a cache to map appId's to Firebase credentials,
  * based on the Couch database.
  */
-export function makePushSender(connection: ServerScope): PushSender {
+export function makePushSender(connections: DbConnections): PushSender {
   async function getSender(
     apiKey: string
   ): Promise<admin.messaging.Messaging | null> {
@@ -37,7 +37,7 @@ export function makePushSender(connection: ServerScope): PushSender {
     }
 
     // Look up the API key for this appId:
-    const apiKeyRow = await getApiKeyByKey(connection, apiKey)
+    const apiKeyRow = await getApiKeyByKey(connections, apiKey)
     if (apiKeyRow == null || apiKeyRow.adminsdk == null) {
       senders.set(apiKey, null)
       return null
@@ -72,7 +72,7 @@ export function makePushSender(connection: ServerScope): PushSender {
     if (loginId != null) {
       await sendToLogin(loginId, message)
     } else if (deviceId != null) {
-      const device = await getDeviceById(connection, deviceId, new Date())
+      const device = await getDeviceById(connections, deviceId, new Date())
       await sendToDevice(device.device, message)
     }
   }
@@ -81,7 +81,7 @@ export function makePushSender(connection: ServerScope): PushSender {
     loginId: Uint8Array,
     message: SendableMessage
   ): Promise<void> {
-    const deviceRows = await getDevicesByLoginId(connection, loginId)
+    const deviceRows = await getDevicesByLoginId(connections, loginId)
     for (const deviceRow of deviceRows) {
       await sendToDevice(deviceRow.device, message)
     }

@@ -17,7 +17,7 @@ import {
   makeJsDesign,
   viewToStream
 } from 'edge-server-tools'
-import { DocumentScope, ServerScope } from 'nano'
+import { DocumentScope } from 'nano'
 import { base64 } from 'rfc4648'
 
 import { NewPushEvent } from '../types/pushApiTypes'
@@ -30,6 +30,7 @@ import {
   asPushTriggerState
 } from '../types/pushCleaners'
 import { PushEvent, PushTrigger } from '../types/pushTypes'
+import { DbConnections } from './dbConnections'
 
 /**
  * An event returned from the database.
@@ -142,11 +143,11 @@ export const couchEventsSetup: DatabaseSetup = {
 }
 
 export async function addEvent(
-  connection: ServerScope,
+  connections: DbConnections,
   event: PushEvent,
   created: Date
 ): Promise<void> {
-  const db = connection.use(couchEventsSetup.name)
+  const db = connections.couch.use(couchEventsSetup.name)
   try {
     await db.insert(
       wasCouchPushEvent({
@@ -156,12 +157,12 @@ export async function addEvent(
     )
   } catch (error) {
     if (asMaybeConflictError(error) == null) throw error
-    await addEvent(connection, event, new Date(created.valueOf() + 1))
+    await addEvent(connections, event, new Date(created.valueOf() + 1))
   }
 }
 
 export async function adjustEvents(
-  connection: ServerScope,
+  connections: DbConnections,
   opts: {
     date: Date
     deviceId?: string
@@ -175,9 +176,9 @@ export async function adjustEvents(
   // Load existing events:
   const eventRows =
     deviceId != null
-      ? await getEventsByDeviceId(connection, deviceId)
+      ? await getEventsByDeviceId(connections, deviceId)
       : loginId != null
-      ? await getEventsByLoginId(connection, loginId)
+      ? await getEventsByLoginId(connections, loginId)
       : []
 
   // Remove events from the array:
@@ -205,7 +206,7 @@ export async function adjustEvents(
       state: 'waiting',
       triggered: undefined
     }
-    await addEvent(connection, event, date)
+    await addEvent(connections, event, date)
     out.push(event)
   }
 
@@ -213,10 +214,10 @@ export async function adjustEvents(
 }
 
 export async function getEventsByDeviceId(
-  connection: ServerScope,
+  connections: DbConnections,
   deviceId: string
 ): Promise<PushEventRow[]> {
-  const db = connection.use(couchEventsSetup.name)
+  const db = connections.couch.use(couchEventsSetup.name)
   const response = await db.view('deviceId', 'deviceId', {
     include_docs: true,
     key: deviceId
@@ -227,10 +228,10 @@ export async function getEventsByDeviceId(
 }
 
 export async function getEventsByLoginId(
-  connection: ServerScope,
+  connections: DbConnections,
   loginId: Uint8Array
 ): Promise<PushEventRow[]> {
-  const db = connection.use(couchEventsSetup.name)
+  const db = connections.couch.use(couchEventsSetup.name)
   const response = await db.view('loginId', 'loginId', {
     include_docs: true,
     key: base64.stringify(loginId)
@@ -241,13 +242,13 @@ export async function getEventsByLoginId(
 }
 
 export async function* streamEvents(
-  connection: ServerScope,
+  connections: DbConnections,
   view: 'address-balance' | 'price-change' | 'price-level' | 'tx-confirm',
   opts: { afterDate?: Date } = {}
 ): AsyncIterableIterator<PushEventRow> {
   const { afterDate } = opts
 
-  const db = connection.use(couchEventsSetup.name)
+  const db = connections.couch.use(couchEventsSetup.name)
   const stream = viewToStream(async params => {
     return await db.view(view, view, {
       start_key: afterDate == null ? '' : afterDate.toISOString(),
