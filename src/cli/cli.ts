@@ -6,7 +6,6 @@ import { setupDatabases } from '../db/couchSetup'
 import { serverConfig } from '../serverConfig'
 import { ServerContext } from './cliTools'
 import { GetDevice } from './commands/getDevice'
-import { MigrateDevices } from './commands/migrateDevices'
 import { PushMarketing } from './commands/pushMarketing'
 import { SendMessage } from './commands/sendMessage'
 
@@ -30,7 +29,6 @@ async function main(): Promise<void> {
 
   // Our commands:
   cli.register(GetDevice)
-  cli.register(MigrateDevices)
   cli.register(SendMessage)
   cli.register(PushMarketing)
 
