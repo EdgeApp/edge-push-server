@@ -84,7 +84,13 @@ async function sendToDevice(
       data: message.data ?? {}
     })
   } catch (error) {
-    logger.info('Unknown error', { deviceId, error })
+    if (String(error).includes('not a valid FCM registration token')) {
+      logger.info(`Disabling device: ${deviceId}`)
+      deviceRow.device.deviceToken = undefined
+      await deviceRow.save()
+    } else {
+      logger.info('Unknown error', { deviceId, error })
+    }
   }
 }
 
