@@ -10,13 +10,35 @@ import {
 import { Serverlet } from 'serverlet'
 
 import { getDeviceById } from '../../db/couchDevices'
-import { Device } from '../../models/Device'
-import { User } from '../../models/User'
 import { ApiRequest } from '../../types/requestTypes'
-import { errorResponse, jsonResponse } from '../../types/responseTypes'
+import { jsonResponse } from '../../types/responseTypes'
 import { base58 } from '../../util/base58'
 import { checkPayload } from '../../util/checkPayload'
 import { verifyData } from '../../util/verifyData'
+
+interface LegacyDevice {
+  appId: string
+  tokenId: string | undefined
+  deviceDescription: string
+  osType: string
+  edgeVersion: string
+  edgeBuildNumber: number
+}
+
+interface LegacyUser {
+  devices: {
+    [deviceId: string]: boolean
+  }
+  notifications: {
+    enabled: boolean
+    currencyCodes: {
+      [currencyCode: string]: {
+        1: boolean
+        24: boolean
+      }
+    }
+  }
+}
 
 /**
  * The GUI names this `registerDevice`, and calls it at boot.
@@ -26,7 +48,7 @@ import { verifyData } from '../../util/verifyData'
  * Response body: unused
  */
 export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, connection, date, json, log, query } = request
+  const { apiKey, connection, date, json, query } = request
 
   const checkedQuery = checkPayload(asRegisterDeviceQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
@@ -35,16 +57,6 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
   const checkedBody = checkPayload(asRegisterDeviceRequest, json)
   if (checkedBody.error != null) return checkedBody.error
   const { clean } = checkedBody
-
-  let device = await Device.fetch(deviceId)
-  if (device != null) {
-    await device.save(clean as any)
-    log('Device updated.')
-  } else {
-    device = new Device(clean as any, deviceId)
-    await device.save()
-    log(`Device registered.`)
-  }
 
   // Update the v2 device:
   {
@@ -56,7 +68,8 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
     await deviceRow.save()
   }
 
-  return jsonResponse(device)
+  const result: LegacyDevice = clean
+  return jsonResponse(result)
 }
 
 /**
@@ -68,19 +81,16 @@ export const registerDeviceV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: { notifications: { enabled: boolean } }
  */
 export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
-  const { log, query } = request
+  const { query } = request
 
   const checkedQuery = checkPayload(asUserIdQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
-  const { userId } = checkedQuery.clean
+  // const { userId } = checkedQuery.clean
 
-  const result = await User.fetch(userId)
-  if (result == null) {
-    return errorResponse(`Cannot find user ${userId}`, { status: 404 })
+  const result: LegacyUser = {
+    devices: {},
+    notifications: { enabled: false, currencyCodes: {} }
   }
-
-  log(`Got user settings for ${userId}`)
-
   return jsonResponse(result)
 }
 
@@ -92,22 +102,11 @@ export const fetchStateV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
-  const { connection, date, log, query } = request
+  const { connection, date, query } = request
 
   const checkedQuery = checkPayload(asAttachUserQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
   const { deviceId, userId } = checkedQuery.clean
-
-  const device = await Device.fetch(deviceId)
-  if (device == null) {
-    return errorResponse(`Cannot find device ${deviceId}`, { status: 404 })
-  }
-
-  const user = (await User.fetch(userId)) ?? new User(null, userId)
-  user.devices[deviceId] = true
-  await user.save()
-
-  log(`Successfully attached device "${deviceId}" to user "${userId}"`)
 
   // Update the v2 device:
   {
@@ -120,7 +119,11 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
     }
   }
 
-  return jsonResponse(user)
+  const result: LegacyUser = {
+    devices: {},
+    notifications: { enabled: false, currencyCodes: {} }
+  }
+  return jsonResponse(result)
 }
 
 /**
@@ -134,22 +137,21 @@ export const attachUserV1Route: Serverlet<ApiRequest> = async request => {
 export const registerCurrenciesV1Route: Serverlet<
   ApiRequest
 > = async request => {
-  const { log, json, query } = request
+  const { json, query } = request
 
   const checkedQuery = checkPayload(asUserIdQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
-  const { userId } = checkedQuery.clean
+  // const { userId } = checkedQuery.clean
 
   const checkedBody = checkPayload(asRegisterCurrenciesBody, json)
   if (checkedBody.error != null) return checkedBody.error
-  const { currencyCodes } = checkedBody.clean
+  // const { currencyCodes } = checkedBody.clean
 
-  const user = (await User.fetch(userId)) ?? new User(null, userId)
-  await user.registerNotifications(currencyCodes)
-
-  log(`Registered notifications for user ${userId}: ${String(currencyCodes)}`)
-
-  return jsonResponse(user)
+  const result: LegacyUser = {
+    devices: {},
+    notifications: { enabled: false, currencyCodes: {} }
+  }
+  return jsonResponse(result)
 }
 
 /**
@@ -161,25 +163,20 @@ export const registerCurrenciesV1Route: Serverlet<
  * Response body: { '24': number, '1': number }
  */
 export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
-  const { log, path, query } = request
+  const { query } = request
 
   const checkedQuery = checkPayload(asUserIdQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
-  const { userId } = checkedQuery.clean
+  // const { userId } = checkedQuery.clean
 
-  const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
-  const currencyCode = match != null ? match[1] : ''
+  // const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
+  // const currencyCode = match != null ? match[1] : ''
 
-  const user = (await User.fetch(userId)) ?? new User(null, userId)
-  const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
+  return jsonResponse({
     '1': false,
     '24': false,
     fallbackSettings: true
-  }
-
-  log(`Got notification settings for ${currencyCode} for user ${userId}`)
-
-  return jsonResponse(currencySettings)
+  })
 }
 
 /**
@@ -191,31 +188,22 @@ export const fetchCurrencyV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
-  const { log, json, path, query } = request
+  const { json, query } = request
 
   const checkedQuery = checkPayload(asUserIdQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
-  const { userId } = checkedQuery.clean
+  // const { userId } = checkedQuery.clean
 
   const checkedBody = checkPayload(asEnableCurrencyBody, json)
   if (checkedBody.error != null) return checkedBody.error
-  const { hours, enabled } = checkedBody.clean
 
-  const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
-  const currencyCode = match != null ? match[1] : ''
+  // const match = path.match(/notifications\/([0-9A-Za-z]+)\/?$/)
+  // const currencyCode = match != null ? match[1] : ''
 
-  const user = (await User.fetch(userId)) ?? new User(null, userId)
-  const currencySettings = user.notifications.currencyCodes[currencyCode] ?? {
+  return jsonResponse({
     '1': false,
     '24': false
-  }
-  user.notifications.currencyCodes[currencyCode] = currencySettings
-  currencySettings[hours] = enabled
-  await user.save()
-
-  log(`Updated notification settings for user ${userId} for ${currencyCode}`)
-
-  return jsonResponse(currencySettings)
+  })
 }
 
 /**
@@ -227,23 +215,20 @@ export const enableCurrencyV1Route: Serverlet<ApiRequest> = async request => {
  * Response body: unused
  */
 export const toggleStateV1Route: Serverlet<ApiRequest> = async request => {
-  const { log, json, query } = request
+  const { json, query } = request
 
   const checkedQuery = checkPayload(asUserIdQuery, query)
   if (checkedQuery.error != null) return checkedQuery.error
-  const { userId } = checkedQuery.clean
+  // const { userId } = checkedQuery.clean
 
   const checkedBody = checkPayload(asToggleStateBody, json)
   if (checkedBody.error != null) return checkedBody.error
-  const { enabled } = checkedBody.clean
 
-  const user = (await User.fetch(userId)) ?? new User(null, userId)
-  user.notifications.enabled = enabled
-  await user.save()
-
-  log(`User notifications toggled to: ${String(enabled)}`)
-
-  return jsonResponse(user)
+  const result: LegacyUser = {
+    devices: {},
+    notifications: { enabled: false, currencyCodes: {} }
+  }
+  return jsonResponse(result)
 }
 
 const asAttachUserQuery = asObject({
