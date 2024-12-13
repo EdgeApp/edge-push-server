@@ -81,7 +81,18 @@ export const asPushRequestBody = asObject<PushRequestBody>({
   // Who is making the request:
   apiKey: asString,
   deviceId: asString,
-  deviceToken: asOptional(asString),
+  deviceToken: asOptional(raw => {
+    const clean = asString(raw)
+
+    // The app will send a blank string when Firebase has a problem,
+    // so treat that as missing:
+    if (clean === '') return undefined
+
+    // Otherwise, we need an alphanumeric string:
+    if (/^[a-zA-Z0-9_\-:]+$/.test(clean)) return clean
+
+    throw new TypeError(`Invalid deviceToken "${clean}"`)
+  }),
 
   // For logins:
   loginId: asOptional(asBase64)

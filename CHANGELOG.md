@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- removed: Unused legacy databases. The v1 routes continue to support security message registration, but won't remember any preferences.
+- added: Validate deviceTokens with a RegExp.
+
 ## 2.3.3 (2024-10-08)
 
 - fixed: Do not return 500 errors when CouchDB views are out-of-date.
