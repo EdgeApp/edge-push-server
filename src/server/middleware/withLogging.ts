@@ -1,4 +1,3 @@
-import io from '@pm2/io'
 import { asMaybeNotFoundError, stringifyError } from 'edge-server-tools'
 import { HttpResponse, Serverlet } from 'serverlet'
 import { ExpressRequest } from 'serverlet/express'
@@ -9,11 +8,6 @@ import { jsonResponse, UnavailableError } from '../../types/responseTypes'
 import { logger } from '../../util/logger'
 import { slackAlert } from '../../util/slackAlert'
 
-const requestMeter = io.meter({
-  id: 'request:meter',
-  name: 'Total Request Frequency'
-})
-
 /**
  * Log the final outcome of a server call.
  */
@@ -22,9 +16,6 @@ export const withLogging =
   async request => {
     const { method, req } = request
     const { ip, originalUrl } = req
-
-    // Log to PM2:
-    requestMeter.mark()
 
     const date = new Date()
     const events: string[] = []

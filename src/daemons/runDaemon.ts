@@ -1,13 +1,13 @@
 import { asMaybe } from 'cleaners'
 import cluster from 'cluster'
 import { makePeriodicTask } from 'edge-server-tools'
-import nano, { ServerScope } from 'nano'
 
 import { asNumberString } from '../cli/cliTools'
 import { syncedSettings } from '../db/couchSettings'
 import { setupDatabases } from '../db/couchSetup'
+import { DbConnections } from '../db/dbConnections'
 import { makePlugins } from '../miniPlugins/miniPlugins'
-import { serverConfig } from '../serverConfig'
+import { makeConnections } from '../serverConfig'
 import { MiniPlugins } from '../types/miniPlugin'
 import { makeHeartbeat } from '../util/heartbeat'
 import { logger } from '../util/logger'
@@ -18,7 +18,7 @@ import { slackAlert } from '../util/slackAlert'
 export interface DaemonTools {
   iteration: number
 
-  connection: ServerScope
+  connections: DbConnections
   heartbeat: (item?: string) => void
   plugins: MiniPlugins
   rates: RatesCache
@@ -40,9 +40,8 @@ async function manage(): Promise<void> {
   logger.info('Starting daemon')
 
   // Load settings from CouchDB:
-  const { couchUri } = serverConfig
-  const connection = nano(couchUri)
-  await setupDatabases(connection)
+  const connections = await makeConnections()
+  await setupDatabases(connections)
 
   const gapSeconds = 6
   let iteration = 0
@@ -82,9 +81,8 @@ async function manage(): Promise<void> {
 async function iterate(
   loop: (tools: DaemonTools) => Promise<void>
 ): Promise<void> {
-  const { couchUri } = serverConfig
-  const connection = nano(couchUri)
-  await setupDatabases(connection)
+  const connections = await makeConnections()
+  await setupDatabases(connections)
 
   // Grab our iteration number from the environment:
   const iteration = asMaybe(asNumberString, 0)(process.env.ITERATION)
@@ -103,11 +101,11 @@ async function iterate(
   })
   const plugins = makePlugins()
   const rates = makeRatesCache()
-  const sender = makePushSender(connection)
+  const sender = makePushSender(connections)
 
   logger.info({ msg: 'Starting loop', startTime: new Date() })
   await loop({
-    connection,
+    connections,
     heartbeat,
     iteration,
     plugins,

@@ -6,9 +6,9 @@ const HOUR = 60 * 60 * 1000
 const DAY = 24 * HOUR
 
 runDaemon(async tools => {
-  const { connection, heartbeat } = tools
+  const { connections, heartbeat } = tools
 
-  for await (const eventRow of streamEvents(connection, 'price-change')) {
+  for await (const eventRow of streamEvents(connections, 'price-change')) {
     const { trigger } = eventRow.event
     if (trigger.type !== 'price-change') continue
     const now = new Date()
@@ -39,9 +39,9 @@ async function checkPriceChange(
   toPrice: number,
   mode: 'day' | 'hour'
 ): Promise<void> {
-  const { connection, sender } = tools
+  const { sender } = tools
   const { event } = eventRow
-  const { deviceId, loginId, pushMessage, trigger, triggered } = event
+  const { pushMessage, trigger, triggered } = event
   if (trigger.type !== 'price-change') return
   const { currencyPair, directions = [], dailyChange, hourlyChange } = trigger
 
@@ -93,18 +93,13 @@ async function checkPriceChange(
   // Send the message:
   if (pushMessage != null) {
     const { body, data, title } = pushMessage
-    const results = await sender.send(
-      connection,
-      { body: fixMessage(body), data, title: fixMessage(title) },
-      {
-        date: now,
-        deviceId,
-        loginId,
-        isPriceChange: true
-      }
-    )
-    event.pushMessageEmits = results.successCount
-    event.pushMessageFails = results.failureCount
+    await sender.sendToEvent(eventRow.event, {
+      body: fixMessage(body),
+      data,
+      title: fixMessage(title),
+      isMarketing: false,
+      isPriceChange: true
+    })
   }
 
   event.triggered = now

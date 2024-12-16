@@ -20,6 +20,7 @@
     "prepare": "husky install && npm-run-all clean build",
     "price-change-daemon": "node -r sucrase/register src/daemons/priceChangeDaemon.ts",
     "price-level-daemon": "node -r sucrase/register src/daemons/priceLevelDaemon.ts",
+    "publish-daemon": "node -r sucrase/register src/daemons/publishDaemon.ts",
     "start": "node -r sucrase/register src/server/index.ts",
     "test": "mocha -r sucrase/register 'test/**/*.test.ts'",
     "types": "tsc",
@@ -29,7 +30,7 @@
     "*.{js,ts}": "eslint"
   },
   "dependencies": {
-    "@pm2/io": "^4.3.5",
+    "@cloudamqp/amqp-client": "^3.1.1",
     "axios": "^0.21.2",
     "base-x": "^3.0.8",
     "biggystring": "^4.0.0",

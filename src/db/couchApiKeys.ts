@@ -5,9 +5,9 @@ import {
   CouchDoc,
   DatabaseSetup
 } from 'edge-server-tools'
-import { ServerScope } from 'nano'
 
 import { ApiKey, FirebaseAdminKey } from '../types/pushTypes'
+import { DbConnections } from './dbConnections'
 
 export const asFirebaseAdminKey = asObject<FirebaseAdminKey>({
   type: asOptional(asString),
@@ -44,10 +44,10 @@ export const couchApiKeysSetup: DatabaseSetup = {
 }
 
 export async function getApiKeyByKey(
-  connection: ServerScope,
+  connections: DbConnections,
   apiKey: string
 ): Promise<ApiKey | undefined> {
-  const db = connection.db.use(couchApiKeysSetup.name)
+  const db = connections.couch.db.use(couchApiKeysSetup.name)
   if (apiKey === '') return
 
   const raw = await db.get(apiKey).catch(error => {

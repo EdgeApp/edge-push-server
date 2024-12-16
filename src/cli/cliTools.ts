@@ -1,11 +1,12 @@
 import { asString, Cleaner } from 'cleaners'
 import { BaseContext } from 'clipanion'
-import { ServerScope } from 'nano'
 import { base16, base64 } from 'rfc4648'
 import { Writable } from 'stream'
 
+import { DbConnections } from '../db/dbConnections'
+
 export interface ServerContext extends BaseContext {
-  connection: ServerScope
+  connections: DbConnections
 }
 
 export const asNumberString: Cleaner<number> = raw => {

@@ -12,13 +12,13 @@ const wasLoginPayload = uncleaner(asLoginPayload)
  * POST /v2/login
  */
 export const loginFetchRoute = withDevice(async request => {
-  const { connection, loginId } = request
+  const { connections, loginId } = request
 
   if (loginId == null) {
     return errorResponse('No login provided', { status: 400 })
   }
 
-  const eventRows = await getEventsByLoginId(connection, loginId)
+  const eventRows = await getEventsByLoginId(connections, loginId)
   return jsonResponse(
     wasLoginPayload({
       events: eventRows.map(row => row.event)
@@ -30,7 +30,7 @@ export const loginFetchRoute = withDevice(async request => {
  * POST /v2/login/update
  */
 export const loginUpdateRoute = withDevice(async request => {
-  const { connection, date, payload, loginId } = request
+  const { connections, date, payload, loginId } = request
 
   if (loginId == null) {
     return errorResponse('No login provided', { status: 400 })
@@ -40,7 +40,7 @@ export const loginUpdateRoute = withDevice(async request => {
   if (checked.error != null) return checked.error
   const { createEvents, removeEvents } = checked.clean
 
-  const events = await adjustEvents(connection, {
+  const events = await adjustEvents(connections, {
     date,
     loginId,
     createEvents,

@@ -3,13 +3,13 @@ import {
   setupDatabase,
   SetupDatabaseOptions
 } from 'edge-server-tools'
-import { ServerScope } from 'nano'
 
 import { serverConfig } from '../serverConfig'
 import { couchApiKeysSetup } from './couchApiKeys'
 import { couchDevicesSetup } from './couchDevices'
 import { couchEventsSetup } from './couchPushEvents'
 import { settingsSetup, syncedReplicators } from './couchSettings'
+import { DbConnections } from './dbConnections'
 
 // ---------------------------------------------------------------------------
 // Databases
@@ -30,7 +30,7 @@ const usersSetup: DatabaseSetup = {
 // ---------------------------------------------------------------------------
 
 export async function setupDatabases(
-  connection: ServerScope,
+  connections: DbConnections,
   disableWatching: boolean = false
 ): Promise<void> {
   const { currentCluster } = serverConfig
@@ -40,12 +40,12 @@ export async function setupDatabases(
     disableWatching
   }
 
-  await setupDatabase(connection, settingsSetup, options)
+  await setupDatabase(connections.couch, settingsSetup, options)
   await Promise.all([
-    setupDatabase(connection, couchApiKeysSetup, options),
-    setupDatabase(connection, couchDevicesSetup, options),
-    setupDatabase(connection, couchEventsSetup, options),
-    setupDatabase(connection, devicesSetup, options),
-    setupDatabase(connection, usersSetup, options)
+    setupDatabase(connections.couch, couchApiKeysSetup, options),
+    setupDatabase(connections.couch, couchDevicesSetup, options),
+    setupDatabase(connections.couch, couchEventsSetup, options),
+    setupDatabase(connections.couch, devicesSetup, options),
+    setupDatabase(connections.couch, usersSetup, options)
   ])
 }

@@ -6,6 +6,8 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    // @cloudamqp/amqp-client is failing:
+    "skipLibCheck": true,
 
     "noEmit": true,
     "strict": true

@@ -17,25 +17,29 @@ import { makePushSender } from '../../util/pushSender'
  * Response body: unused
  */
 export const sendNotificationV1Route: Serverlet<ApiRequest> = async request => {
-  const { apiKey, connection, date, json, log } = request
+  const { apiKey, connections, json, log } = request
 
   const checkedBody = checkPayload(asSendNotificationBody, json)
   if (checkedBody.error != null) return checkedBody.error
   const { title, body, data, userId: loginId } = checkedBody.clean
 
   if (!apiKey.admin) return errorResponse('Not an admin', { status: 401 })
-  const sender = makePushSender(connection)
+  const sender = makePushSender(connections)
 
   // Perform the send:
-  const message = { title, body, data }
-  const response = await sender.send(connection, message, { date, loginId })
-  const { successCount, failureCount } = response
-
-  log(
-    `Sent notifications to loginId ${base64.stringify(
-      loginId
-    )} devices: ${successCount} success - ${failureCount} failure`
+  const response = await sender.sendToLogin(
+    loginId,
+    {
+      title,
+      body,
+      data,
+      isPriceChange: false,
+      isMarketing: false // Security messages from login server
+    },
+    5 // High priority
   )
+
+  log(`Sent notifications to loginId ${base64.stringify(loginId)}`)
   return jsonResponse(response)
 }
 

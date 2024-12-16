@@ -12,12 +12,12 @@ const ignoreMs = 365 * 24 * 60 * 60 * 1000
 const throttleMs = 10 * 60 * 1000
 
 runDaemon(async tools => {
-  const { connection, heartbeat, iteration } = tools
+  const { connections, heartbeat, iteration } = tools
 
   // How far in the past should we query?
   const msBack = Math.max(ignoreMs, throttleMs * exponentialBackoff(iteration))
 
-  for await (const eventRow of streamEvents(connection, 'tx-confirm', {
+  for await (const eventRow of streamEvents(connections, 'tx-confirm', {
     afterDate: safeDate(Date.now() - msBack)
   })) {
     await checkEventTrigger(tools, eventRow).catch(err => {
