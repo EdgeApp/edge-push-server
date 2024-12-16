@@ -2,8 +2,11 @@
 
 ## Unreleased
 
-- removed: Unused legacy databases. The v1 routes continue to support security message registration, but won't remember any preferences.
+## 2.4.0 (2024-12-16)
+
 - added: Validate deviceTokens with a RegExp.
+- changed: Add a RabbitMQ queue in front of the publishing process.
+- removed: Unused legacy databases. The v1 routes continue to support security message registration, but won't remember any preferences.
 
 ## 2.3.3 (2024-10-08)
 
