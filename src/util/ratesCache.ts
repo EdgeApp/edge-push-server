@@ -1,12 +1,13 @@
 import { asEither, asNull, asObject, asString } from 'cleaners'
 import fetch from 'node-fetch'
 
+import { syncedSettings } from '../db/couchSettings'
+
 export interface RatesCache {
   getRate: (currencyPair: string, date: Date) => Promise<number | null>
   trimCache: (before: Date) => void
 }
 
-const RATES_SERVER = 'https://rates2.edge.app'
 const ROUNDING = 5 * 60 * 1000 // 5 minutes
 
 export function makeRatesCache(): RatesCache {
@@ -49,8 +50,9 @@ async function getFromServer(
   currencyPair: string,
   date: Date
 ): Promise<number | null> {
+  const { ratesServer } = syncedSettings.doc
   const response = await fetch(
-    `${RATES_SERVER}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
+    `${ratesServer}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
   )
   const json = await response.json()
   const { exchangeRate } = asRateReply(json)
