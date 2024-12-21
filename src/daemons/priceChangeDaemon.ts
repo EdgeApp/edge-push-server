@@ -18,7 +18,7 @@ runDaemon(async tools => {
 
       // Grab the price:
       const price = await tools.rates.getRate(currencyPair, now)
-      if (price == null) return
+      if (price == null) continue
 
       // Check the triggers:
       await checkPriceChange(tools, eventRow, now, price, 'day')
