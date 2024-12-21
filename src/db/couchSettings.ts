@@ -27,6 +27,7 @@ const asSettings = asObject({
     ),
     []
   ),
+  ratesServer: asMaybe(asString, 'https://rates2.edge.app'),
 
   // Mode toggles:
   debugLogs: asMaybe(asBoolean, false),
