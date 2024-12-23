@@ -4,6 +4,7 @@
 
 - fixed: Do not exit the price-change daemon when a rate is missing
 - fixed: Make the rates backend configurable.
+- fixed: Send a NACK when we fail to deliver a message.
 
 ## 2.4.0 (2024-12-16)
 
