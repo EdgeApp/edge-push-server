@@ -19,9 +19,13 @@ runDaemon(async tools => {
   const consumer = await connections.queue.subscribe(
     { noAck: false },
     message => {
-      handleMessage(connections, message).catch(error => {
+      handleMessage(connections, message).catch(async error => {
+        const nackStatus = await message.nack(true).then(
+          () => '',
+          () => ', nack failed'
+        )
         logger.warn({
-          msg: 'Failed to handle message',
+          msg: 'Failed to handle message' + nackStatus,
           body: message.bodyToString(),
           error
         })
