@@ -1,7 +1,7 @@
 import { asEither, asNull, asObject, asString } from 'cleaners'
 import fetch from 'node-fetch'
 
-import { syncedSettings } from '../db/couchSettings'
+import { syncedServices } from '../db/couchSettings'
 
 export interface RatesCache {
   getRate: (currencyPair: string, date: Date) => Promise<number | null>
@@ -50,7 +50,7 @@ async function getFromServer(
   currencyPair: string,
   date: Date
 ): Promise<number | null> {
-  const { ratesServer } = syncedSettings.doc
+  const { ratesServer } = syncedServices.doc
   const response = await fetch(
     `${ratesServer}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
   )
