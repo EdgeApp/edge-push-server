@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Move API keys to a separate settings document.
+
 ## 2.4.1 (2024-12-23)
 
 - fixed: Do not exit the price-change daemon when a rate is missing

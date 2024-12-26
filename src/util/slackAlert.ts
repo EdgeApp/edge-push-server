@@ -1,10 +1,10 @@
 import fetch from 'node-fetch'
 
-import { syncedSettings } from '../db/couchSettings'
+import { syncedServices } from '../db/couchSettings'
 import { logger } from './logger'
 
 export function slackAlert(text: string): void {
-  const { slackUri } = syncedSettings.doc
+  const { slackUri } = syncedServices.doc
 
   if (slackUri == null) return
 

@@ -1,5 +1,4 @@
 import {
-  asArray,
   asBoolean,
   asEither,
   asMaybe,
@@ -18,23 +17,18 @@ import {
  * Live-updating server options stored in the `push-settings` database.
  */
 const asSettings = asObject({
-  apiKeys: asMaybe(
-    asArray(
-      asObject({
-        name: asString,
-        apiKey: asString
-      })
-    ),
-    []
-  ),
-  ratesServer: asMaybe(asString, 'https://rates2.edge.app'),
-
   // Mode toggles:
   debugLogs: asMaybe(asBoolean, false),
-  daemonMaxHours: asMaybe(asNumber, 1),
+  daemonMaxHours: asMaybe(asNumber, 1)
+})
 
-  // Other services we rely on:
+/**
+ * Keys to outside services we rely on.
+ */
+const asServices = asObject({
   infuraProjectId: asMaybe(asString, ''),
+  ipApiKey: asMaybe(asString, ''),
+  ratesServer: asMaybe(asString, 'https://rates2.edge.app'),
   slackUri: asMaybe(asEither(asString, asNull), null)
 })
 
@@ -44,8 +38,9 @@ export const syncedReplicators = syncedDocument(
 )
 
 export const syncedSettings = syncedDocument('settings', asSettings.withRest)
+export const syncedServices = syncedDocument('services', asServices.withRest)
 
 export const settingsSetup: DatabaseSetup = {
   name: 'push-settings',
-  syncedDocuments: [syncedReplicators, syncedSettings]
+  syncedDocuments: [syncedReplicators, syncedServices, syncedSettings]
 }

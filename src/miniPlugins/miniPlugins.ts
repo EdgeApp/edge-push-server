@@ -1,4 +1,4 @@
-import { syncedSettings } from '../db/couchSettings'
+import { syncedServices } from '../db/couchSettings'
 import { MiniPlugins } from '../types/miniPlugin'
 import { makeBlockbookPlugin } from './blockbook'
 import { makeEvmPlugin } from './evm'
@@ -107,10 +107,10 @@ export function makePlugins(): MiniPlugins {
     // wax: makeEvmPlugin('https://wax.greymass.com'), // not sure
     // polkadot: makeEvmPlugin('wss://rpc.polkadot.io'), // not sure
     ethereum: makeEvmPlugin(
-      `https://mainnet.infura.io/v3/${syncedSettings.doc.infuraProjectId}`
+      `https://mainnet.infura.io/v3/${syncedServices.doc.infuraProjectId}`
     ),
     kovan: makeEvmPlugin(
-      `https://kovan.infura.io/v3/${syncedSettings.doc.infuraProjectId}`
+      `https://kovan.infura.io/v3/${syncedServices.doc.infuraProjectId}`
     ),
     ethereumclassic: makeEvmPlugin('https://www.ethercluster.com/etc'),
     fantom: makeEvmPlugin('https://rpc.ftm.tools'),

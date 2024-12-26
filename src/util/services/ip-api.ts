@@ -1,7 +1,7 @@
 import { asEither, asObject, asString, asValue } from 'cleaners'
 import fetch from 'node-fetch'
 
-import { syncedSettings } from '../../db/couchSettings'
+import { syncedServices } from '../../db/couchSettings'
 import { Device } from '../../types/pushTypes'
 
 const asApiReply = asEither(
@@ -20,14 +20,10 @@ const asApiReply = asEither(
 )
 
 export async function locateIp(ip: string): Promise<Device['location']> {
-  const { apiKeys } = syncedSettings.doc
-  const { apiKey } = apiKeys.find(apiKey => apiKey.name === 'ipService') ?? {}
-
-  if (apiKey == null)
-    throw new Error(`Missing 'ipService' API Key in settings document`)
+  const { ipApiKey } = syncedServices.doc
 
   const reply = await fetch(
-    `https://pro.ip-api.com/json/${ip}?fields=49183&key=${apiKey}`
+    `https://pro.ip-api.com/json/${ip}?fields=49183&key=${ipApiKey}`
   )
   if (!reply.ok) {
     throw new Error(`IP lookup returned status code ${reply.status}`)
