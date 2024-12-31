@@ -32,7 +32,8 @@ async function main(): Promise<void> {
   cli.register(PushMarketing)
 
   const args = process.argv.slice(2)
-  await cli.runExit(args, context)
+  process.exitCode = await cli.run(args, context)
+  await connections.amqpClient.close()
 }
 
 main().catch(error => console.error(error))
