@@ -35,6 +35,13 @@ export async function makeConnections(): Promise<DbConnections> {
 
   return {
     couch: nano(serverConfig.couchUri),
+    amqpClient: amqp,
     queue: await channel.queue('messages')
   }
+}
+
+export async function closeConnections(
+  connections: DbConnections
+): Promise<void> {
+  await connections.amqpClient.close()
 }

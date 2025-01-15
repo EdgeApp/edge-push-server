@@ -2,7 +2,7 @@ import { Builtins, Cli } from 'clipanion'
 
 import packageJson from '../../package.json'
 import { setupDatabases } from '../db/couchSetup'
-import { makeConnections } from '../serverConfig'
+import { closeConnections, makeConnections } from '../serverConfig'
 import { ServerContext } from './cliTools'
 import { GetDevice } from './commands/getDevice'
 import { PushMarketing } from './commands/pushMarketing'
@@ -32,7 +32,8 @@ async function main(): Promise<void> {
   cli.register(PushMarketing)
 
   const args = process.argv.slice(2)
-  await cli.runExit(args, context)
+  process.exitCode = await cli.run(args, context)
+  await closeConnections(connections)
 }
 
 main().catch(error => console.error(error))

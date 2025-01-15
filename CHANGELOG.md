@@ -3,6 +3,7 @@
 ## Unreleased
 
 - changed: Move API keys to a separate settings document.
+- fixed: Close the AMQP client when the CLI exits. This keeps the CLI from hanging.
 
 ## 2.4.1 (2024-12-23)
 
