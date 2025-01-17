@@ -78,6 +78,8 @@ async function sendToDevice(
   const sender = await getSender(connections, apiKey)
   if (sender == null) return
 
+  const highPriority = !message.isPriceChange && !message.isMarketing
+
   try {
     await sender.send({
       token: deviceToken,
@@ -85,7 +87,15 @@ async function sendToDevice(
         title: message.title ?? '',
         body: message.body ?? ''
       },
-      data: message.data ?? {}
+      data: message.data ?? {},
+      android: {
+        priority: highPriority ? 'high' : 'normal'
+      },
+      apns: {
+        headers: {
+          'apns-priority': highPriority ? '10' : '5'
+        }
+      }
     })
   } catch (error) {
     if (String(error).includes('not a valid FCM registration token')) {
