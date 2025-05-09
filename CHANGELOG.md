@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.5.0 (2025-05-08)
+
 - changed: Move API keys to a separate settings document.
 - fixed: Close the AMQP client when the CLI exits. This keeps the CLI from hanging.
 - fixed: Limit the number of in-flight messages to prevent the publisher from crashing.
