@@ -33,6 +33,9 @@ export async function makeConnections(): Promise<DbConnections> {
   const connection = await amqp.connect()
   const channel = await connection.channel()
 
+  // Limits the number of in-flight messages:
+  await channel.prefetch(50)
+
   return {
     couch: nano(serverConfig.couchUri),
     amqpClient: amqp,
