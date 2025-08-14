@@ -4,7 +4,19 @@
 
 This server sends push notifications to Edge client apps. It contains an HTTP server that clients can use to register for notifications, and a background process that checks for price changes and actually sends the messages.
 
-The docs folder has can find [an example of how to use the v2 API](./docs/demo.ts).
+## Features
+
+- **Device Registration API**: Register devices for push notifications
+- **Event-based Notifications**: Price changes, transaction confirmations, balance alerts
+- **Marketing API**: Location-based marketing campaigns with async task processing
+- **Background Processing**: Reliable message delivery via AMQP queues
+
+## Documentation
+
+- **[Marketing API Guide](./docs/guides/marketing-api.md)** - Complete guide for location-based push campaigns
+- **[API Integration Example](./docs/demo.ts)** - TypeScript example for v2 API integration
+- **[AMQP Configuration](./docs/guides/amqp-configuration.md)** - Detailed message queue setup
+- **[Migration Guides](./docs/guides/)** - For upgrading existing installations
 
 ## Setup
 

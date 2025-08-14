@@ -18,6 +18,27 @@ This file serves as the central index for all documentation in the Edge Push Ser
 - **When to read**: Before running `yarn start` for the first time, when setting up development environment, or troubleshooting message queue issues
 - **Summary**: Complete guide for configuring the AMQP client connection required by the push server, including RabbitMQ 3.12 Docker setup, connection string format, security considerations, and troubleshooting tips
 
+### API Documentation
+
+#### `docs/guides/marketing-api.md`
+
+- **When to read**: When implementing marketing campaigns, sending location-based push notifications, or integrating with the marketing task queue system
+- **Summary**: Complete documentation for the Marketing API endpoints including authentication, location targeting, task queue management, progress tracking, and integration examples. Covers device filtering, error handling, and best practices for large-scale push notification campaigns.
+
+### Technical References
+
+#### `docs/guides/marketing-database-schema.md`
+
+- **When to read**: When working on marketing system internals, database maintenance, or understanding the task queue architecture
+- **Summary**: Technical documentation of database schema changes for the Marketing API, including ApiKey updates, MarketingTask structure, CouchDB views, migration considerations, and monitoring queries. Essential for developers working on the marketing system backend.
+
+### Migration Guides
+
+#### `docs/guides/marketing-api-migration.md`
+
+- **When to read**: When upgrading an existing Edge Push Server installation to include Marketing API support
+- **Summary**: Step-by-step migration guide covering code updates, database migration, API key configuration, daemon setup, and verification procedures. Includes troubleshooting tips, rollback procedures, and post-migration tasks for existing installations.
+
 ### Additional Resources
 
 #### `docs/demo.ts`

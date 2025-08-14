@@ -14,6 +14,7 @@
     "cli": "node -r sucrase/register src/cli/cli.ts",
     "confirmation-daemon": "node -r sucrase/register src/daemons/confirmationDaemon.ts",
     "demo": "node -r sucrase/register docs/demo.ts",
+    "marketing-daemon": "node -r sucrase/register src/daemons/marketingDaemon.ts",
     "fix": "yarn-deduplicate && eslint . --fix",
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types test prepare",
