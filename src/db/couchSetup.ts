@@ -7,6 +7,7 @@ import {
 import { serverConfig } from '../serverConfig'
 import { couchApiKeysSetup } from './couchApiKeys'
 import { couchDevicesSetup } from './couchDevices'
+import { couchMarketingTasksSetup } from './couchMarketingTasks'
 import { couchEventsSetup } from './couchPushEvents'
 import { settingsSetup, syncedReplicators } from './couchSettings'
 import { DbConnections } from './dbConnections'
@@ -45,6 +46,7 @@ export async function setupDatabases(
     setupDatabase(connections.couch, couchApiKeysSetup, options),
     setupDatabase(connections.couch, couchDevicesSetup, options),
     setupDatabase(connections.couch, couchEventsSetup, options),
+    setupDatabase(connections.couch, couchMarketingTasksSetup, options),
     setupDatabase(connections.couch, devicesSetup, options),
     setupDatabase(connections.couch, usersSetup, options)
   ])

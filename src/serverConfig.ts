@@ -15,7 +15,7 @@ const asServerConfig = asObject({
   listenPort: asOptional(asNumber, 8008),
 
   // Databases:
-  amqpUri: asOptional(asString, 'amqp://username:password@localhost:5672'),
+  amqpUri: asOptional(asString, 'amqp://guest:guest@localhost:5672'),
   couchUri: asOptional(asString, 'http://username:password@localhost:5984'),
   currentCluster: asOptional(asString)
 })

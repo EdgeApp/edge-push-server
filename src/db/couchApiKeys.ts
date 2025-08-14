@@ -32,6 +32,7 @@ export const asCouchApiKey = asCouchDoc(
   asObject<CouchApiKey>({
     appId: asString,
     admin: asBoolean,
+    marketer: asOptional(asBoolean, false),
     adminsdk: asOptional(asFirebaseAdminKey)
   })
 )
@@ -60,5 +61,5 @@ export async function getApiKeyByKey(
 }
 
 function unpackApiKey(doc: CouchDoc<CouchApiKey>): ApiKey {
-  return { ...doc.doc, apiKey: doc.id }
+  return { ...doc.doc, apiKey: doc.id, marketer: doc.doc.marketer ?? false }
 }

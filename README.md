@@ -4,11 +4,51 @@
 
 This server sends push notifications to Edge client apps. It contains an HTTP server that clients can use to register for notifications, and a background process that checks for price changes and actually sends the messages.
 
-The docs folder has can find [an example of how to use the v2 API](./docs/demo.ts).
+## Features
+
+- **Device Registration API**: Register devices for push notifications
+- **Event-based Notifications**: Price changes, transaction confirmations, balance alerts
+- **Marketing API**: Location-based marketing campaigns with async task processing
+- **Background Processing**: Reliable message delivery via AMQP queues
+
+## Documentation
+
+- **[Marketing API Guide](./docs/guides/marketing-api.md)** - Complete guide for location-based push campaigns
+- **[API Integration Example](./docs/demo.ts)** - TypeScript example for v2 API integration
+- **[AMQP Configuration](./docs/guides/amqp-configuration.md)** - Detailed message queue setup
+- **[Migration Guides](./docs/guides/)** - For upgrading existing installations
 
 ## Setup
 
-This server requires a working copies of Node.js, Yarn, PM2, and CouchDB. We also recommend using Caddy to terminate SSL connections.
+This server requires a working copies of Node.js, Yarn, PM2, CouchDB, and RabbitMQ 3.12 (via Docker). We also recommend using Caddy to terminate SSL connections.
+
+### Configure AMQP Message Queue
+
+The push server uses AMQP (RabbitMQ) for reliable message delivery between the HTTP server and push notification daemons. Before running `yarn start`, you must:
+
+1. **Start RabbitMQ 3.12 using Docker**:
+
+```bash
+docker run -d --name rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -e RABBITMQ_DEFAULT_USER=guest \
+  -e RABBITMQ_DEFAULT_PASS=guest \
+  rabbitmq:3.12-management
+```
+
+2. **Create a configuration file** `pushServerConfig.json` in the project root:
+
+```json
+{
+  "listenHost": "127.0.0.1",
+  "listenPort": 8008,
+  "amqpUri": "amqp://guest:guest@localhost:5672",
+  "couchUri": "http://username:password@localhost:5984"
+}
+```
+
+For detailed AMQP configuration instructions, troubleshooting, and security considerations, see [docs/guides/amqp-configuration.md](./docs/guides/amqp-configuration.md).
 
 ### Set up logging
 

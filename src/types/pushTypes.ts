@@ -26,6 +26,7 @@ export interface ApiKey {
   appId: string
 
   admin: boolean
+  marketer: boolean
   adminsdk?: FirebaseAdminKey
 }
 
@@ -148,6 +149,47 @@ export type PushEventState =
   | 'cancelled' // Removed before the trigger happened
   | 'triggered' // The trigger and effects are done
   | 'hidden' // Removed after being triggered
+
+//
+// Marketing task queue types
+//
+
+export type MarketingTaskStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+
+export interface MarketingTask {
+  readonly taskId: string
+  readonly createdTime: Date
+
+  // Task parameters
+  readonly location: {
+    country?: string
+    city?: string
+    region?: string
+  }
+  readonly message: {
+    title: string
+    body: string
+  }
+
+  // Task status
+  status: MarketingTaskStatus
+  started?: Date
+  completed?: Date
+  error?: string
+
+  // Progress tracking
+  progress: {
+    total: number
+    queried: number
+    sent: number
+    failed: number
+    filtered: number
+  }
+}
 
 /**
  * Combines a trigger with an action.

@@ -3,6 +3,7 @@ import { pickMethod, pickPath, Serverlet } from 'serverlet'
 import { DbRequest } from '../types/requestTypes'
 import { errorResponse, jsonResponse } from '../types/responseTypes'
 import { withLegacyApiKey } from './middleware/withLegacyApiKey'
+import { withMarketerApiKey } from './middleware/withMarketerApiKey'
 import { deviceFetchRoute, deviceUpdateRoute } from './routes/deviceRoutes'
 import {
   attachUserV1Route,
@@ -14,6 +15,12 @@ import {
   toggleStateV1Route
 } from './routes/legacyRoutes'
 import { loginFetchRoute, loginUpdateRoute } from './routes/loginRoutes'
+import {
+  marketingCountRoute,
+  marketingSendRoute,
+  marketingTaskRoute,
+  marketingTasksListRoute
+} from './routes/marketingRoutes'
 import { sendNotificationV1Route } from './routes/notificationRoute'
 
 const missingRoute: Serverlet<DbRequest> = request =>
@@ -61,6 +68,20 @@ const urls: { [path: string]: Serverlet<DbRequest> } = {
   }),
   '/v2/login/update/?': pickMethod({
     POST: loginUpdateRoute
+  }),
+
+  // Marketing endpoints
+  '/marketing/count/?': pickMethod({
+    GET: withMarketerApiKey(marketingCountRoute)
+  }),
+  '/marketing/send/?': pickMethod({
+    POST: withMarketerApiKey(marketingSendRoute)
+  }),
+  '/marketing/send/[a-zA-Z0-9-]+/?': pickMethod({
+    GET: withMarketerApiKey(marketingTaskRoute)
+  }),
+  '/marketing/sends/?': pickMethod({
+    GET: withMarketerApiKey(marketingTasksListRoute)
   })
 }
 export const allRoutes: Serverlet<DbRequest> = pickPath(urls, missingRoute)
