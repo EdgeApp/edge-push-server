@@ -123,6 +123,11 @@ const locationByRegionDesign = makeJsDesign('locationByRegion', ({ emit }) => ({
 
 /**
  * Looks up devices by API key, then by IP location.
+ *
+ * The row value carries everything an audience query needs to decide whether
+ * a device matches and to describe it, so the query never has to fetch the
+ * documents themselves. Devices with no location are absent from this view,
+ * and are therefore unreachable by location targeting.
  */
 const apiKeyLocationDesign = makeJsDesign('apiKeyLocation', ({ emit }) => ({
   map: function (doc) {
@@ -137,7 +142,15 @@ const apiKeyLocationDesign = makeJsDesign('apiKeyLocation', ({ emit }) => ({
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         doc.location.city || ''
       ],
-      null
+      {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        region: doc.location.region || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        city: doc.location.city || '',
+        deviceToken: doc.deviceToken,
+        ignoreMarketing: doc.ignoreMarketing === true,
+        visited: doc.visited
+      }
     )
   },
   reduce: '_count'
@@ -415,28 +428,69 @@ function makeApiKeyLocationStartKey(
 }
 
 /**
- * Streams the devices registered under an API key, optionally narrowed by
- * location.
+ * What the `apiKeyLocation` view stores alongside each device, so that an
+ * audience query can work from the index alone.
  */
-export async function* streamDevicesByApiKeyLocation(
+export interface DeviceSummary {
+  deviceId: string
+  apiKey: string
+  region: string
+  city: string
+  deviceToken: string | undefined
+  ignoreMarketing: boolean
+  visited: Date
+}
+
+const asViewValue = asObject({
+  region: asOptional(asString, ''),
+  city: asOptional(asString, ''),
+  deviceToken: asOptional(asString),
+  ignoreMarketing: asOptional(asBoolean, false),
+  visited: asOptional(asDate, () => new Date(0))
+})
+
+// Rows to pull per request while paging through the view:
+const VIEW_PAGE_SIZE = 2048
+
+/**
+ * Streams a summary of every device registered under an API key, optionally
+ * narrowed by location.
+ *
+ * This reads the view rows only. Fetching the documents would mean pulling
+ * hundreds of megabytes to read a handful of fields, since the view spans a
+ * whole country and the location filters are applied afterwards.
+ */
+export async function* streamDeviceSummariesByApiKeyLocation(
   connections: DbConnections,
   apiKey: string,
   location: { country?: string; region?: string; city?: string }
-): AsyncIterableIterator<DeviceRow> {
+): AsyncIterableIterator<DeviceSummary> {
   const db = connections.couch.use(couchDevicesSetup.name)
   const startKey = makeApiKeyLocationStartKey(apiKey, location)
   const endKey = [...startKey, 'zzzzzz']
 
-  for await (const doc of viewToStream(async params => {
-    return await db.view('apiKeyLocation', 'apiKeyLocation', {
+  let params: object = { start_key: startKey }
+  while (true) {
+    const response = await db.view('apiKeyLocation', 'apiKeyLocation', {
       reduce: false,
-      start_key: startKey,
+      include_docs: false,
+      limit: VIEW_PAGE_SIZE,
       end_key: endKey,
       ...params
     })
-  })) {
-    const couchDevice = asMaybe(asCouchDevice)(doc)
-    if (couchDevice == null) continue
-    yield makeDeviceRow(db, couchDevice)
+    const { rows } = response
+    if (rows.length === 0) return
+
+    for (const row of rows) {
+      const value = asMaybe(asViewValue)(row.value)
+      if (value == null) continue
+      yield { ...value, deviceId: row.id, apiKey }
+    }
+
+    if (rows.length < VIEW_PAGE_SIZE) return
+    // Resume after the last row, which needs the doc id to break ties between
+    // devices sharing a location:
+    const last = rows[rows.length - 1]
+    params = { start_key: last.key, start_key_doc_id: last.id, skip: 1 }
   }
 }

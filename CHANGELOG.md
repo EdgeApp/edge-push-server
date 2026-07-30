@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: Marketing tool API endpoints: `POST /marketing/test` sends a single test push, `POST /marketing/query` lists the devices a send would reach (filtered by include/exclude lists of cities and regions), and `POST /marketing/push` sends to the device list a query returned.
+- added: A `marketer` flag and a `targetApiKeys` list on API keys. The marketing endpoints require the flag (or `admin`) and only reach devices registered under the listed keys, so the api keys baked into the apps cannot call them.
+
 ## 2.5.0 (2025-05-08)
 
 - changed: Move API keys to a separate settings document.
