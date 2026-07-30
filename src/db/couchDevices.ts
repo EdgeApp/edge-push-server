@@ -25,6 +25,10 @@ import { asBase64 } from '../types/pushCleaners'
 import { Device } from '../types/pushTypes'
 import { DbConnections } from './dbConnections'
 
+// Couch rejects an `_all_docs` request with no keys, and very large key lists
+// make for unwieldy requests, so batch lookups at this size:
+const FETCH_BATCH_SIZE = 500
+
 /**
  * A device returned from the database.
  * To make changes, edit the `device` object, then call `save`.
@@ -117,12 +121,35 @@ const locationByRegionDesign = makeJsDesign('locationByRegion', ({ emit }) => ({
   reduce: '_count'
 }))
 
+/**
+ * Looks up devices by API key, then by IP location.
+ */
+const apiKeyLocationDesign = makeJsDesign('apiKeyLocation', ({ emit }) => ({
+  map: function (doc) {
+    if (doc.apiKey == null || doc.location == null) return
+    emit(
+      [
+        doc.apiKey,
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.country || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.region || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.city || ''
+      ],
+      null
+    )
+  },
+  reduce: '_count'
+}))
+
 export const couchDevicesSetup: DatabaseSetup = {
   name: 'push-devices',
   documents: {
     '_design/loginId': loginIdDesign,
     '_design/locationByCity': locationByCityDesign,
-    '_design/locationByRegion': locationByRegionDesign
+    '_design/locationByRegion': locationByRegionDesign,
+    '_design/apiKeyLocation': apiKeyLocationDesign
   }
 }
 
@@ -215,6 +242,33 @@ export async function getDeviceById(
 
   if (raw == null) return makeDeviceRow(db, emptyDevice)
   return makeDeviceRow(db, asCouchDevice(raw))
+}
+
+/**
+ * Looks up many devices at once, skipping any ids that are missing, deleted, or
+ * unreadable. Ids are de-duplicated, and the lookup runs in batches to keep
+ * individual Couch requests small.
+ */
+export async function fetchDevicesByIds(
+  connections: DbConnections,
+  deviceIds: string[]
+): Promise<DeviceRow[]> {
+  const db = connections.couch.use(couchDevicesSetup.name)
+  const unique = [...new Set(deviceIds)]
+
+  const out: DeviceRow[] = []
+  for (let i = 0; i < unique.length; i += FETCH_BATCH_SIZE) {
+    const keys = unique.slice(i, i + FETCH_BATCH_SIZE)
+    const response = await db.fetch({ keys })
+    for (const row of response.rows) {
+      // Missing and deleted ids come back as rows without a document:
+      if ('error' in row || row.doc == null) continue
+      const couchDevice = asMaybe(asCouchDevice)(row.doc)
+      if (couchDevice == null) continue
+      out.push(makeDeviceRow(db, couchDevice))
+    }
+  }
+  return out
 }
 
 /**
@@ -335,6 +389,49 @@ export async function* streamDevicesByLocation(
     return await db.view(viewName, viewName, {
       reduce: false,
       ...queryParams,
+      ...params
+    })
+  })) {
+    const couchDevice = asMaybe(asCouchDevice)(doc)
+    if (couchDevice == null) continue
+    yield makeDeviceRow(db, couchDevice)
+  }
+}
+
+/**
+ * Builds a CouchDB start key of [apiKey, country, region, city], stopping at the
+ * first missing location field so the range stays a valid prefix.
+ */
+function makeApiKeyLocationStartKey(
+  apiKey: string,
+  location: { country?: string; region?: string; city?: string }
+): string[] {
+  const key = [apiKey]
+  for (const part of [location.country, location.region, location.city]) {
+    if (part == null) break
+    key.push(part)
+  }
+  return key
+}
+
+/**
+ * Streams the devices registered under an API key, optionally narrowed by
+ * location.
+ */
+export async function* streamDevicesByApiKeyLocation(
+  connections: DbConnections,
+  apiKey: string,
+  location: { country?: string; region?: string; city?: string }
+): AsyncIterableIterator<DeviceRow> {
+  const db = connections.couch.use(couchDevicesSetup.name)
+  const startKey = makeApiKeyLocationStartKey(apiKey, location)
+  const endKey = [...startKey, 'zzzzzz']
+
+  for await (const doc of viewToStream(async params => {
+    return await db.view('apiKeyLocation', 'apiKeyLocation', {
+      reduce: false,
+      start_key: startKey,
+      end_key: endKey,
       ...params
     })
   })) {
