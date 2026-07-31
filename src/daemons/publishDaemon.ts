@@ -9,6 +9,7 @@ import {
   getDevicesByLoginId
 } from '../db/couchDevices'
 import { DbConnections } from '../db/dbConnections'
+import { isUnregisteredToken } from '../util/firebaseErrors'
 import { logger } from '../util/logger'
 import { asRabbitMessage, SendableMessage } from '../util/pushSender'
 import { runDaemon } from './runDaemon'
@@ -88,12 +89,14 @@ async function sendToDevice(
       data: message.data ?? {}
     })
   } catch (error) {
-    if (String(error).includes('not a valid FCM registration token')) {
+    if (isUnregisteredToken(error)) {
       logger.info(`Disabling device: ${deviceId}`)
       deviceRow.device.deviceToken = undefined
       await deviceRow.save()
     } else {
-      logger.info('Unknown error', { deviceId, error })
+      // Pino takes the details first and the message second. Passing them the
+      // other way around silently drops them:
+      logger.info({ deviceId, error: String(error) }, 'Unknown error')
     }
   }
 }
