@@ -4,15 +4,14 @@ import express, { NextFunction, Request, Response, Router } from 'express'
 
 import { getApiKeyByKey } from '../../db/couchApiKeys'
 import {
-  fetchDevicesByIds,
   getDeviceById,
   getDevicesByLoginId,
+  streamDeviceBatchesByIds,
   streamDeviceSummariesByApiKeyLocation
 } from '../../db/couchDevices'
 import { DbConnections } from '../../db/dbConnections'
 import { asBase64 } from '../../types/pushCleaners'
 import { ApiKey, Device } from '../../types/pushTypes'
-import { makeHeartbeat } from '../../util/heartbeat'
 import { makePushSender, SendableMessage } from '../../util/pushSender'
 import {
   getDeviceSkipReason,
@@ -20,6 +19,7 @@ import {
   matchesLocationFilter,
   parseLocationList
 } from './locationFilter'
+import { makeProgressLog } from './progress'
 
 const asTestMessageBody = asObject({
   deviceId: asOptional(asString),
@@ -61,6 +61,9 @@ const BODY_LIMIT = '64mb'
 // the entire targetable population, so ordinary country-wide sends never meet
 // it. Raise it before it starts rejecting real audiences.
 const MAX_QUERY_DEVICES = 2_000_000
+
+// How often a long send reports how far along it is:
+const PROGRESS_INTERVAL_MS = 30_000
 
 /**
  * Builds an Express router with the marketing tool API endpoints: `test` sends
@@ -307,51 +310,62 @@ export function makeMarketingToolRouter(connections: DbConnections): Router {
           isMarketing: true,
           isPriceChange: false
         }
-        const heartbeat = makeHeartbeat({ write }, { logSeconds: 2 })
-
         write(`Loading ${deviceIds.length} devices...\n`)
 
         // Re-read the documents, since a device may have opted out or been
         // deleted since the caller queried it. The publish daemon repeats these
         // checks when it drains the queue, so this is about reporting an honest
         // count rather than about enforcement.
+        const loading = makeProgressLog(write, 'Loaded', deviceIds.length, {
+          intervalMs: PROGRESS_INTERVAL_MS
+        })
         const devices = new Map<string, Device>()
         let skipped = 0
-        for (const deviceRow of await fetchDevicesByIds(
+        let invalidTokens = 0
+        for await (const batch of streamDeviceBatchesByIds(
           connections,
           deviceIds
         )) {
-          const { device } = deviceRow
-          const reason = getDeviceSkipReason(device, targets)
-          if (reason != null) {
-            if (reason === 'invalid-token') {
-              write(
-                `Invalid token '${String(device.deviceToken)}' for doc '${
-                  device.deviceId
-                }'\n`
-              )
+          for (const { device } of batch.deviceRows) {
+            const reason = getDeviceSkipReason(device, targets)
+            if (reason != null) {
+              // One line per bad token would bury the progress log, so count
+              // them and report the total instead:
+              if (reason === 'invalid-token') ++invalidTokens
+              ++skipped
+              continue
             }
-            ++skipped
-            continue
+            devices.set(device.deviceId, device)
           }
-          devices.set(device.deviceId, device)
-          heartbeat(`Reached ${device.deviceId}`)
+          loading.update(batch.idsRead)
+        }
+        loading.finish(deviceIds.length)
+        if (invalidTokens > 0) {
+          write(`  ${invalidTokens} devices had an unusable token\n`)
         }
 
         const missing = deviceIds.length - devices.size - skipped
         write(
-          `Sending to ${devices.size} devices` +
+          `Queueing ${devices.size} devices` +
             ` (${skipped} skipped, ${missing} no longer found)...\n`
         )
+        const queueing = makeProgressLog(write, 'Queued', devices.size, {
+          intervalMs: PROGRESS_INTERVAL_MS
+        })
+        let queued = 0
         for (const device of devices.values()) {
           const { deviceId } = device
           await sender.sendToDevice(device, message).catch((error: unknown) => {
             write(`Device ${deviceId} failed: ${String(error)}\n`)
           })
-          heartbeat(`Reached ${deviceId}`)
+          queueing.update(++queued)
         }
+        queueing.finish(queued)
 
-        write('\n[DONE] Marketing send complete.\n')
+        // Deliberately not "sent": this hands the messages to the queue, and
+        // the publish daemon delivers them afterwards, which for a large
+        // audience runs long after this response ends.
+        write(`\n[DONE] ${devices.size} devices queued for delivery.\n`)
       } catch (error: unknown) {
         write(
           `\n[ERROR] ${

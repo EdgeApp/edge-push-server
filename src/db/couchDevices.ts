@@ -257,31 +257,43 @@ export async function getDeviceById(
   return makeDeviceRow(db, asCouchDevice(raw))
 }
 
+/** One batch of a by-id lookup, along with how far through the ids we are. */
+export interface DeviceBatch {
+  deviceRows: DeviceRow[]
+  /** How many of the requested ids have been read so far. */
+  idsRead: number
+}
+
 /**
  * Looks up many devices at once, skipping any ids that are missing, deleted, or
  * unreadable. Ids are de-duplicated, and the lookup runs in batches to keep
  * individual Couch requests small.
+ *
+ * This yields per batch rather than returning everything at once, so a caller
+ * working through hundreds of thousands of ids can report progress instead of
+ * going quiet for the whole lookup.
  */
-export async function fetchDevicesByIds(
+export async function* streamDeviceBatchesByIds(
   connections: DbConnections,
   deviceIds: string[]
-): Promise<DeviceRow[]> {
+): AsyncIterableIterator<DeviceBatch> {
   const db = connections.couch.use(couchDevicesSetup.name)
   const unique = [...new Set(deviceIds)]
 
-  const out: DeviceRow[] = []
   for (let i = 0; i < unique.length; i += FETCH_BATCH_SIZE) {
     const keys = unique.slice(i, i + FETCH_BATCH_SIZE)
     const response = await db.fetch({ keys })
+
+    const deviceRows: DeviceRow[] = []
     for (const row of response.rows) {
       // Missing and deleted ids come back as rows without a document:
       if ('error' in row || row.doc == null) continue
       const couchDevice = asMaybe(asCouchDevice)(row.doc)
       if (couchDevice == null) continue
-      out.push(makeDeviceRow(db, couchDevice))
+      deviceRows.push(makeDeviceRow(db, couchDevice))
     }
+    yield { deviceRows, idsRead: Math.min(i + keys.length, unique.length) }
   }
-  return out
 }
 
 /**
