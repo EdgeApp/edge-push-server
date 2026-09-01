@@ -19,6 +19,7 @@ import {
   matchesLocationFilter,
   parseLocationList
 } from './locationFilter'
+import { makeMarketingData } from './marketingData'
 import { makeProgressLog } from './progress'
 
 const asTestMessageBody = asObject({
@@ -129,11 +130,7 @@ export function makeMarketingToolRouter(connections: DbConnections): Router {
         }
 
         const sender = makePushSender(connections)
-        const data: { [key: string]: string } = {
-          type: 'marketing',
-          campaignId: TEST_CAMPAIGN_ID
-        }
-        if (url != null) data.url = url
+        const data = makeMarketingData(TEST_CAMPAIGN_ID, url)
         const message: SendableMessage = {
           title,
           body,
@@ -298,11 +295,7 @@ export function makeMarketingToolRouter(connections: DbConnections): Router {
         write(`[campaign] ${campaignId}\n`)
 
         const sender = makePushSender(connections)
-        const data: { [key: string]: string } = {
-          type: 'marketing',
-          campaignId
-        }
-        if (url != null) data.url = url
+        const data = makeMarketingData(campaignId, url)
         const message: SendableMessage = {
           title,
           body,
