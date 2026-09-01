@@ -25,6 +25,10 @@ import { asBase64 } from '../types/pushCleaners'
 import { Device } from '../types/pushTypes'
 import { DbConnections } from './dbConnections'
 
+// Couch rejects an `_all_docs` request with no keys, and very large key lists
+// make for unwieldy requests, so batch lookups at this size:
+const FETCH_BATCH_SIZE = 500
+
 /**
  * A device returned from the database.
  * To make changes, edit the `device` object, then call `save`.
@@ -117,12 +121,48 @@ const locationByRegionDesign = makeJsDesign('locationByRegion', ({ emit }) => ({
   reduce: '_count'
 }))
 
+/**
+ * Looks up devices by API key, then by IP location.
+ *
+ * The row value carries everything an audience query needs to decide whether
+ * a device matches and to describe it, so the query never has to fetch the
+ * documents themselves. Devices with no location are absent from this view,
+ * and are therefore unreachable by location targeting.
+ */
+const apiKeyLocationDesign = makeJsDesign('apiKeyLocation', ({ emit }) => ({
+  map: function (doc) {
+    if (doc.apiKey == null || doc.location == null) return
+    emit(
+      [
+        doc.apiKey,
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.country || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.region || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        doc.location.city || ''
+      ],
+      {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        region: doc.location.region || '',
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        city: doc.location.city || '',
+        deviceToken: doc.deviceToken,
+        ignoreMarketing: doc.ignoreMarketing === true,
+        visited: doc.visited
+      }
+    )
+  },
+  reduce: '_count'
+}))
+
 export const couchDevicesSetup: DatabaseSetup = {
   name: 'push-devices',
   documents: {
     '_design/loginId': loginIdDesign,
     '_design/locationByCity': locationByCityDesign,
-    '_design/locationByRegion': locationByRegionDesign
+    '_design/locationByRegion': locationByRegionDesign,
+    '_design/apiKeyLocation': apiKeyLocationDesign
   }
 }
 
@@ -215,6 +255,45 @@ export async function getDeviceById(
 
   if (raw == null) return makeDeviceRow(db, emptyDevice)
   return makeDeviceRow(db, asCouchDevice(raw))
+}
+
+/** One batch of a by-id lookup, along with how far through the ids we are. */
+export interface DeviceBatch {
+  deviceRows: DeviceRow[]
+  /** How many of the requested ids have been read so far. */
+  idsRead: number
+}
+
+/**
+ * Looks up many devices at once, skipping any ids that are missing, deleted, or
+ * unreadable. Ids are de-duplicated, and the lookup runs in batches to keep
+ * individual Couch requests small.
+ *
+ * This yields per batch rather than returning everything at once, so a caller
+ * working through hundreds of thousands of ids can report progress instead of
+ * going quiet for the whole lookup.
+ */
+export async function* streamDeviceBatchesByIds(
+  connections: DbConnections,
+  deviceIds: string[]
+): AsyncIterableIterator<DeviceBatch> {
+  const db = connections.couch.use(couchDevicesSetup.name)
+  const unique = [...new Set(deviceIds)]
+
+  for (let i = 0; i < unique.length; i += FETCH_BATCH_SIZE) {
+    const keys = unique.slice(i, i + FETCH_BATCH_SIZE)
+    const response = await db.fetch({ keys })
+
+    const deviceRows: DeviceRow[] = []
+    for (const row of response.rows) {
+      // Missing and deleted ids come back as rows without a document:
+      if ('error' in row || row.doc == null) continue
+      const couchDevice = asMaybe(asCouchDevice)(row.doc)
+      if (couchDevice == null) continue
+      deviceRows.push(makeDeviceRow(db, couchDevice))
+    }
+    yield { deviceRows, idsRead: Math.min(i + keys.length, unique.length) }
+  }
 }
 
 /**
@@ -341,5 +420,89 @@ export async function* streamDevicesByLocation(
     const couchDevice = asMaybe(asCouchDevice)(doc)
     if (couchDevice == null) continue
     yield makeDeviceRow(db, couchDevice)
+  }
+}
+
+/**
+ * Builds a CouchDB start key of [apiKey, country, region, city], stopping at the
+ * first missing location field so the range stays a valid prefix.
+ */
+function makeApiKeyLocationStartKey(
+  apiKey: string,
+  location: { country?: string; region?: string; city?: string }
+): string[] {
+  const key = [apiKey]
+  for (const part of [location.country, location.region, location.city]) {
+    if (part == null) break
+    key.push(part)
+  }
+  return key
+}
+
+/**
+ * What the `apiKeyLocation` view stores alongside each device, so that an
+ * audience query can work from the index alone.
+ */
+export interface DeviceSummary {
+  deviceId: string
+  apiKey: string
+  region: string
+  city: string
+  deviceToken: string | undefined
+  ignoreMarketing: boolean
+  visited: Date
+}
+
+const asViewValue = asObject({
+  region: asOptional(asString, ''),
+  city: asOptional(asString, ''),
+  deviceToken: asOptional(asString),
+  ignoreMarketing: asOptional(asBoolean, false),
+  visited: asOptional(asDate, () => new Date(0))
+})
+
+// Rows to pull per request while paging through the view:
+const VIEW_PAGE_SIZE = 2048
+
+/**
+ * Streams a summary of every device registered under an API key, optionally
+ * narrowed by location.
+ *
+ * This reads the view rows only. Fetching the documents would mean pulling
+ * hundreds of megabytes to read a handful of fields, since the view spans a
+ * whole country and the location filters are applied afterwards.
+ */
+export async function* streamDeviceSummariesByApiKeyLocation(
+  connections: DbConnections,
+  apiKey: string,
+  location: { country?: string; region?: string; city?: string }
+): AsyncIterableIterator<DeviceSummary> {
+  const db = connections.couch.use(couchDevicesSetup.name)
+  const startKey = makeApiKeyLocationStartKey(apiKey, location)
+  const endKey = [...startKey, 'zzzzzz']
+
+  let params: object = { start_key: startKey }
+  while (true) {
+    const response = await db.view('apiKeyLocation', 'apiKeyLocation', {
+      reduce: false,
+      include_docs: false,
+      limit: VIEW_PAGE_SIZE,
+      end_key: endKey,
+      ...params
+    })
+    const { rows } = response
+    if (rows.length === 0) return
+
+    for (const row of rows) {
+      const value = asMaybe(asViewValue)(row.value)
+      if (value == null) continue
+      yield { ...value, deviceId: row.id, apiKey }
+    }
+
+    if (rows.length < VIEW_PAGE_SIZE) return
+    // Resume after the last row, which needs the doc id to break ties between
+    // devices sharing a location:
+    const last = rows[rows.length - 1]
+    params = { start_key: last.key, start_key_doc_id: last.id, skip: 1 }
   }
 }

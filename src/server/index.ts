@@ -5,6 +5,7 @@ import { makeExpressRoute } from 'serverlet/express'
 import { setupDatabases } from '../db/couchSetup'
 import { makeConnections, serverConfig } from '../serverConfig'
 import { logger } from '../util/logger'
+import { makeMarketingToolRouter } from './marketing/marketingTool'
 import { withLogging } from './middleware/withLogging'
 import { allRoutes } from './urls'
 
@@ -23,6 +24,12 @@ async function main(): Promise<void> {
   // Set up Express:
   const app = express()
   app.enable('trust proxy')
+
+  // The marketing tool API, mounted before the Serverlet catch-all. It comes
+  // ahead of the body parser below because it installs its own with a larger
+  // limit, and whichever parser runs first wins:
+  app.use('/marketing', makeMarketingToolRouter(connections))
+
   app.use(express.json({ limit: '1mb' }))
   app.use('/', makeExpressRoute(server))
 

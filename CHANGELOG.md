@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- added: Marketing tool API endpoints: `POST /marketing/test` sends a single test push, `POST /marketing/query` lists the devices a send would reach (filtered by include/exclude lists of cities and regions), and `POST /marketing/push` sends to the device list a query returned. Each send may carry an optional Edge deep link (`url`) that the app opens after login.
+- added: A `marketer` flag and a `targetApiKeys` list on API keys. The marketing endpoints require the flag (or `admin`) and only reach devices registered under the listed keys, so the api keys baked into the apps cannot call them.
+- fixed: Recognize Firebase's current "token not registered" error, so devices whose app has been uninstalled get their tokens cleared instead of being retried on every send forever.
+- fixed: Log the device and error when a push fails. The details were being passed to Pino in the wrong argument order, so every failure logged as a bare "Unknown error".
+
 ## 2.5.0 (2025-05-08)
 
 - changed: Move API keys to a separate settings document.

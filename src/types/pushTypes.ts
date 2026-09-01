@@ -27,6 +27,16 @@ export interface ApiKey {
 
   admin: boolean
   adminsdk?: FirebaseAdminKey
+
+  /** May this key call the marketing endpoints? */
+  marketer: boolean
+
+  /**
+   * The api keys whose devices this key may send marketing pushes to.
+   * Devices are registered under the key baked into each app, so a separate
+   * marketing key needs this list to say which apps it is allowed to target.
+   */
+  targetApiKeys: string[]
 }
 
 /**
