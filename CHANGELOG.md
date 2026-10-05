@@ -3,6 +3,9 @@
 ## Unreleased
 
 - added: A `marketer` flag and a `targetApiKeys` list on API keys. The marketing endpoint requires the flag (or `admin`) and only reaches devices registered under the listed keys, so the api keys baked into the apps cannot call it.
+- fixed: Recognize Firebase's current "token not registered" error, so devices whose app has been uninstalled get their tokens cleared instead of being retried on every send forever.
+- fixed: Skip devices registered with an empty token instead of sending them to Firebase, which rejected every one with "Exactly one of topic, token or condition is required".
+- fixed: Log the device and error when a push fails. The details were being passed to Pino in the wrong argument order, so every failure logged as a bare "Unknown error".
 
 ## 2.5.0 (2025-05-08)
 
