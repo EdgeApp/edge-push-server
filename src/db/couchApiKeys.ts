@@ -1,4 +1,4 @@
-import { asBoolean, asObject, asOptional, asString } from 'cleaners'
+import { asArray, asBoolean, asObject, asOptional, asString } from 'cleaners'
 import {
   asCouchDoc,
   asMaybeNotFoundError,
@@ -32,7 +32,9 @@ export const asCouchApiKey = asCouchDoc(
   asObject<CouchApiKey>({
     appId: asString,
     admin: asBoolean,
-    adminsdk: asOptional(asFirebaseAdminKey)
+    adminsdk: asOptional(asFirebaseAdminKey),
+    marketer: asOptional(asBoolean, false),
+    targetApiKeys: asOptional(asArray(asString), () => [])
   })
 )
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: A `marketer` flag and a `targetApiKeys` list on API keys. The marketing endpoint requires the flag (or `admin`) and only reaches devices registered under the listed keys, so the api keys baked into the apps cannot call it.
+
 ## 2.5.0 (2025-05-08)
 
 - changed: Move API keys to a separate settings document.
