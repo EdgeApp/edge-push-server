@@ -39,6 +39,21 @@ export function parseLocationList(lines: string[]): string[] {
 }
 
 /**
+ * The stored spellings that one normalized filter value matches. The filter is
+ * case-insensitive but Couch keys are not, so an index scan narrowed to a
+ * country has to use the name as ip-api stored it, not as typed. Several
+ * spellings match when the stored data disagrees with itself; none means no
+ * device under that key is located there.
+ */
+export function findStoredNames(stored: string[], value: string): string[] {
+  const out = new Set<string>()
+  for (const name of stored) {
+    if (name.trim().toLowerCase() === value) out.add(name)
+  }
+  return [...out]
+}
+
+/**
  * Decides whether a device's location passes the filter. Values within one box
  * are OR'd together, and the boxes are AND'ed with each other. An empty include
  * box means "no restriction", while an empty exclude box excludes nothing. So

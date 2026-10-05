@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import {
+  findStoredNames,
   getDeviceSkipReason,
   getFilterProblem,
   LocationFilter,
@@ -271,5 +272,36 @@ describe('getDeviceSkipReason', function () {
         getDeviceSkipReason(device, targets)
       )
     }
+  })
+})
+
+describe('findStoredNames', function () {
+  const stored = ['Nigeria', 'United States', 'United Kingdom']
+
+  it('finds the stored spelling however the country was typed', function () {
+    for (const typed of ['Nigeria', 'nigeria', 'NIGERIA', '  nigeria ']) {
+      const [value] = parseLocationList([typed])
+      expect(findStoredNames(stored, value)).deep.equals(['Nigeria'])
+    }
+  })
+
+  it('returns every stored spelling when the data disagrees with itself', function () {
+    const messy = [...stored, 'NIGERIA', ' Nigeria']
+    expect(findStoredNames(messy, 'nigeria')).deep.equals([
+      'Nigeria',
+      'NIGERIA',
+      ' Nigeria'
+    ])
+  })
+
+  it('finds nothing for a name no device carries, as the filter would', function () {
+    expect(findStoredNames(stored, 'france')).deep.equals([])
+    expect(findStoredNames([], 'nigeria')).deep.equals([])
+  })
+
+  it('matches the stored spelling exactly, not as a prefix', function () {
+    expect(findStoredNames(['Niger', 'Nigeria'], 'niger')).deep.equals([
+      'Niger'
+    ])
   })
 })
