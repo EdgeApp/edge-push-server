@@ -1,0 +1,7 @@
+{
+  "listenHost": "127.0.0.1",
+  "listenPort": 8008,
+  "amqpUri": "amqp://username:password@localhost:5672",
+  "couchUri": "http://username:password@localhost:5984",
+  "currentCluster": ""
+}
