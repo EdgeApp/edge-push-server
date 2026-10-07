@@ -33,6 +33,7 @@ import {
   parseLocationList
 } from './locationFilter'
 import { makeMarketingData } from './marketingData'
+import { getLinkProblem } from './marketingLink'
 import { makeProgressLog } from './progress'
 
 const asStringList = asOptional(asArray(asString), () => [])
@@ -50,6 +51,8 @@ export const asPushBody = asObject({
   // The message:
   title: asOptional(asString),
   body: asOptional(asString),
+  // An Edge deep link the app opens after login. Only the navigation targets
+  // allowed by marketingLink.ts are accepted:
   url: asOptional(asString),
 
   // A name for the send, kept in the server log beside the campaign id so
@@ -130,6 +133,8 @@ const MAX_CONSECUTIVE_FAILURES = 10
  * the filter to review the audience, then send exactly the ids the dry run
  * returned. Tests and dry runs answer JSON; a send to a list or filter streams
  * a text progress log, since a large audience takes minutes to queue.
+ * A send may carry an Edge deep link (`url`) that the app opens after login;
+ * only the navigation targets allowed by marketingLink.ts are accepted.
  *
  * `GET /countries` lists the countries devices are located in under the
  * caller's targeted keys, with counts, so a caller can offer exactly the
@@ -212,6 +217,17 @@ export function makeMarketingToolRouter(connections: DbConnections): Router {
         })
         return
       }
+      // The app follows any link it can parse, so refuse everything but the
+      // navigation targets a campaign may use. Dry runs are checked too, so
+      // the operator hears about it before the audience is resolved:
+      if (parsed.url != null) {
+        const linkProblem = getLinkProblem(parsed.url)
+        if (linkProblem != null) {
+          res.status(400).json({ error: linkProblem })
+          return
+        }
+      }
+
       const { dryRun } = parsed
       const isTest = target === 'device' || target === 'login'
 
