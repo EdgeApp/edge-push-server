@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- added: A marketing push endpoint, `POST /marketing/push`. One call sends a message to a single device or login (a test), to an explicit list of device ids, or to the audience a location filter resolves to: include/exclude lists of countries, cities and regions, where the lines within a list are alternatives, the lists narrow each other, and an empty country include means every country. Region and city rules are accepted only with exactly one included country, since those values are stored without their country. With `dryRun: true` it resolves the audience and reports it without sending, so the caller can review the list and then send exactly those ids. Sends to a list stream a progress log, and each send may carry an optional Edge deep link (`url`) that the app opens after login, accepted only from an allow-list of buy, sell, swap, exchange, plugin (without a query), promotion, fund-account and earn links since the app follows any link it can parse, and an optional `label` that the server logs beside the campaign id. Tests obey the marketing opt-out like any other send.
+- added: `GET /marketing/countries`, the countries devices are located in under the caller's targeted keys, with counts, so a caller can offer exactly the names an audience filter matches.
+- added: A `marketer` flag and a `targetApiKeys` list on API keys. The marketing endpoint requires the flag (or `admin`) and only reaches devices registered under the listed keys, so the api keys baked into the apps cannot call it.
+- fixed: Recognize Firebase's current "token not registered" error, so devices whose app has been uninstalled get their tokens cleared instead of being retried on every send forever.
+- fixed: Skip devices registered with an empty token instead of sending them to Firebase, which rejected every one with "Exactly one of topic, token or condition is required".
+- fixed: Log the device and error when a push fails. The details were being passed to Pino in the wrong argument order, so every failure logged as a bare "Unknown error".
+
 ## 2.5.0 (2025-05-08)
 
 - changed: Move API keys to a separate settings document.
