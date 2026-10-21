@@ -2,6 +2,7 @@ import { asEither, asNull, asObject, asString } from 'cleaners'
 import fetch from 'node-fetch'
 
 import { syncedServices } from '../db/couchSettings'
+import { logger } from './logger'
 
 export interface RatesCache {
   getRate: (currencyPair: string, date: Date) => Promise<number | null>
@@ -10,9 +11,14 @@ export interface RatesCache {
 
 const ROUNDING = 5 * 60 * 1000 // 5 minutes
 
-export function makeRatesCache(): RatesCache {
+export function makeRatesCache(fetchRate: typeof fetch = fetch): RatesCache {
   // Timestamp -> currency pair -> rate
   const cache = new Map<number, Map<string, number | null>>()
+
+  // Timestamps whose fetch failure we have already logged.
+  // A dead rates server used to produce one stack trace per event,
+  // which filled the disk; now it produces one warning per time bucket.
+  const loggedFailures = new Set<number>()
 
   return {
     async getRate(currencyPair: string, date: Date): Promise<number | null> {
@@ -27,7 +33,27 @@ export function makeRatesCache(): RatesCache {
       // Look up the rate:
       let rate = cacheRow.get(currencyPair)
       if (rate === undefined) {
-        rate = await getFromServer(currencyPair, new Date(cacheKey))
+        try {
+          rate = await getFromServer(
+            fetchRate,
+            currencyPair,
+            new Date(cacheKey)
+          )
+        } catch (err) {
+          // Treat a failed fetch like a missing rate, and remember that
+          // for this time bucket so the other events don't retry it:
+          rate = null
+          if (!loggedFailures.has(cacheKey)) {
+            loggedFailures.add(cacheKey)
+            logger.warn({
+              msg: 'Rates server fetch failed',
+              ratesServer: syncedServices.doc.ratesServer,
+              currencyPair,
+              date: new Date(cacheKey),
+              err
+            })
+          }
+        }
         cacheRow.set(currencyPair, rate)
       }
       return rate
@@ -41,17 +67,21 @@ export function makeRatesCache(): RatesCache {
       cache.forEach((_, key) => {
         if (key < beforeKey) toDelete.push(key)
       })
-      for (const key of toDelete) cache.delete(key)
+      for (const key of toDelete) {
+        cache.delete(key)
+        loggedFailures.delete(key)
+      }
     }
   }
 }
 
 async function getFromServer(
+  fetchRate: typeof fetch,
   currencyPair: string,
   date: Date
 ): Promise<number | null> {
   const { ratesServer } = syncedServices.doc
-  const response = await fetch(
+  const response = await fetchRate(
     `${ratesServer}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
   )
   const json = await response.json()

@@ -8,6 +8,7 @@
 - fixed: Recognize Firebase's current "token not registered" error, so devices whose app has been uninstalled get their tokens cleared instead of being retried on every send forever.
 - fixed: Skip devices registered with an empty token instead of sending them to Firebase, which rejected every one with "Exactly one of topic, token or condition is required".
 - fixed: Log the device and error when a push fails. The details were being passed to Pino in the wrong argument order, so every failure logged as a bare "Unknown error".
+- fixed: Treat a failed rates fetch as a missing rate for its 5-minute bucket and log it once per bucket, naming the configured `ratesServer`. A dead rates server used to produce one stack trace per price-change event, about 17 GB of log a day.
 
 ## 2.5.0 (2025-05-08)
 
