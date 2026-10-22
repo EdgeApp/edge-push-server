@@ -1,31 +1,51 @@
 import { streamEvents } from '../db/couchPushEvents'
 import { logger } from '../util/logger'
-import { checkPriceChange } from '../util/priceChange'
+import { pages } from '../util/pages'
+import { checkPriceChange, priceChangeLookups } from '../util/priceChange'
 import { runDaemon } from './runDaemon'
 
+/**
+ * Events per rates prefetch. The first pages fill the cache with the
+ * common pairs, so later pages mostly find their rates already there.
+ */
+const PAGE_SIZE = 500
+
 runDaemon(async tools => {
-  const { connections, heartbeat } = tools
+  const { connections, heartbeat, rates } = tools
 
-  for await (const eventRow of streamEvents(connections, 'price-change')) {
-    const { trigger } = eventRow.event
-    if (trigger.type !== 'price-change') continue
-    const now = new Date()
+  try {
+    const stream = streamEvents(connections, 'price-change')
+    for await (const page of pages(stream, PAGE_SIZE)) {
+      // Fetch every rate this page needs in a few batched requests,
+      // so the lookups below come from the cache:
+      const now = new Date()
+      await rates.prefetch(
+        page.flatMap(row => priceChangeLookups(row.event, now))
+      )
 
-    try {
-      const { currencyPair } = trigger
+      for (const eventRow of page) {
+        const { trigger } = eventRow.event
+        if (trigger.type !== 'price-change') continue
 
-      // Grab the price:
-      const price = await tools.rates.getRate(currencyPair, now)
-      if (price == null) continue
+        try {
+          const { currencyPair } = trigger
 
-      // Check the triggers:
-      await checkPriceChange(tools, eventRow, now, price, 'day')
-      await checkPriceChange(tools, eventRow, now, price, 'hour')
-    } catch (err) {
-      const id = eventRow.event.created.toISOString()
-      logger.warn({ msg: 'Failed event', id, err })
+          // Grab the price:
+          const price = await rates.getRate(currencyPair, now)
+          if (price == null) continue
+
+          // Check the triggers:
+          await checkPriceChange(tools, eventRow, now, price, 'day')
+          await checkPriceChange(tools, eventRow, now, price, 'hour')
+        } catch (err) {
+          const id = eventRow.event.created.toISOString()
+          logger.warn({ msg: 'Failed event', id, err })
+        }
+
+        heartbeat(`row '${eventRow.id}'`)
+      }
     }
-
-    heartbeat(`row '${eventRow.id}'`)
+  } finally {
+    logger.info({ msg: 'Rates lookups', ...rates.getStats() })
   }
 })
