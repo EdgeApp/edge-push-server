@@ -84,6 +84,9 @@ async function getFromServer(
   const response = await fetchRate(
     `${ratesServer}/v2/exchangeRate?currency_pair=${currencyPair}&date=${date.toISOString()}`
   )
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} from ${ratesServer}`)
+  }
   const json = await response.json()
   const { exchangeRate } = asRateReply(json)
 

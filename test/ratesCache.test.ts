@@ -85,4 +85,16 @@ describe('ratesCache', function () {
     expect(await rates.getRate('BTC_iso:USD', inBucket)).equals(1)
     expect(calls.length).equals(2)
   })
+
+  it('treats a non-2xx reply as a failed fetch, even with an empty body', async function () {
+    // A rate-limited load balancer answers 429 with no body:
+    const { calls, fetch } = makeFetch(
+      async () => new Response('', { status: 429 })
+    )
+    const rates = makeRatesCache(fetch)
+
+    expect(await rates.getRate('BTC_iso:USD', inBucket)).equals(null)
+    expect(await rates.getRate('BTC_iso:USD', sameBucket)).equals(null)
+    expect(calls.length).equals(1)
+  })
 })
