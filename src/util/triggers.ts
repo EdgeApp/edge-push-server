@@ -5,11 +5,13 @@ import { PushEventRow } from '../db/couchPushEvents'
 import {
   AddressBalanceTrigger,
   PriceLevelTrigger,
+  PushEvent,
   PushTrigger,
   PushTriggerState,
   TxConfirmTrigger
 } from '../types/pushTypes'
 import { logger } from './logger'
+import { RateRequest } from './ratesCache'
 
 interface PushTriggerUpdate {
   done: boolean
@@ -18,12 +20,12 @@ interface PushTriggerUpdate {
 
 export async function checkEventTrigger(
   tools: DaemonTools,
-  eventRow: PushEventRow
+  eventRow: PushEventRow,
+  date: Date = new Date()
 ): Promise<void> {
   const { plugins, sender } = tools
   const { event } = eventRow
   const { broadcastTxs = [], pushMessage, trigger, triggered } = event
-  const date = new Date()
 
   const update = await checkTrigger(tools, trigger, triggered, date)
   if (update.done) {
@@ -58,6 +60,40 @@ export async function checkEventTrigger(
   } else if (update.state !== triggered) {
     event.triggered = update.state
     await eventRow.save()
+  }
+}
+
+/**
+ * Every rate `checkEventTrigger` will ask for when it checks
+ * this event at `now`, so they can be fetched in one batch first.
+ * This walks the trigger tree the same way `checkTrigger` does.
+ */
+export function priceLevelLookups(event: PushEvent, now: Date): RateRequest[] {
+  const out: RateRequest[] = []
+  collectPriceLevels(event.trigger, event.triggered, now, out)
+  return out
+}
+
+function collectPriceLevels(
+  trigger: PushTrigger,
+  state: PushTriggerState,
+  now: Date,
+  out: RateRequest[]
+): void {
+  switch (trigger.type) {
+    case 'all':
+    case 'any': {
+      const states = Array.isArray(state) ? state : []
+      trigger.triggers.forEach((child, i) => {
+        collectPriceLevels(child, states[i], now, out)
+      })
+      return
+    }
+
+    case 'price-level':
+      // Already triggered, so `checkTrigger` won't look at the price:
+      if (state instanceof Date) return
+      out.push({ currencyPair: trigger.currencyPair, date: now })
   }
 }
 
